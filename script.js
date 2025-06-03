@@ -21,13 +21,22 @@ document.addEventListener('DOMContentLoaded', () => {
     ));
     const cards = Array.from(document.querySelectorAll('.stat-card, .skill-category, .project-card'));
 
+    // --- Section Offsets for Scroll Tracking ---
+    let sectionOffsets = [];
+    function cacheSectionOffsets() {
+        sectionOffsets = pageSections.map(section => ({
+            id: section.id,
+            offsetTop: section.offsetTop - mainNav.offsetHeight - 50
+        }));
+    }
+    window.addEventListener('resize', cacheSectionOffsets);
+    cacheSectionOffsets();
+
     // --- Loading and Startup Sequence ---
     function startWebsite() {
         loader.style.transition = 'opacity 0.5s ease-out';
         loader.style.opacity = '0';
-        setTimeout(() => {
-            loader.style.display = 'none';
-        }, 500);
+        setTimeout(() => { loader.style.display = 'none'; }, 500);
 
         if (startupSound) {
             startupSound.volume = 0.3;
@@ -86,28 +95,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setTimeout(startWebsite, 200);
 
-    // --- Navigation Scroll Active State & Sticky Nav ---
+    // --- Optimized Navigation Scroll Active State ---
     function updateActiveNavLink() {
+        const scrollY = window.scrollY;
         let currentSectionId = '';
-        pageSections.forEach(section => {
-            const sectionTop = section.offsetTop - mainNav.offsetHeight - 50;
-            if (window.scrollY >= sectionTop) {
-                currentSectionId = section.getAttribute('id');
+
+        for (let i = 0; i < sectionOffsets.length; i++) {
+            if (scrollY >= sectionOffsets[i].offsetTop) {
+                currentSectionId = sectionOffsets[i].id;
             }
-        });
+        }
 
         navLinks.forEach(link => {
-            link.classList.remove('active');
-            if (link.getAttribute('href') === `#${currentSectionId}`) {
-                link.classList.add('active');
-            }
+            const isActive = link.getAttribute('href') === `#${currentSectionId}`;
+            link.classList.toggle('active', isActive);
         });
 
-        if (window.scrollY > 50) {
-            mainNav.classList.add('scrolled');
-        } else {
-            mainNav.classList.remove('scrolled');
-        }
+        mainNav.classList.toggle('scrolled', scrollY > 50);
     }
 
     // --- Hamburger Menu Toggle ---
@@ -127,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- Scroll-Triggered Animations ---
+    // --- Scroll-Triggered Animations (cleaned logic) ---
     const observerOptions = {
         root: null,
         rootMargin: '0px',
@@ -152,15 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function checkElementsVisibility() {
         animatedElements.forEach(el => {
-            const rect = el.getBoundingClientRect();
-            if (rect.top <= (window.innerHeight || document.documentElement.clientHeight) && rect.bottom >= 0 && !el.classList.contains('is-visible')) {
-                const siblings = Array.from(el.parentElement.children);
-                const delay = el.classList.contains('stagger') ? (siblings.indexOf(el) * 150) : 0;
-                setTimeout(() => {
-                    el.classList.add('is-visible');
-                }, delay);
-                scrollObserver.unobserve(el);
-            } else if (!el.classList.contains('is-visible')) {
+            if (!el.classList.contains('is-visible')) {
                 scrollObserver.observe(el);
             }
         });
@@ -191,13 +187,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
-    // --- Optimized Cursor Aura with Animation Frame ---
+
+    // --- Optimized Cursor Aura ---
     if (cursorAura) {
-        // Make the inner circle a lighter color for better visibility
         cursorAura.style.background = 'rgba(255,255,255,0.7)';
         cursorAura.style.boxShadow = '0 0 16px 4px rgba(255,255,255,0.5)';
-
-        // Hide the default mouse cursor
         document.body.style.cursor = 'none';
 
         let auraX = window.innerWidth / 2;
@@ -206,13 +200,11 @@ document.addEventListener('DOMContentLoaded', () => {
         let targetY = auraY;
         let pointerLocked = false;
 
-        // Update targetX/Y on mousemove (normal)
         document.addEventListener('mousemove', (e) => {
             if (!pointerLocked) {
                 targetX = e.clientX;
                 targetY = e.clientY;
             } else {
-                // Pointer lock movement
                 targetX += e.movementX;
                 targetY += e.movementY;
                 targetX = Math.max(0, Math.min(window.innerWidth, targetX));
@@ -220,7 +212,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Animation loop for aura
         function animateAura() {
             auraX += (targetX - auraX) * 0.25;
             auraY += (targetY - auraY) * 0.25;
@@ -229,17 +220,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         animateAura();
 
-        // Set initial opacity to 0.9 (90%)
         cursorAura.style.opacity = '0.9';
 
         interactiveElements.forEach(el => {
             el.classList.add('interactive-hover-target');
-            el.addEventListener('mouseenter', () => {
-                cursorAura.classList.add('hovering');
-            });
-            el.addEventListener('mouseleave', () => {
-                cursorAura.classList.remove('hovering');
-            });
+            el.addEventListener('mouseenter', () => cursorAura.classList.add('hovering'));
+            el.addEventListener('mouseleave', () => cursorAura.classList.remove('hovering'));
         });
 
         document.addEventListener('mouseleave', () => {
@@ -248,13 +234,19 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('mouseenter', () => {
             cursorAura.style.opacity = '0.9';
         });
-
-        // Optional: pointer lock logic can be added here if needed
     }
 
-    // --- Enhanced Card Interactions (Ripple and Tilt) ---
+    // --- Throttled Card Interactions (Ripple + Tilt) ---
     cards.forEach(card => {
+        // Ripple throttle
+        let lastClick = 0;
+        const clickCooldown = 300; // ms
+
         card.addEventListener('click', function(e) {
+            const now = Date.now();
+            if (now - lastClick < clickCooldown) return;
+            lastClick = now;
+
             const ripple = document.createElement('span');
             ripple.classList.add('ripple');
             const rect = this.getBoundingClientRect();
@@ -265,10 +257,18 @@ document.addEventListener('DOMContentLoaded', () => {
             ripple.style.left = `${x}px`;
             ripple.style.top = `${y}px`;
             this.appendChild(ripple);
-            setTimeout(() => {
-                ripple.remove();
-            }, 600);
+            setTimeout(() => ripple.remove(), 600);
         });
+
+        // Tilt throttle using requestAnimationFrame
+        let tiltX = 0;
+        let tiltY = 0;
+        let rafId = null;
+
+        function updateTiltTransform() {
+            card.style.transform = `perspective(1000px) rotateX(${tiltY}deg) rotateY(${tiltX}deg) translateY(-5px) scale(1.03)`;
+            rafId = null;
+        }
 
         card.addEventListener('mousemove', function(e) {
             const rect = this.getBoundingClientRect();
@@ -276,13 +276,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const y = e.clientY - rect.top;
             const centerX = rect.width / 2;
             const centerY = rect.height / 2;
-            const rotateX = (y - centerY) / 20;
-            const rotateY = (centerX - x) / 20;
-            this.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-5px) scale(1.03)`;
+            tiltX = (centerX - x) / 20;
+            tiltY = (y - centerY) / 20;
+
+            if (!rafId) {
+                rafId = requestAnimationFrame(updateTiltTransform);
+            }
         });
 
         card.addEventListener('mouseleave', function() {
             this.style.transform = '';
+            cancelAnimationFrame(rafId);
+            rafId = null;
         });
     });
 
@@ -304,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Event Listeners ---
+    // --- Scroll & Resize Listeners ---
     window.addEventListener('scroll', () => {
         updateActiveNavLink();
         if (window.scrollY < window.innerHeight) {
@@ -313,6 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { passive: true });
 
     window.addEventListener('resize', () => {
+        cacheSectionOffsets();
         updateActiveNavLink();
     });
 
@@ -321,3 +327,19 @@ document.addEventListener('DOMContentLoaded', () => {
         requestTick();
     }
 });
+// --- Preload Images ---
+function preloadImages() {
+    const images = document.querySelectorAll('img[data-src]');
+    images.forEach(img => {
+        const src = img.getAttribute('data-src');
+        if (src) {
+            const newImg = new Image();
+            newImg.src = src;
+            newImg.onload = () => {
+                img.src = src;
+                img.removeAttribute('data-src');
+            };
+        }
+    });
+}
+document.addEventListener('DOMContentLoaded', preloadImages);
