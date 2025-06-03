@@ -1,6 +1,3 @@
-/* Import Ubuntu Font */
-@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap');
-
 /* --- Variables & Base --- */
 :root {
     --bg-dark: #18131e; /* Deep purple-black */
@@ -109,13 +106,17 @@ body::before {
 }
 #startup-quote {
     font-family: var(--font-primary);
-    font-size: 6vw; /* Responsive size */
+    font-size: 4vw; /* Smaller, more likely to fit */
     font-weight: 500;
     color: var(--fg-dark);
     text-align: center;
     opacity: 0;
     transform: scale(1.5);
     transition: opacity 1s ease-in-out, transform 1s ease-in-out;
+    margin: 0 20vw; /* 20% margin on left and right */
+    max-width: 60vw; /* Ensures it never exceeds available space */
+    box-sizing: border-box;
+    word-break: break-word;
 }
 
 /* --- Navigation --- */
@@ -704,7 +705,8 @@ body::before {
     width: 100%;
 }
 
-/* Easter Egg */
+/* Removed Easter Egg CSS as element is not present */
+/*
 .hidden-link {
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -716,6 +718,7 @@ body::before {
 #easter-egg:hover {
     opacity: 1;
 }
+*/
 
 /* --- Footer --- */
 footer {
@@ -724,6 +727,15 @@ footer {
     font-size: 0.9rem;
     opacity: 0.7;
 }
+
+.footer-music-credit {
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+}
+.footer-music-credit:hover {
+    opacity: 1;
+}
+
 
 /* --- Animations on Scroll --- */
 .animate-on-scroll {
@@ -820,6 +832,7 @@ footer {
 /* Magnetic hover effects */
 .magnetic-hover {
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform;
 }
 .magnetic-hover:hover {
     transform: scale(1.1);
@@ -827,32 +840,34 @@ footer {
 
 /* --- Cursor Aura Styling --- */
 #cursor-aura {
-    width: 30px;
-    height: 30px;
-    border: 2px solid var(--cursor-aura-color);
-    background-color: transparent;
+  position: fixed;
+  left: 0; top: 0;
+  width: 40px; height: 40px;
+  pointer-events: none;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.1);
+  will-change: transform;
+  transition: opacity 0.2s;
+  z-index: 9999;
+}
+#cursor-aura::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 100%; height: 100%;
     border-radius: 50%;
-    position: fixed;
-    transform: translate(-50%, -50%) scale(1);
-    pointer-events: none;
-    z-index: 10000;
-    transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
-                height 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
-                transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
-                border-color 0.3s ease-in-out,
-                opacity 0.3s ease-in-out;
-    opacity: 0.7;
-    box-shadow: 0 0 15px 0px var(--cursor-aura-color);
+    background: var(--cursor-aura-color);
+    transform: translate(-50%, -50%);
+    transition: transform 0.2s, opacity 0.2s;
+}
+#cursor-aura.active {
+    opacity: 1;
+}
+#cursor-aura.inactive {
+    opacity: 0;
 }
 
-#cursor-aura.hovering {
-    transform: translate(-50%, -50%) scale(1.8);
-    opacity: 1;
-    width: 45px;
-    height: 45px;
-    border-width: 1px;
-    box-shadow: 0 0 25px 5px var(--cursor-aura-color);
-}
+
 
 /* Hide aura on touch devices */
 @media (hover: none) {
@@ -869,6 +884,7 @@ footer {
     transform: scale(0);
     animation: rippleEffect 0.6s var(--ease-emphasized);
     pointer-events: none;
+    /* will-change: transform, opacity; /* For the ripple animation - can be intensive */
 }
 
 @keyframes rippleEffect {
