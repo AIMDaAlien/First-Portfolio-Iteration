@@ -160,7 +160,6 @@ body::before {
  font-weight: 700;
  font-family: var(--font-primary);
  transition: transform var(--duration-short) var(--ease-emphasized);
- cursor: pointer;
 }
 
 .nav-logo:hover {
@@ -251,7 +250,6 @@ body::before {
 /* Hamburger Menu */
 .hamburger-menu {
  display: none; /* Hidden on desktop */
- cursor: pointer;
  padding: var(--spacing-unit);
  z-index: 1001;
 }
@@ -355,7 +353,6 @@ body::before {
  font-size: calc(var(--spacing-unit) * 3);
  opacity: 0;
  transition: opacity var(--duration-long) var(--ease-emphasized) 1s;
- cursor: pointer;
 }
 
 .scroll-indicator span {
@@ -437,7 +434,6 @@ body::before {
  border: 1px solid transparent;
  position: relative;
  overflow: hidden;
- cursor: pointer;
 }
 
 /* Ripple effect for cards */
@@ -493,7 +489,6 @@ body::before {
  border: 1px solid transparent;
  position: relative;
  overflow: hidden;
- cursor: pointer;
 }
 
 /* Gradient overlay effect */
@@ -632,7 +627,6 @@ body::before {
  border: 1px solid transparent;
  position: relative;
  overflow: hidden;
- cursor: pointer;
 }
 
 /* Animated border effect */
@@ -750,20 +744,6 @@ body::before {
  width: 100%;
 }
 
-/* Removed Easter Egg CSS as element is not present */
-/*
-.hidden-link {
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    font-size: 1.5rem;
-    margin-left: var(--spacing-unit);
-    text-decoration: none;
-}
-#github-link:hover + #easter-egg,
-#easter-egg:hover {
-    opacity: 1;
-}
-*/
 
 /* --- Footer --- */
 footer {
@@ -960,4 +940,11 @@ footer {
   transform: scale(4);
   opacity: 0;
  }
+}
+.ripple-container {
+ position: relative;
+ overflow: hidden; /* Ensure ripple doesn't overflow */
+}
+.ripple-container:hover .ripple {
+ animation: rippleEffect 0.6s var(--ease-emphasized);
 }
