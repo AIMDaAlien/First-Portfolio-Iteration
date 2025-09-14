@@ -58,6 +58,16 @@ body::before {
  opacity: 0.025; /* 2-3% opacity */
  z-index: -1;
  pointer-events: none;
+ animation: driftNoise 45s linear infinite;
+}
+/* --- Animated Background Noise Texture --- */
+@keyframes driftNoise {
+ 0% {
+  transform: translate(0, 0);
+ }
+ 100% {
+  transform: translate(-100vw, -100vh);
+ }
 }
 
 /* --- Loading Animation --- */
@@ -126,6 +136,31 @@ body::before {
  word-break: break-word;
 }
 
+#startup-prompt {
+ font-family: var(--font-primary);
+ font-size: 1.5vw;
+ font-weight: 300;
+ color: var(--fg-dark);
+ text-align: center;
+ opacity: 0;
+ margin-top: 2rem;
+ animation: fadeInPulse 2s ease-in-out 1.5s forwards;
+}
+
+@keyframes fadeInPulse {
+ 0% {
+  opacity: 0;
+  transform: translateY(10px);
+ }
+ 50% {
+  opacity: 0.7;
+ }
+ 100% {
+  opacity: 1;
+  transform: translateY(0);
+ }
+}
+
 /* --- Navigation --- */
 #main-nav {
  position: fixed;
@@ -151,6 +186,7 @@ body::before {
 
 #main-nav.scrolled {
  background-color: rgba(24, 19, 30, 0.85);
+ -webkit-backdrop-filter: blur(10px);
  backdrop-filter: blur(10px);
  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }

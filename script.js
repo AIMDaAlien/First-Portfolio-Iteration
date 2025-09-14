@@ -21,6 +21,46 @@ document.addEventListener('DOMContentLoaded', () => {
     ));
     const cards = Array.from(document.querySelectorAll('.stat-card, .skill-category, .project-card'));
 
+    // --- Audio Management ---
+    let audioStarted = false;
+    
+    function attemptAudioPlay() {
+        if (!audioStarted && startupSound) {
+            startupSound.volume = 0.3;
+            startupSound.loop = true;
+            
+            const playPromise = startupSound.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    audioStarted = true;
+                    console.log('Audio started successfully');
+                }).catch(error => {
+                    console.warn('Audio autoplay prevented:', error);
+                    // Add click-to-play fallback
+                    if (!audioStarted) {
+                        const playAudioOnInteraction = () => {
+                            if (!audioStarted) {
+                                startupSound.play().then(() => {
+                                    audioStarted = true;
+                                    console.log('Audio started after user interaction');
+                                }).catch(e => console.error('Audio play failed:', e));
+                                // Remove listeners after successful play
+                                document.removeEventListener('click', playAudioOnInteraction);
+                                document.removeEventListener('keydown', playAudioOnInteraction);
+                                document.removeEventListener('touchstart', playAudioOnInteraction);
+                            }
+                        };
+                        
+                        // Add multiple event listeners for better coverage
+                        document.addEventListener('click', playAudioOnInteraction, { once: true });
+                        document.addEventListener('keydown', playAudioOnInteraction, { once: true });
+                        document.addEventListener('touchstart', playAudioOnInteraction, { once: true });
+                    }
+                });
+            }
+        }
+    }
+
     // --- Section Offsets for Scroll Tracking ---
     let sectionOffsets = [];
     function cacheSectionOffsets() {
@@ -38,16 +78,8 @@ document.addEventListener('DOMContentLoaded', () => {
         loader.style.opacity = '0';
         setTimeout(() => { loader.style.display = 'none'; }, 500);
 
-        if (startupSound) {
-            startupSound.volume = 0.3;
-            startupSound.loop = true;
-            const playSoundPromise = startupSound.play();
-            if (playSoundPromise !== undefined) {
-                playSoundPromise.catch(error => {
-                    console.warn("Startup sound autoplay was prevented:", error);
-                });
-            }
-        }
+        // Attempt to play audio
+        attemptAudioPlay();
 
         startupIntro.style.opacity = '1';
         setTimeout(() => {
@@ -58,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             startupQuote.style.transform = 'scale(0.6)';
             startupQuote.style.opacity = '0';
-        }, 2500);
+        }, 5000);  // Extended from 2500ms
 
         setTimeout(() => {
             startupIntro.style.opacity = '0';
@@ -90,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 checkElementsVisibility();
             }, 700);
-        }, 4000);
+        }, 6500);  // Extended from 4000ms to give users time to interact
     }
 
     setTimeout(startWebsite, 200);
@@ -327,6 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
         requestTick();
     }
 });
+
 // --- Preload Images ---
 function preloadImages() {
     const images = document.querySelectorAll('img[data-src]');

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Garden - Aim's Digital Notes</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&family=Kalam:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="garden.css">
+</head>
+<body>
+    <header class="garden-header">
+        <a href="#" class="garden-title" onclick="garden.loadMainIndex()">📚 Knowledge Garden</a>
+        <nav class="nav-breadcrumb" id="breadcrumb">
+            <span class="breadcrumb-link">Main Index</span>
+        </nav>
+        <a href="index.html" class="back-to-portfolio">← Back to Portfolio</a>
+    </header>
+
+    <aside class="sidebar" id="sidebar">
+        <h3 style="font-family: var(--font-handwritten); margin-bottom: 1rem;">もくじ (Table of Contents)</h3>
+        <ul class="folder-structure" id="folderStructure">
+            <!-- Will be populated dynamically -->
+        </ul>
+    </aside>
+
+    <button class="sidebar-toggle" onclick="garden.toggleSidebar()">📂</button>
+
+    <main class="garden-container">
+        <div class="loading-spinner"></div>
+        <article class="note-content" id="noteContent">
+            <!-- Content will be loaded here -->
+        </article>
+    </main>
+
+    <script src="garden.js"></script>
+</body>
+</html>
