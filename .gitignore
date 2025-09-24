@@ -1,0 +1,39 @@
+# Privacy Protection - Sensitive Personal Content
+# これらのフォルダーは非公開です (These folders are private)
+
+# Personal career information
+Career/
+Career/**
+
+# Personal private notes
+Myself/
+Myself/**
+
+# Obsidian workspace files (contain user preferences)
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+
+# Obsidian cache
+.obsidian/cache
+
+# MacOS system files
+.DS_Store
+**/.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+~$*
+
+# Editor backups
+*~
+*.swp
+*.swo
+*.swn
+
+# Log files
+*.log
+
+# Environment files
+.env
+.env.local

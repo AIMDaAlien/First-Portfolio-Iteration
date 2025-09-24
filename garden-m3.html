@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Garden - Material Design 3</title>
+    
+    <!-- Material Design 3 Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="garden-m3.css">
+    
+    <!-- Marked.js for proper markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <!-- Top App Bar -->
+    <header class="top-app-bar">
+        <button class="icon-button" id="menuButton" title="Toggle navigation">
+            <span class="material-symbols-outlined">menu</span>
+        </button>
+        
+        <div class="top-app-bar-title">
+            <span id="pageTitle">Knowledge Garden</span>
+        </div>
+        
+        <div class="breadcrumb-wrapper" id="breadcrumb">
+            <span class="breadcrumb-link" onclick="garden.loadMainIndex()">Home</span>
+        </div>
+        
+        <div class="top-app-bar-actions">
+            <button class="icon-button" id="themeToggle" title="Toggle theme">
+                <span class="material-symbols-outlined">dark_mode</span>
+            </button>
+            <button class="filled-tonal-button" onclick="window.location.href='index.html'">
+                <span>Back to Portfolio</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Navigation Rail (Desktop) -->
+    <nav class="navigation-rail">
+        <button class="nav-fab" onclick="garden.loadMainIndex()" title="Home">
+            <span class="material-symbols-outlined">home</span>
+        </button>
+        
+        <button class="nav-destination" data-destination="notes" title="All Notes">
+            <span class="material-symbols-outlined">description</span>
+        </button>
+        
+        <button class="nav-destination" data-destination="recent" title="Recent">
+            <span class="material-symbols-outlined">schedule</span>
+        </button>
+        
+        <button class="nav-destination" data-destination="search" title="Search">
+            <span class="material-symbols-outlined">search</span>
+        </button>
+    </nav>
+
+    <!-- Navigation Drawer (Sidebar) -->
+    <aside class="navigation-drawer" id="navigationDrawer">
+        <div class="drawer-header">
+            <h2>📚 Table of Contents</h2>
+        </div>
+        <ul class="folder-list" id="folderStructure">
+            <!-- Will be populated dynamically -->
+        </ul>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="content-area" id="contentArea">
+        <div class="note-container">
+            <article class="note-card">
+                <div class="note-content" id="noteContent">
+                    <!-- Content will be loaded here -->
+                </div>
+            </article>
+        </div>
+    </main>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loadingSpinner"></div>
+
+    <script src="garden-m3.js"></script>
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = themeToggle.querySelector('.material-symbols-outlined');
+        
+        // Check for saved theme preference or default to light mode
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        themeIcon.textContent = currentTheme === 'dark' ? 'light_mode' : 'dark_mode';
+        
+        themeToggle.addEventListener('click', () => {
+            const theme = document.documentElement.getAttribute('data-theme');
+            const newTheme = theme === 'light' ? 'dark' : 'light';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            themeIcon.textContent = newTheme === 'dark' ? 'light_mode' : 'dark_mode';
+        });
+        
+        // Navigation Drawer Toggle
+        const menuButton = document.getElementById('menuButton');
+        const navigationDrawer = document.getElementById('navigationDrawer');
+        const contentArea = document.getElementById('contentArea');
+        
+        menuButton.addEventListener('click', () => {
+            navigationDrawer.classList.toggle('open');
+            contentArea.classList.toggle('drawer-open');
+        });
+    </script>
+</body>
+</html>
