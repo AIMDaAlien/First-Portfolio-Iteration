@@ -344,6 +344,10 @@ class ObsidianGarden {
     }
 
     escapeHtml(unsafe) {
+        // Ensure input is a string
+        if (typeof unsafe !== 'string') {
+            unsafe = String(unsafe || '');
+        }
         return unsafe
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
