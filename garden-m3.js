@@ -57,6 +57,8 @@ class ObsidianGarden {
     async fetchVaultStructure() {
         const apiUrl = `https://api.github.com/repos/${this.vaultOwner}/${this.vaultRepo}/git/trees/${this.branch}?recursive=true`;
         
+        console.log('Fetching vault structure from:', apiUrl);
+        
         const response = await fetch(apiUrl, {
             headers: { 
                 'Accept': 'application/vnd.github.v3+json',
@@ -69,24 +71,40 @@ class ObsidianGarden {
         }
         
         const data = await response.json();
+        console.log(`✓ GitHub API returned ${data.tree.length} total items`);
+        
+        const mdFiles = data.tree.filter(item => item.path.endsWith('.md'));
+        console.log(`✓ Found ${mdFiles.length} markdown files`);
+        
         return this.parseTreeStructure(data.tree);
     }
 
     parseTreeStructure(tree) {
         const structure = {};
+        let totalFiles = 0;
+        let skippedPrivate = 0;
+        let skippedHidden = 0;
+        let processed = 0;
         
         tree.forEach(item => {
             // Only process markdown files
             if (!item.path.endsWith('.md')) return;
+            totalFiles++;
             
             const parts = item.path.split('/');
             const folder = parts.length > 1 ? parts[0] : 'Root';
             
             // Skip private folders
-            if (this.privateFolders.includes(folder)) return;
+            if (this.privateFolders.includes(folder)) {
+                skippedPrivate++;
+                return;
+            }
             
             // Skip hidden files and folders
-            if (parts.some(part => part.startsWith('.'))) return;
+            if (parts.some(part => part.startsWith('.'))) {
+                skippedHidden++;
+                return;
+            }
             
             const fileName = parts[parts.length - 1].replace('.md', '');
             
@@ -106,7 +124,21 @@ class ObsidianGarden {
                 path: item.path,
                 folder: folder
             });
+            
+            processed++;
         });
+        
+        console.log('\n📊 Parse Summary:');
+        console.log(`  Total .md files: ${totalFiles}`);
+        console.log(`  Skipped (private): ${skippedPrivate}`);
+        console.log(`  Skipped (hidden): ${skippedHidden}`);
+        console.log(`  ✓ Processed: ${processed}`);
+        console.log(`  ✓ SearchIndex size: ${this.searchIndex.length}`);
+        console.log('\n📁 Folder breakdown:');
+        Object.entries(structure).forEach(([folder, files]) => {
+            console.log(`  ${folder}: ${files.length} files`);
+        });
+        console.log('');
         
         return structure;
     }
@@ -433,14 +465,25 @@ class ObsidianGarden {
         const nodeMap = new Map();
         const linkCounts = new Map();
         
-        const loadingBar = document.getElementById('graphLoadingBar');
-        const loadingProgress = document.getElementById('graphLoadingProgress');
+        // Access loading bar elements directly each time
+        const showProgress = (percentage) => {
+            const bar = document.getElementById('graphLoadingBar');
+            const progress = document.getElementById('graphLoadingProgress');
+            if (bar && progress) {
+                bar.classList.add('active');
+                progress.style.width = `${percentage}%`;
+            }
+        };
+        
+        const hideProgress = () => {
+            const bar = document.getElementById('graphLoadingBar');
+            if (bar) {
+                setTimeout(() => bar.classList.remove('active'), 500);
+            }
+        };
         
         // Show loading bar
-        if (loadingBar) {
-            loadingBar.classList.add('active');
-            loadingProgress.style.width = '0%';
-        }
+        showProgress(0);
         
         // Build complete node list from searchIndex
         this.searchIndex.forEach((note) => {
@@ -459,17 +502,15 @@ class ObsidianGarden {
             linkCounts.set(nodeId, 0);
         });
         
-        // Update progress: 20% after nodes created
-        if (loadingProgress) loadingProgress.style.width = '20%';
+        showProgress(20);
         
-        // Fetch all notes in parallel with progress tracking
+        // Fetch all notes in parallel
         const totalNotes = this.searchIndex.length;
         let processedNotes = 0;
         
         const fetchPromises = this.searchIndex.map(async (note) => {
             let content = this.noteCache.get(note.path);
             
-            // If not cached, fetch it now
             if (!content) {
                 try {
                     const rawUrl = `https://raw.githubusercontent.com/${this.vaultOwner}/${this.vaultRepo}/${this.branch}/${encodeURIComponent(note.path)}`;
@@ -482,21 +523,17 @@ class ObsidianGarden {
                 }
             }
             
-            // Update progress (20% to 70% range for fetching)
             processedNotes++;
             const fetchProgress = 20 + ((processedNotes / totalNotes) * 50);
-            if (loadingProgress) loadingProgress.style.width = `${fetchProgress}%`;
+            showProgress(fetchProgress);
             
             return { path: note.path, content };
         });
         
-        // Wait for all fetches to complete
         const fetchedNotes = await Promise.all(fetchPromises);
+        showProgress(70);
         
-        // Update progress: 70% after all fetches complete
-        if (loadingProgress) loadingProgress.style.width = '70%';
-        
-        // Extract links from fetched content
+        // Extract links
         let processedLinks = 0;
         fetchedNotes.forEach(({ path, content }) => {
             if (!content) return;
@@ -519,24 +556,18 @@ class ObsidianGarden {
                 }
             }
             
-            // Update progress (70% to 90% range for link extraction)
             processedLinks++;
             const linkProgress = 70 + ((processedLinks / fetchedNotes.length) * 20);
-            if (loadingProgress) loadingProgress.style.width = `${linkProgress}%`;
+            showProgress(linkProgress);
         });
         
-        // Add connection count to nodes for sizing
+        // Add connection counts
         nodes.forEach(node => {
             node.connections = linkCounts.get(node.id) || 0;
         });
         
-        // Update progress: 100% complete
-        if (loadingProgress) loadingProgress.style.width = '100%';
-        
-        // Hide loading bar after short delay
-        setTimeout(() => {
-            if (loadingBar) loadingBar.classList.remove('active');
-        }, 500);
+        showProgress(100);
+        hideProgress();
         
         return { nodes, links };
     }
