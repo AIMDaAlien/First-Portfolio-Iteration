@@ -427,13 +427,22 @@ class ObsidianGarden {
     
     // Graph View Implementation
     async buildGraphData() {
-        /**Build comprehensive graph data from ALL vault notes**/
+        /**Build comprehensive graph data from ALL vault notes with progress tracking**/
         const nodes = [];
         const links = [];
         const nodeMap = new Map();
-        const linkCounts = new Map(); // Track connection density
+        const linkCounts = new Map();
         
-        // Build complete node list from searchIndex (includes all files)
+        const loadingBar = document.getElementById('graphLoadingBar');
+        const loadingProgress = document.getElementById('graphLoadingProgress');
+        
+        // Show loading bar
+        if (loadingBar) {
+            loadingBar.classList.add('active');
+            loadingProgress.style.width = '0%';
+        }
+        
+        // Build complete node list from searchIndex
         this.searchIndex.forEach((note) => {
             const nodeId = note.path;
             nodeMap.set(note.name, nodeId);
@@ -450,28 +459,48 @@ class ObsidianGarden {
             linkCounts.set(nodeId, 0);
         });
         
-        // Extract links from all notes (load uncached notes on-demand)
-        for (const note of this.searchIndex) {
+        // Update progress: 20% after nodes created
+        if (loadingProgress) loadingProgress.style.width = '20%';
+        
+        // Fetch all notes in parallel with progress tracking
+        const totalNotes = this.searchIndex.length;
+        let processedNotes = 0;
+        
+        const fetchPromises = this.searchIndex.map(async (note) => {
             let content = this.noteCache.get(note.path);
             
-            // If not cached, fetch it now for graph building
+            // If not cached, fetch it now
             if (!content) {
                 try {
                     const rawUrl = `https://raw.githubusercontent.com/${this.vaultOwner}/${this.vaultRepo}/${this.branch}/${encodeURIComponent(note.path)}`;
                     const response = await fetch(rawUrl);
                     if (response.ok) {
                         content = await response.text();
-                        // Don't cache to avoid memory issues, just use for graph
                     }
                 } catch (e) {
-                    console.warn(`Could not fetch ${note.path} for graph:`, e);
-                    continue;
+                    console.warn(`Could not fetch ${note.path}:`, e);
                 }
             }
             
-            if (!content) continue;
+            // Update progress (20% to 70% range for fetching)
+            processedNotes++;
+            const fetchProgress = 20 + ((processedNotes / totalNotes) * 50);
+            if (loadingProgress) loadingProgress.style.width = `${fetchProgress}%`;
             
-            // Extract wiki-style links
+            return { path: note.path, content };
+        });
+        
+        // Wait for all fetches to complete
+        const fetchedNotes = await Promise.all(fetchPromises);
+        
+        // Update progress: 70% after all fetches complete
+        if (loadingProgress) loadingProgress.style.width = '70%';
+        
+        // Extract links from fetched content
+        let processedLinks = 0;
+        fetchedNotes.forEach(({ path, content }) => {
+            if (!content) return;
+            
             const wikiLinkRegex = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;
             let match;
             
@@ -479,23 +508,35 @@ class ObsidianGarden {
                 const linkTarget = match[1];
                 const targetPath = this.resolveGraphLink(linkTarget, nodeMap);
                 
-                if (targetPath && targetPath !== note.path) {
+                if (targetPath && targetPath !== path) {
                     links.push({
-                        source: note.path,
+                        source: path,
                         target: targetPath
                     });
                     
-                    // Increment connection counts
-                    linkCounts.set(note.path, (linkCounts.get(note.path) || 0) + 1);
+                    linkCounts.set(path, (linkCounts.get(path) || 0) + 1);
                     linkCounts.set(targetPath, (linkCounts.get(targetPath) || 0) + 1);
                 }
             }
-        }
+            
+            // Update progress (70% to 90% range for link extraction)
+            processedLinks++;
+            const linkProgress = 70 + ((processedLinks / fetchedNotes.length) * 20);
+            if (loadingProgress) loadingProgress.style.width = `${linkProgress}%`;
+        });
         
         // Add connection count to nodes for sizing
         nodes.forEach(node => {
             node.connections = linkCounts.get(node.id) || 0;
         });
+        
+        // Update progress: 100% complete
+        if (loadingProgress) loadingProgress.style.width = '100%';
+        
+        // Hide loading bar after short delay
+        setTimeout(() => {
+            if (loadingBar) loadingBar.classList.remove('active');
+        }, 500);
         
         return { nodes, links };
     }
