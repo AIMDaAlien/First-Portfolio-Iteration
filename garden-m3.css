@@ -521,6 +521,23 @@ body {
   border-bottom-color: var(--md-sys-color-primary);
 }
 
+/* Note Tags */
+.note-tag {
+  display: inline-block;
+  color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary-container);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font: var(--md-sys-typescale-label-small);
+  margin: 0 4px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.note-tag:hover {
+  background: color-mix(in srgb, var(--md-sys-color-primary-container) 85%, var(--md-sys-color-on-primary-container));
+}
+
 /* Loading Spinner */
 .loading-spinner {
   display: none;

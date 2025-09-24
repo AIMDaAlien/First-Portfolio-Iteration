@@ -18,40 +18,13 @@ class ObsidianGarden {
     configureMarked() {
         if (typeof marked !== 'undefined') {
             marked.setOptions({
-                breaks: true,           // GitHub Flavored Markdown line breaks
-                gfm: true,              // GitHub Flavored Markdown
-                headerIds: true,        // Add IDs to headers
-                mangle: false,          // Don't escape HTML
-                sanitize: false,        // Allow HTML (we control the content)
-                smartypants: true,      // Smart quotes and dashes
-                xhtml: false
+                breaks: true,
+                gfm: true,
+                headerIds: true,
+                mangle: false,
+                sanitize: false,
+                smartypants: true
             });
-            
-            // Custom renderer for better styling
-            const renderer = new marked.Renderer();
-            
-            // Override link renderer to handle wiki links
-            const originalLinkRenderer = renderer.link.bind(renderer);
-            renderer.link = (href, title, text) => {
-                // Type-safe href handling
-                const safeHref = String(href || '');
-                const safeTitle = String(title || text || '');
-                const safeText = String(text || '');
-                
-                if (safeHref.startsWith('#wiki:')) {
-                    const notePath = safeHref.replace('#wiki:', '');
-                    return `<a href="javascript:void(0)" class="note-link" data-link="${notePath}" title="${safeTitle}">${safeText}</a>`;
-                }
-                return originalLinkRenderer(safeHref, safeTitle, safeText);
-            };
-            
-            // Override code renderer for better syntax highlighting preparation
-            renderer.code = (code, language) => {
-                const lang = language || 'plaintext';
-                return `<pre><code class="language-${lang}">${this.escapeHtml(code)}</code></pre>`;
-            };
-            
-            marked.use({ renderer });
         } else {
             console.error('marked.js not loaded! Markdown parsing will fail.');
         }
@@ -238,20 +211,37 @@ class ObsidianGarden {
             // Remove YAML frontmatter
             content = content.replace(/^---\n[\s\S]*?\n---\n/m, '');
             
-            // Convert Obsidian wiki links to markdown links
-            // Format: [[link|text]] -> [text](#wiki:link)
-            content = content.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, '[$2](#wiki:$1)');
-            // Format: [[link]] -> [link](#wiki:link)
-            content = content.replace(/\[\[([^\]]+)\]\]/g, '[$1](#wiki:$1)');
+            // Preprocess: Convert Obsidian wiki links to HTML with data attributes
+            // This happens BEFORE marked parses, avoiding renderer issues
+            // Format: [[link|text]] -> special marker that we'll convert after marked
+            content = content.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, (match, link, text) => {
+                return `<span class="wiki-link-marker" data-link="${link}">${text}</span>`;
+            });
+            // Format: [[link]] -> special marker
+            content = content.replace(/\[\[([^\]]+)\]\]/g, (match, link) => {
+                return `<span class="wiki-link-marker" data-link="${link}">${link}</span>`;
+            });
+            
+            // Preprocess: Convert Obsidian tags to styled spans
+            // Format: #tag -> <span class="note-tag">#tag</span>
+            content = content.replace(/(^|\s)(#[a-zA-Z][a-zA-Z0-9_-]*)/g, (match, space, tag) => {
+                return `${space}<span class="note-tag">${tag}</span>`;
+            });
             
             // Convert Obsidian callouts to blockquotes
-            // Format: > [!note] Title -> ### Title (as blockquote)
             content = content.replace(/^> \[!(\w+)\]\s*(.*)$/gm, (match, type, title) => {
                 return `> **${type.toUpperCase()}${title ? ': ' + title : ''}**`;
             });
             
-            // Parse with marked.js
+            // Parse with marked.js (no custom renderer needed)
             let html = marked.parse(content);
+            
+            // Post-process: Convert wiki-link-markers to actual clickable links
+            html = html.replace(/<span class="wiki-link-marker" data-link="([^"]+)">([^<]+)<\/span>/g, 
+                (match, link, text) => {
+                    return `<a href="javascript:void(0)" class="note-link" data-link="${link}">${text}</a>`;
+                }
+            );
             
             return html;
             
