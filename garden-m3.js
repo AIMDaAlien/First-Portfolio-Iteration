@@ -33,11 +33,16 @@ class ObsidianGarden {
             // Override link renderer to handle wiki links
             const originalLinkRenderer = renderer.link.bind(renderer);
             renderer.link = (href, title, text) => {
-                if (href.startsWith('#wiki:')) {
-                    const notePath = href.replace('#wiki:', '');
-                    return `<a href="javascript:void(0)" class="note-link" data-link="${notePath}" title="${title || text}">${text}</a>`;
+                // Type-safe href handling
+                const safeHref = String(href || '');
+                const safeTitle = String(title || text || '');
+                const safeText = String(text || '');
+                
+                if (safeHref.startsWith('#wiki:')) {
+                    const notePath = safeHref.replace('#wiki:', '');
+                    return `<a href="javascript:void(0)" class="note-link" data-link="${notePath}" title="${safeTitle}">${safeText}</a>`;
                 }
-                return originalLinkRenderer(href, title, text);
+                return originalLinkRenderer(safeHref, safeTitle, safeText);
             };
             
             // Override code renderer for better syntax highlighting preparation
@@ -355,10 +360,115 @@ class ObsidianGarden {
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
     }
+    
+    showAllNotes() {
+        /**Display all available notes in a categorized list**/
+        let html = '<h1>📚 All Notes</h1>';
+        
+        const folders = {};
+        this.searchIndex.forEach(note => {
+            if (!folders[note.folder]) {
+                folders[note.folder] = [];
+            }
+            folders[note.folder].push(note);
+        });
+        
+        Object.keys(folders).sort().forEach(folder => {
+            html += `<h2>📁 ${folder}</h2><ul>`;
+            folders[folder].sort((a, b) => a.name.localeCompare(b.name)).forEach(note => {
+                html += `<li><a href="javascript:void(0)" class="note-link" data-link="${note.path}" onclick="garden.loadNote('${note.path}')">${note.name}</a></li>`;
+            });
+            html += '</ul>';
+        });
+        
+        document.getElementById('noteContent').innerHTML = html;
+    }
+    
+    showRecentNotes() {
+        /**Display recently accessed notes**/
+        const html = `
+            <h1>🕒 Recent Notes</h1>
+            <p>Recently accessed notes functionality coming soon.</p>
+            <p>This will show your most recently viewed notes for quick access.</p>
+        `;
+        document.getElementById('noteContent').innerHTML = html;
+    }
+    
+    showSearch() {
+        /**Display search interface**/
+        const html = `
+            <h1>🔍 Search Knowledge Garden</h1>
+            <div style="max-width: 600px; margin: 2rem auto;">
+                <input type="text" 
+                       id="searchInput" 
+                       placeholder="Search notes..." 
+                       style="width: 100%; padding: 12px 16px; font-size: 16px; border: 2px solid var(--md-sys-color-outline); border-radius: 8px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface);">
+                <div id="searchResults" style="margin-top: 24px;"></div>
+            </div>
+        `;
+        document.getElementById('noteContent').innerHTML = html;
+        
+        // Add search functionality
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const results = this.searchIndex.filter(note => 
+                note.name.toLowerCase().includes(query) || 
+                note.folder.toLowerCase().includes(query)
+            );
+            
+            let resultsHtml = '';
+            if (query.length > 0) {
+                if (results.length > 0) {
+                    resultsHtml = `<p>Found ${results.length} result(s):</p><ul>`;
+                    results.slice(0, 10).forEach(note => {
+                        resultsHtml += `<li><a href="javascript:void(0)" onclick="garden.loadNote('${note.path}')" style="color: var(--md-sys-color-primary);">${note.name}</a> <small style="color: var(--md-sys-color-on-surface-variant);">in ${note.folder}</small></li>`;
+                    });
+                    resultsHtml += '</ul>';
+                } else {
+                    resultsHtml = '<p>No results found.</p>';
+                }
+            }
+            document.getElementById('searchResults').innerHTML = resultsHtml;
+        });
+        
+        searchInput.focus();
+    }
 }
 
 // Initialize Garden
 const garden = new ObsidianGarden();
 document.addEventListener('DOMContentLoaded', () => {
     garden.init();
+    
+    // Navigation Rail Button Handlers
+    document.querySelectorAll('.nav-destination').forEach(button => {
+        button.addEventListener('click', () => {
+            const destination = button.dataset.destination;
+            
+            // Remove active state from all buttons
+            document.querySelectorAll('.nav-destination').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Add active state to clicked button
+            button.classList.add('active');
+            
+            // Handle navigation
+            switch(destination) {
+                case 'notes':
+                    // Show all notes functionality
+                    garden.showAllNotes();
+                    break;
+                case 'recent':
+                    // Show recent notes functionality
+                    garden.showRecentNotes();
+                    break;
+                case 'search':
+                    // Show search functionality
+                    garden.showSearch();
+                    break;
+            }
+        });
+    });
 });
