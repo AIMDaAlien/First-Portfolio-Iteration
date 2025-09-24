@@ -18,6 +18,9 @@
     
     <!-- Marked.js for proper markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- Force-Graph for graph visualization -->
+    <script src="https://unpkg.com/force-graph@1.43.4/dist/force-graph.min.js"></script>
 </head>
 <body>
     <!-- Top App Bar -->
@@ -61,6 +64,10 @@
         <button class="nav-destination" data-destination="search" title="Search">
             <span class="material-symbols-outlined">search</span>
         </button>
+        
+        <button class="nav-destination" id="graphToggleBtn" title="Graph View">
+            <span class="material-symbols-outlined">share</span>
+        </button>
     </nav>
 
     <!-- Navigation Drawer (Sidebar) -->
@@ -86,6 +93,22 @@
 
     <!-- Loading Spinner -->
     <div class="loading-spinner" id="loadingSpinner"></div>
+
+    <!-- Graph View Panel -->
+    <div class="graph-panel" id="graphPanel">
+        <div class="graph-header">
+            <span class="graph-title">📊 Graph View</span>
+            <div class="graph-actions">
+                <button class="icon-button" id="graphExpandBtn" title="Expand">
+                    <span class="material-symbols-outlined">open_in_full</span>
+                </button>
+                <button class="icon-button" id="graphCloseBtn" title="Close">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+        </div>
+        <div class="graph-container" id="graphContainer"></div>
+    </div>
 
     <script src="garden-m3.js"></script>
     <script>

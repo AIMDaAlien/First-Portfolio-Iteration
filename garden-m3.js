@@ -424,12 +424,205 @@ class ObsidianGarden {
         
         searchInput.focus();
     }
+    
+    // Graph View Implementation
+    async buildGraphData() {
+        /**Build graph data structure from notes and their links**/
+        const nodes = [];
+        const links = [];
+        const nodeMap = new Map();
+        
+        // Create nodes from search index
+        this.searchIndex.forEach((note, index) => {
+            const nodeId = note.path;
+            nodeMap.set(note.name, nodeId);
+            nodeMap.set(note.path, nodeId);
+            
+            nodes.push({
+                id: nodeId,
+                name: note.name,
+                folder: note.folder,
+                path: note.path
+            });
+        });
+        
+        // Extract links from cached notes
+        for (const [path, content] of this.noteCache.entries()) {
+            // Find all wiki-style links in content
+            const wikiLinkRegex = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;
+            let match;
+            
+            while ((match = wikiLinkRegex.exec(content)) !== null) {
+                const linkTarget = match[1];
+                const targetPath = this.resolveGraphLink(linkTarget, nodeMap);
+                
+                if (targetPath && nodeMap.has(path)) {
+                    links.push({
+                        source: path,
+                        target: targetPath
+                    });
+                }
+            }
+        }
+        
+        return { nodes, links };
+    }
+    
+    resolveGraphLink(linkText, nodeMap) {
+        /**Resolve a wiki link to an actual node ID**/
+        // Try exact match first
+        if (nodeMap.has(linkText)) {
+            return nodeMap.get(linkText);
+        }
+        
+        // Try with .md extension
+        if (nodeMap.has(linkText + '.md')) {
+            return nodeMap.get(linkText + '.md');
+        }
+        
+        // Try finding by partial name match
+        for (const [key, value] of nodeMap.entries()) {
+            if (key.includes(linkText) || linkText.includes(key)) {
+                return value;
+            }
+        }
+        
+        return null;
+    }
+    
+    async initializeGraph() {
+        /**Initialize the Force-Graph visualization**/
+        if (typeof ForceGraph === 'undefined') {
+            console.error('Force-Graph library not loaded');
+            return;
+        }
+        
+        const graphContainer = document.getElementById('graphContainer');
+        if (!graphContainer) return;
+        
+        // Build graph data
+        const graphData = await this.buildGraphData();
+        
+        // Get current theme colors
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const primaryColor = isDark ? '#D0BCFF' : '#7C4DFF';
+        const surfaceColor = isDark ? '#1C1B1E' : '#FDFBFF';
+        const onSurfaceColor = isDark ? '#E6E1E6' : '#1C1B1E';
+        
+        // Initialize Force-Graph
+        this.graph = ForceGraph()(graphContainer)
+            .graphData(graphData)
+            .nodeId('id')
+            .nodeLabel('name')
+            .nodeColor(node => {
+                // Color by folder
+                const folderColors = {
+                    'Programming': '#7C4DFF',
+                    'Systems': '#B388FF',
+                    'Homelab': '#9575CD',
+                    'Learning': '#CE93D8',
+                    'Root': '#BA68C8'
+                };
+                return folderColors[node.folder] || primaryColor;
+            })
+            .nodeVal(node => 8)
+            .nodeCanvasObject((node, ctx, globalScale) => {
+                const label = node.name;
+                const fontSize = 12/globalScale;
+                ctx.font = `${fontSize}px Roboto Flex, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = node.color;
+                
+                // Draw node circle
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 5, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Draw label on hover
+                if (this.hoveredNode === node.id) {
+                    ctx.fillStyle = onSurfaceColor;
+                    ctx.fillText(label, node.x, node.y + 15);
+                }
+            })
+            .linkColor(() => isDark ? '#948F99' : '#79747E')
+            .linkWidth(1)
+            .linkDirectionalParticles(2)
+            .linkDirectionalParticleWidth(1.5)
+            .backgroundColor(surfaceColor)
+            .onNodeHover(node => {
+                this.hoveredNode = node ? node.id : null;
+                graphContainer.style.cursor = node ? 'pointer' : 'default';
+            })
+            .onNodeClick(node => {
+                if (node && node.path) {
+                    this.loadNote(node.path);
+                }
+            });
+        
+        // Store graph instance
+        this.graphInstance = this.graph;
+    }
+    
+    toggleGraphPanel() {
+        /**Toggle graph panel visibility**/
+        const panel = document.getElementById('graphPanel');
+        if (panel.classList.contains('hidden')) {
+            panel.classList.remove('hidden');
+            if (!this.graphInstance) {
+                this.initializeGraph();
+            }
+        } else {
+            panel.classList.add('hidden');
+        }
+    }
+    
+    expandGraphPanel() {
+        /**Expand graph panel to full screen**/
+        const panel = document.getElementById('graphPanel');
+        const expandBtn = document.getElementById('graphExpandBtn');
+        const expandIcon = expandBtn.querySelector('.material-symbols-outlined');
+        
+        if (panel.classList.contains('expanded')) {
+            panel.classList.remove('expanded');
+            expandIcon.textContent = 'open_in_full';
+        } else {
+            panel.classList.add('expanded');
+            expandIcon.textContent = 'close_fullscreen';
+        }
+        
+        // Trigger graph resize
+        if (this.graphInstance) {
+            setTimeout(() => {
+                this.graphInstance.width(panel.clientWidth);
+                this.graphInstance.height(panel.clientHeight - 48);
+            }, 300);
+        }
+    }
 }
 
 // Initialize Garden
 const garden = new ObsidianGarden();
 document.addEventListener('DOMContentLoaded', () => {
     garden.init();
+    
+    // Graph panel event handlers
+    document.getElementById('graphExpandBtn').addEventListener('click', () => {
+        garden.expandGraphPanel();
+    });
+    
+    document.getElementById('graphCloseBtn').addEventListener('click', () => {
+        garden.toggleGraphPanel();
+    });
+    
+    document.getElementById('graphToggleBtn').addEventListener('click', () => {
+        garden.toggleGraphPanel();
+    });
+    
+    // Initialize graph after a short delay to ensure notes are loaded
+    setTimeout(() => {
+        garden.initializeGraph();
+    }, 2000);
     
     // Navigation Rail Button Handlers
     document.querySelectorAll('.nav-destination').forEach(button => {
