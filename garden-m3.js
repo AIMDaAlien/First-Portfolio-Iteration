@@ -3,7 +3,7 @@ class ObsidianGarden {
     constructor() {
         // Repository Configuration
         this.vaultOwner = 'AIMDaAlien';
-        this.vaultRepo = 'obsidian-vault';
+        this.vaultRepo = 'knowledge-garden-vault';
         this.branch = 'main';
         
         this.noteCache = new Map();
