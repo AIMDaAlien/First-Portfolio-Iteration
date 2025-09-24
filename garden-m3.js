@@ -427,16 +427,18 @@ class ObsidianGarden {
     
     // Graph View Implementation
     async buildGraphData() {
-        /**Build graph data structure from notes and their links**/
+        /**Build comprehensive graph data from ALL vault notes**/
         const nodes = [];
         const links = [];
         const nodeMap = new Map();
+        const linkCounts = new Map(); // Track connection density
         
-        // Create nodes from search index
-        this.searchIndex.forEach((note, index) => {
+        // Build complete node list from searchIndex (includes all files)
+        this.searchIndex.forEach((note) => {
             const nodeId = note.path;
             nodeMap.set(note.name, nodeId);
             nodeMap.set(note.path, nodeId);
+            nodeMap.set(note.name.replace('.md', ''), nodeId);
             
             nodes.push({
                 id: nodeId,
@@ -444,11 +446,32 @@ class ObsidianGarden {
                 folder: note.folder,
                 path: note.path
             });
+            
+            linkCounts.set(nodeId, 0);
         });
         
-        // Extract links from cached notes
-        for (const [path, content] of this.noteCache.entries()) {
-            // Find all wiki-style links in content
+        // Extract links from all notes (load uncached notes on-demand)
+        for (const note of this.searchIndex) {
+            let content = this.noteCache.get(note.path);
+            
+            // If not cached, fetch it now for graph building
+            if (!content) {
+                try {
+                    const rawUrl = `https://raw.githubusercontent.com/${this.vaultOwner}/${this.vaultRepo}/${this.branch}/${encodeURIComponent(note.path)}`;
+                    const response = await fetch(rawUrl);
+                    if (response.ok) {
+                        content = await response.text();
+                        // Don't cache to avoid memory issues, just use for graph
+                    }
+                } catch (e) {
+                    console.warn(`Could not fetch ${note.path} for graph:`, e);
+                    continue;
+                }
+            }
+            
+            if (!content) continue;
+            
+            // Extract wiki-style links
             const wikiLinkRegex = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;
             let match;
             
@@ -456,14 +479,23 @@ class ObsidianGarden {
                 const linkTarget = match[1];
                 const targetPath = this.resolveGraphLink(linkTarget, nodeMap);
                 
-                if (targetPath && nodeMap.has(path)) {
+                if (targetPath && targetPath !== note.path) {
                     links.push({
-                        source: path,
+                        source: note.path,
                         target: targetPath
                     });
+                    
+                    // Increment connection counts
+                    linkCounts.set(note.path, (linkCounts.get(note.path) || 0) + 1);
+                    linkCounts.set(targetPath, (linkCounts.get(targetPath) || 0) + 1);
                 }
             }
         }
+        
+        // Add connection count to nodes for sizing
+        nodes.forEach(node => {
+            node.connections = linkCounts.get(node.id) || 0;
+        });
         
         return { nodes, links };
     }
@@ -491,7 +523,7 @@ class ObsidianGarden {
     }
     
     async initializeGraph() {
-        /**Initialize the Force-Graph visualization**/
+        /**Initialize the Force-Graph visualization with enhanced rendering**/
         if (typeof ForceGraph === 'undefined') {
             console.error('Force-Graph library not loaded');
             return;
@@ -500,68 +532,106 @@ class ObsidianGarden {
         const graphContainer = document.getElementById('graphContainer');
         if (!graphContainer) return;
         
-        // Build graph data
+        // Build comprehensive graph data
+        console.log('Building graph data...');
         const graphData = await this.buildGraphData();
+        console.log(`Graph built: ${graphData.nodes.length} nodes, ${graphData.links.length} links`);
         
         // Get current theme colors
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        const primaryColor = isDark ? '#D0BCFF' : '#7C4DFF';
         const surfaceColor = isDark ? '#1C1B1E' : '#FDFBFF';
         const onSurfaceColor = isDark ? '#E6E1E6' : '#1C1B1E';
         
-        // Initialize Force-Graph
+        // Enhanced folder color scheme
+        const folderColors = {
+            'Programming': '#7C4DFF',      // Periwinkle
+            'Systems': '#42A5F5',          // Blue  
+            'Homelab': '#66BB6A',          // Green
+            'Learning': '#FF7043',         // Orange
+            'Root': '#AB47BC',             // Purple
+            'Computer Related Stuff': '#26C6DA'  // Cyan
+        };
+        
+        // Initialize Force-Graph with enhanced configuration
         this.graph = ForceGraph()(graphContainer)
             .graphData(graphData)
             .nodeId('id')
-            .nodeLabel('name')
-            .nodeColor(node => {
-                // Color by folder
-                const folderColors = {
-                    'Programming': '#7C4DFF',
-                    'Systems': '#B388FF',
-                    'Homelab': '#9575CD',
-                    'Learning': '#CE93D8',
-                    'Root': '#BA68C8'
-                };
-                return folderColors[node.folder] || primaryColor;
+            .nodeLabel(node => `${node.name} (${node.connections} connections)`)
+            .nodeColor(node => folderColors[node.folder] || '#9E9E9E')
+            .nodeVal(node => {
+                // Size based on connection density (hub detection)
+                const baseSize = 4;
+                const scaleFactor = 0.5;
+                return baseSize + (node.connections * scaleFactor);
             })
-            .nodeVal(node => 8)
             .nodeCanvasObject((node, ctx, globalScale) => {
-                const label = node.name;
-                const fontSize = 12/globalScale;
-                ctx.font = `${fontSize}px Roboto Flex, sans-serif`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillStyle = node.color;
+                // Dynamic node rendering
+                const label = node.name.replace('.md', '');
+                const fontSize = 10/globalScale;
+                const nodeSize = Math.sqrt(node.val) * 2;
                 
-                // Draw node circle
+                // Draw node circle with size based on connections
                 ctx.beginPath();
-                ctx.arc(node.x, node.y, 5, 0, 2 * Math.PI);
+                ctx.arc(node.x, node.y, nodeSize, 0, 2 * Math.PI);
+                ctx.fillStyle = node.color;
                 ctx.fill();
                 
-                // Draw label on hover
-                if (this.hoveredNode === node.id) {
+                // Add border for emphasis
+                ctx.strokeStyle = isDark ? '#E6E1E6' : '#1C1B1E';
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
+                
+                // Always show label for hub nodes (>3 connections)
+                if (node.connections > 3 || this.hoveredNode === node.id) {
+                    ctx.font = `${fontSize}px Roboto Flex, sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
                     ctx.fillStyle = onSurfaceColor;
-                    ctx.fillText(label, node.x, node.y + 15);
+                    
+                    // Text background for readability
+                    const textWidth = ctx.measureText(label).width;
+                    ctx.fillStyle = surfaceColor + 'CC'; // Semi-transparent background
+                    ctx.fillRect(node.x - textWidth/2 - 2, node.y + nodeSize + 2, textWidth + 4, fontSize + 4);
+                    
+                    // Draw text
+                    ctx.fillStyle = onSurfaceColor;
+                    ctx.fillText(label, node.x, node.y + nodeSize + fontSize/2 + 6);
                 }
             })
             .linkColor(() => isDark ? '#948F99' : '#79747E')
-            .linkWidth(1)
-            .linkDirectionalParticles(2)
-            .linkDirectionalParticleWidth(1.5)
+            .linkWidth(1.5)
+            .linkDirectionalParticles(node => {
+                // More particles for highly connected nodes
+                return node.source.connections > 5 ? 4 : 2;
+            })
+            .linkDirectionalParticleWidth(2)
+            .linkDirectionalParticleSpeed(0.005)
             .backgroundColor(surfaceColor)
+            .d3Force('charge', window.d3.forceManyBody().strength(-100))
+            .d3Force('link', window.d3.forceLink().distance(50))
+            .d3Force('collision', window.d3.forceCollide().radius(node => Math.sqrt(node.val) * 2 + 5))
             .onNodeHover(node => {
                 this.hoveredNode = node ? node.id : null;
                 graphContainer.style.cursor = node ? 'pointer' : 'default';
             })
             .onNodeClick(node => {
                 if (node && node.path) {
+                    console.log('Navigating to:', node.path);
                     this.loadNote(node.path);
                 }
+            })
+            .cooldownTicks(100)
+            .onEngineStop(() => {
+                console.log('Graph simulation stabilized');
             });
         
         // Store graph instance
         this.graphInstance = this.graph;
+        
+        // Trigger initial zoom to fit
+        setTimeout(() => {
+            this.graph.zoomToFit(400, 50);
+        }, 500);
     }
     
     toggleGraphPanel() {
