@@ -19,11 +19,8 @@
     <!-- Marked.js for proper markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
-    <!-- D3.js for force simulation -->
+    <!-- D3.js for graph visualization -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    
-    <!-- Force-Graph for graph visualization -->
-    <script src="https://unpkg.com/force-graph@1.43.4/dist/force-graph.min.js"></script>
 </head>
 <body>
     <!-- Top App Bar -->
@@ -68,8 +65,8 @@
             <span class="material-symbols-outlined">search</span>
         </button>
         
-        <button class="nav-destination" id="graphToggleBtn" title="Graph View">
-            <span class="material-symbols-outlined">share</span>
+        <button class="nav-destination" id="graphToggleBtn" title="Toggle Graph">
+            <span class="material-symbols-outlined">account_tree</span>
         </button>
     </nav>
 
@@ -97,24 +94,30 @@
     <!-- Loading Spinner -->
     <div class="loading-spinner" id="loadingSpinner"></div>
 
-    <!-- Graph View Panel -->
-    <div class="graph-panel" id="graphPanel">
-        <div class="graph-header">
-            <span class="graph-title">📊 Graph View</span>
-            <div class="graph-actions">
-                <button class="icon-button" id="graphExpandBtn" title="Expand">
+    <!-- Corner Knowledge Graph Widget -->
+    <div class="corner-graph-widget" id="cornerGraphWidget">
+        <div class="corner-graph-header" id="cornerGraphHeader">
+            <div class="graph-title">
+                <span class="material-symbols-outlined">account_tree</span>
+                <span id="cornerGraphTitle">Knowledge Map</span>
+            </div>
+            <div class="connection-count" id="connectionCount">Loading...</div>
+            <div class="graph-controls">
+                <button class="icon-button" id="cornerExpandBtn" title="Expand">
                     <span class="material-symbols-outlined">open_in_full</span>
                 </button>
-                <button class="icon-button" id="graphCloseBtn" title="Close">
-                    <span class="material-symbols-outlined">close</span>
+                <button class="icon-button" id="cornerMinimizeBtn" title="Minimize">
+                    <span class="material-symbols-outlined">minimize</span>
                 </button>
             </div>
         </div>
-        <div class="graph-container" id="graphContainer">
-            <div class="graph-loading-bar" id="graphLoadingBar">
-                <div class="graph-loading-progress" id="graphLoadingProgress"></div>
-            </div>
+        
+        <div class="corner-graph-container" id="cornerGraphContainer">
+            <svg id="cornerGraphSvg" width="100%" height="100%"></svg>
+            <div class="graph-status-indicator"></div>
         </div>
+        
+        <div class="graph-tooltip" id="graphTooltip"></div>
     </div>
 
     <script src="garden-m3.js"></script>
