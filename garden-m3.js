@@ -647,11 +647,23 @@ class CornerGraphWidget {
         const width = container.clientWidth;
         const height = container.clientHeight;
         
+        // Ensure minimum dimensions for proper rendering
+        if (width < 50 || height < 50) {
+            console.warn('Container too small for graph rendering');
+            return;
+        }
+        
         // Clear existing
         this.svg.selectAll('*').remove();
         if (this.simulation) {
             this.simulation.stop();
         }
+        
+        // Set proper SVG viewBox and dimensions
+        this.svg
+            .attr('width', width)
+            .attr('height', height)
+            .attr('viewBox', `0 0 ${width} ${height}`);
         
         const visibleNodeIds = this.getVisibleNodes();
         const visibleNodes = this.graphData.nodes.filter(n => visibleNodeIds.includes(n.id));
@@ -661,31 +673,36 @@ class CornerGraphWidget {
             return visibleNodeIds.includes(sourceId) && visibleNodeIds.includes(targetId);
         });
         
-        console.log(`🎯 Rendering: ${visibleNodes.length} nodes, ${visibleLinks.length} links`);
+        console.log(`🎯 Rendering: ${visibleNodes.length} nodes, ${visibleLinks.length} links in ${width}x${height}`);
         
-        // Create D3 force simulation
+        // Create D3 force simulation with proper bounds
         this.simulation = d3.forceSimulation(visibleNodes)
-            .force('link', d3.forceLink(visibleLinks).id(d => d.id).distance(40))
-            .force('charge', d3.forceManyBody().strength(-200))
+            .force('link', d3.forceLink(visibleLinks).id(d => d.id).distance(50))
+            .force('charge', d3.forceManyBody().strength(-300))
             .force('center', d3.forceCenter(width / 2, height / 2))
-            .force('collision', d3.forceCollide().radius(15));
+            .force('collision', d3.forceCollide().radius(d => (d.type === 'folder' ? 16 : 12)))
+            .force('x', d3.forceX(width / 2).strength(0.1))
+            .force('y', d3.forceY(height / 2).strength(0.1));
         
         // Create links
         const link = this.svg.append('g')
+            .attr('class', 'links')
             .selectAll('line')
             .data(visibleLinks)
             .enter().append('line')
             .attr('class', 'graph-link');
         
-        // Create nodes
+        // Create nodes with proper event handling
         const node = this.svg.append('g')
+            .attr('class', 'nodes')
             .selectAll('circle')
             .data(visibleNodes)
             .enter().append('circle')
             .attr('class', d => `graph-node ${d.type}`)
             .attr('r', d => d.type === 'folder' ? 14 : 10)
-            .call(this.drag(this.simulation))
+            .call(this.createNodeDrag(this.simulation))
             .on('click', (event, d) => {
+                // Prevent event bubbling to widget
                 event.stopPropagation();
                 if (event.detail === 1) {
                     // Single click: expand/collapse
@@ -698,6 +715,7 @@ class CornerGraphWidget {
             })
             .on('dblclick', (event, d) => {
                 event.preventDefault();
+                event.stopPropagation();
                 // Double click: navigate to note (only for notes, not folders)
                 if (d.type === 'note') {
                     console.log('🔗 **ナビゲート** (nabigēto - navigate) to:', d.id);
@@ -717,15 +735,27 @@ class CornerGraphWidget {
         
         // Create labels for important nodes
         const label = this.svg.append('g')
+            .attr('class', 'labels')
             .selectAll('text')
             .data(visibleNodes.filter(d => d.connections > 2 || d.type === 'folder'))
             .enter().append('text')
             .attr('class', 'node-label visible')
-            .text(d => d.name)
-            .attr('dy', d => (d.type === 'folder' ? 18 : 14) + 4);
+            .text(d => d.name.length > 15 ? d.name.substring(0, 15) + '...' : d.name)
+            .attr('dy', d => (d.type === 'folder' ? 18 : 14) + 4)
+            .style('pointer-events', 'none'); // Prevent label interference
         
-        // Update simulation
+        // Constrain nodes to container bounds
+        const constrainToBounds = (node) => {
+            const radius = node.type === 'folder' ? 16 : 12;
+            node.x = Math.max(radius, Math.min(width - radius, node.x));
+            node.y = Math.max(radius, Math.min(height - radius, node.y));
+        };
+        
+        // Update simulation with bounds checking
         this.simulation.on('tick', () => {
+            // Apply bounds constraints
+            visibleNodes.forEach(constrainToBounds);
+            
             link
                 .attr('x1', d => d.source.x)
                 .attr('y1', d => d.source.y)
@@ -741,11 +771,16 @@ class CornerGraphWidget {
                 .attr('y', d => d.y);
         });
         
-        // Stop simulation after convergence
+        // Run simulation longer for proper settling
         this.simulation.alpha(1).restart();
+        
+        // Stop simulation after adequate time for convergence
         setTimeout(() => {
-            if (this.simulation) this.simulation.stop();
-        }, 3000);
+            if (this.simulation) {
+                this.simulation.stop();
+                console.log('✓ Graph simulation converged');
+            }
+        }, 5000);
     }
     
     expandNode(nodeId) {
@@ -940,22 +975,28 @@ class CornerGraphWidget {
         }
     }
     
-    drag(simulation) {
+    createNodeDrag(simulation) {
+        // Separate node drag handler to prevent conflict with widget drag
         function dragstarted(event, d) {
+            // Stop event propagation to prevent widget dragging
+            event.stopPropagation();
             if (!event.active) simulation.alphaTarget(0.3).restart();
             d.fx = d.x;
             d.fy = d.y;
         }
         
         function dragged(event, d) {
+            event.stopPropagation();
             d.fx = event.x;
             d.fy = event.y;
         }
         
         function dragended(event, d) {
+            event.stopPropagation();
             if (!event.active) simulation.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
+            // Keep node fixed at dragged position
+            d.fx = event.x;
+            d.fy = event.y;
         }
         
         return d3.drag()
