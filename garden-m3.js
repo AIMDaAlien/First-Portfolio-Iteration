@@ -254,17 +254,27 @@ class ObsidianGarden {
             // Remove YAML frontmatter
             content = content.replace(/^---\n[\s\S]*?\n---\n/m, '');
             
-            // Preprocess: Convert Obsidian wiki links to HTML with data attributes
+            // Use unique markers that won't be affected by HTML escaping
+            const WIKI_LINK_MARKER = '___WIKI_LINK___';
+            const wikiLinkReplacements = [];
+            let markerIndex = 0;
+            
+            // Preprocess: Convert Obsidian wiki links to temporary markers
+            // Format: [[link|text]] -> marker
             content = content.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, (match, link, text) => {
-                return `<span class="wiki-link-marker" data-link="${link}">${text}</span>`;
-            });
-            content = content.replace(/\[\[([^\]]+)\]\]/g, (match, link) => {
-                return `<span class="wiki-link-marker" data-link="${link}">${link}</span>`;
+                const marker = `${WIKI_LINK_MARKER}${markerIndex}${WIKI_LINK_MARKER}`;
+                wikiLinkReplacements.push({ marker, link: link.trim(), text: text.trim() });
+                markerIndex++;
+                return marker;
             });
             
-            // Preprocess: Convert Obsidian tags to styled spans
-            content = content.replace(/(^|\s)(#[a-zA-Z][a-zA-Z0-9_-]*)/g, (match, space, tag) => {
-                return `${space}<span class="note-tag">${tag}</span>`;
+            // Format: [[link]] -> marker
+            content = content.replace(/\[\[([^\]]+)\]\]/g, (match, link) => {
+                const linkTrimmed = link.trim();
+                const marker = `${WIKI_LINK_MARKER}${markerIndex}${WIKI_LINK_MARKER}`;
+                wikiLinkReplacements.push({ marker, link: linkTrimmed, text: linkTrimmed });
+                markerIndex++;
+                return marker;
             });
             
             // Convert Obsidian callouts to blockquotes
@@ -275,12 +285,16 @@ class ObsidianGarden {
             // Parse with marked.js
             let html = marked.parse(content);
             
-            // Post-process: Convert wiki-link-markers to actual clickable links
-            html = html.replace(/<span class="wiki-link-marker" data-link="([^"]+)">([^<]+)<\/span>/g, 
-                (match, link, text) => {
-                    return `<a href="javascript:void(0)" class="note-link" data-link="${link}">${text}</a>`;
-                }
-            );
+            // Post-process: Replace markers with actual clickable links
+            wikiLinkReplacements.forEach(({ marker, link, text }) => {
+                const linkHtml = `<a href="javascript:void(0)" class="note-link" data-link="${this.escapeHtml(link)}">${this.escapeHtml(text)}</a>`;
+                html = html.replace(new RegExp(this.escapeRegex(marker), 'g'), linkHtml);
+            });
+            
+            // Process Obsidian tags after marked.js to avoid conflicts
+            html = html.replace(/(^|\s|>)(#[a-zA-Z][a-zA-Z0-9_-]*)/g, (match, prefix, tag) => {
+                return `${prefix}<span class="note-tag">${tag}</span>`;
+            });
             
             return html;
             
@@ -387,6 +401,10 @@ class ObsidianGarden {
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
+    }
+    
+    escapeRegex(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
     
     // Additional functionality for navigation rail
@@ -591,6 +609,13 @@ class CornerGraphWidget {
     }
     
     getVisibleNodes() {
+        // Show ALL nodes for Obsidian-like experience
+        // Users can filter/focus using expand functionality if needed
+        return this.graphData.nodes.map(node => node.id);
+    }
+    
+    getExpandedVisibleNodes() {
+        // This method provides the old hierarchical behavior for future use
         const visibleIds = new Set();
         
         // Always show main index
@@ -823,38 +848,71 @@ class CornerGraphWidget {
     makeDraggable() {
         const header = document.getElementById('cornerGraphHeader');
         let isDragging = false;
+        let dragMoved = false;
         let startX, startY, initialX, initialY;
+        let animationId = null;
+        
+        const updatePosition = (clientX, clientY) => {
+            if (!isDragging) return;
+            
+            const deltaX = clientX - startX;
+            const deltaY = clientY - startY;
+            
+            // Use transform for better performance during drag
+            this.widget.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+        };
         
         header.addEventListener('mousedown', (e) => {
             isDragging = true;
+            dragMoved = false;
             startX = e.clientX;
             startY = e.clientY;
             
             const rect = this.widget.getBoundingClientRect();
             initialX = rect.left;
             initialY = rect.top;
+            
+            e.preventDefault();
         });
         
         document.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
             
-            const deltaX = e.clientX - startX;
-            const deltaY = e.clientY - startY;
+            dragMoved = true;
             
-            this.widget.style.left = (initialX + deltaX) + 'px';
-            this.widget.style.top = (initialY + deltaY) + 'px';
-            this.widget.style.right = 'auto';
-            this.widget.style.bottom = 'auto';
+            // Cancel previous animation frame
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            
+            // Use requestAnimationFrame for smooth dragging
+            animationId = requestAnimationFrame(() => {
+                updatePosition(e.clientX, e.clientY);
+            });
         });
         
-        document.addEventListener('mouseup', () => {
-            isDragging = false;
-        });
-        
-        // Header click to cycle modes
-        header.addEventListener('click', (e) => {
-            if (!isDragging && e.target === header) {
-                this.cycleMode();
+        document.addEventListener('mouseup', (e) => {
+            if (isDragging) {
+                isDragging = false;
+                
+                // Apply final position using left/top for persistence
+                if (dragMoved) {
+                    const deltaX = e.clientX - startX;
+                    const deltaY = e.clientY - startY;
+                    
+                    this.widget.style.left = (initialX + deltaX) + 'px';
+                    this.widget.style.top = (initialY + deltaY) + 'px';
+                    this.widget.style.right = 'auto';
+                    this.widget.style.bottom = 'auto';
+                    this.widget.style.transform = 'none';
+                }
+                
+                // Only cycle mode if no drag occurred
+                if (!dragMoved && e.target.closest('#cornerGraphHeader')) {
+                    this.cycleMode();
+                }
+                
+                dragMoved = false;
             }
         });
     }
