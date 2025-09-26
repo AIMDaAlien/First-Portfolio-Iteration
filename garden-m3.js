@@ -752,6 +752,9 @@ class CornerGraphWidget {
                 // Apply zoom transform to graph content
                 graphGroup.attr('transform', event.transform);
                 this.currentTransform = event.transform;
+                
+                // DYNAMIC NODE SCALING: Update node sizes based on zoom level
+                this.updateNodeSizes();
             });
         
         // Apply zoom behavior to SVG
@@ -773,12 +776,12 @@ class CornerGraphWidget {
         
         console.log(`🎯 Rendering: ${visibleNodes.length} nodes, ${visibleLinks.length} links in ${width}x${height}`);
         
-        // Create D3 force simulation with proper bounds
+        // Create D3 force simulation with dynamic collision radius
         this.simulation = d3.forceSimulation(visibleNodes)
-            .force('link', d3.forceLink(visibleLinks).id(d => d.id).distance(50))
-            .force('charge', d3.forceManyBody().strength(-300))
+            .force('link', d3.forceLink(visibleLinks).id(d => d.id).distance(40)) // Reduced distance for smaller nodes
+            .force('charge', d3.forceManyBody().strength(-200)) // Reduced charge for smaller nodes
             .force('center', d3.forceCenter(width / 2, height / 2))
-            .force('collision', d3.forceCollide().radius(d => (d.type === 'folder' ? 16 : 12)))
+            .force('collision', d3.forceCollide().radius(d => this.calculateNodeRadius(d) + 2)) // Dynamic collision
             .force('x', d3.forceX(width / 2).strength(0.1))
             .force('y', d3.forceY(height / 2).strength(0.1));
         
@@ -790,14 +793,14 @@ class CornerGraphWidget {
             .enter().append('line')
             .attr('class', 'graph-link');
         
-        // Create nodes with corrected event handling - SYSTEMATIC FIX
+        // Create nodes with DYNAMIC SIZING and enhanced interaction handling
         const node = graphGroup.append('g')
             .attr('class', 'nodes')
             .selectAll('circle')
             .data(visibleNodes)
             .enter().append('circle')
             .attr('class', d => `graph-node ${d.type}`)
-            .attr('r', d => d.type === 'folder' ? 14 : 10)
+            .attr('r', d => this.calculateNodeRadius(d)) // DYNAMIC RADIUS CALCULATION
             .call(this.createNodeDrag(this.simulation))
             .on('click', (event, d) => {
                 // CRITICAL FIX: Check defaultPrevented to distinguish drag from click
@@ -820,14 +823,29 @@ class CornerGraphWidget {
                 this.showTooltip(event, d);
                 this.highlightConnections(d);
                 this.hoveredNode = d.id;
+                
+                // HOVER SCALING: Enhance node size on hover
+                d3.select(event.target)
+                    .transition()
+                    .duration(200)
+                    .attr('r', this.calculateNodeRadius(d, true)); // Pass hover state
             })
-            .on('mouseout', () => {
+            .on('mouseout', (event, d) => {
                 this.hideTooltip();
                 this.clearHighlights();
                 this.hoveredNode = null;
+                
+                // HOVER SCALING: Return to normal size
+                d3.select(event.target)
+                    .transition()
+                    .duration(200)
+                    .attr('r', this.calculateNodeRadius(d, false));
             });
         
-        // Create labels for important nodes
+        // Store node reference for dynamic updates
+        this.nodeSelection = node;
+        
+        // Create labels for important nodes with dynamic positioning
         const label = graphGroup.append('g')
             .attr('class', 'labels')
             .selectAll('text')
@@ -835,17 +853,21 @@ class CornerGraphWidget {
             .enter().append('text')
             .attr('class', 'node-label visible')
             .text(d => d.name.length > 15 ? d.name.substring(0, 15) + '...' : d.name)
-            .attr('dy', d => (d.type === 'folder' ? 18 : 14) + 4)
-            .style('pointer-events', 'none');
+            .attr('dy', d => this.calculateNodeRadius(d) + 8) // Dynamic label positioning
+            .style('pointer-events', 'none')
+            .style('font-size', () => this.calculateLabelSize() + 'px'); // Dynamic font size
         
-        // Constrain nodes to container bounds
+        // Store label reference for dynamic updates
+        this.labelSelection = label;
+        
+        // Constrain nodes to container bounds with dynamic radius consideration
         const constrainToBounds = (node) => {
-            const radius = node.type === 'folder' ? 16 : 12;
+            const radius = this.calculateNodeRadius(node);
             node.x = Math.max(radius, Math.min(width - radius, node.x));
             node.y = Math.max(radius, Math.min(height - radius, node.y));
         };
         
-        // Update simulation with bounds checking
+        // Update simulation with bounds checking and dynamic positioning
         this.simulation.on('tick', () => {
             // Apply bounds constraints
             visibleNodes.forEach(constrainToBounds);
@@ -862,7 +884,7 @@ class CornerGraphWidget {
             
             label
                 .attr('x', d => d.x)
-                .attr('y', d => d.y);
+                .attr('y', d => d.y + this.calculateNodeRadius(d) + 8);
         });
         
         // Run simulation longer for proper settling
@@ -875,6 +897,96 @@ class CornerGraphWidget {
                 console.log('✓ Graph simulation converged');
             }
         }, 5000);
+    }
+    
+    calculateNodeRadius(node, isHovered = false) {
+        // Base radius - smaller than original for less cluttered appearance
+        const baseRadius = node.type === 'folder' ? 8 : 6;
+        
+        // Get current zoom level (default to 1 if no transform)
+        const zoomLevel = this.currentTransform ? this.currentTransform.k : 1;
+        
+        // Calculate container size factor relative to window
+        const container = document.getElementById('cornerGraphContainer');
+        if (!container) return baseRadius;
+        
+        const containerArea = container.clientWidth * container.clientHeight;
+        const windowArea = window.innerWidth * window.innerHeight;
+        const sizeFactor = Math.sqrt(containerArea / windowArea);
+        
+        // Zoom-responsive scaling
+        // At zoom 1.0: normal size
+        // At zoom 0.3: smaller (75% of base)
+        // At zoom 3.0: larger (125% of base)
+        const zoomFactor = 0.75 + (zoomLevel * 0.25);
+        
+        // Size factor scaling (larger containers get slightly larger nodes)
+        const containerFactor = 0.8 + (sizeFactor * 0.4);
+        
+        // Hover enhancement
+        const hoverFactor = isHovered ? 1.4 : 1.0;
+        
+        // Calculate final radius with all factors
+        const finalRadius = baseRadius * zoomFactor * containerFactor * hoverFactor;
+        
+        // Ensure minimum and maximum bounds
+        return Math.max(3, Math.min(finalRadius, 20));
+    }
+    
+    calculateLabelSize() {
+        // Base font size
+        const baseFontSize = 10;
+        
+        // Get current zoom level
+        const zoomLevel = this.currentTransform ? this.currentTransform.k : 1;
+        
+        // Calculate container size factor
+        const container = document.getElementById('cornerGraphContainer');
+        if (!container) return baseFontSize;
+        
+        const containerArea = container.clientWidth * container.clientHeight;
+        const windowArea = window.innerWidth * window.innerHeight;
+        const sizeFactor = Math.sqrt(containerArea / windowArea);
+        
+        // Zoom-responsive label scaling
+        const zoomFactor = 0.8 + (zoomLevel * 0.3);
+        const containerFactor = 0.9 + (sizeFactor * 0.2);
+        
+        const finalSize = baseFontSize * zoomFactor * containerFactor;
+        
+        // Ensure readable bounds
+        return Math.max(8, Math.min(finalSize, 14));
+    }
+    
+    updateNodeSizes() {
+        // Update node sizes based on current zoom and container state
+        if (this.nodeSelection) {
+            this.nodeSelection
+                .transition()
+                .duration(150)
+                .attr('r', d => {
+                    // Check if this node is currently hovered
+                    const isHovered = d.id === this.hoveredNode;
+                    return this.calculateNodeRadius(d, isHovered);
+                });
+        }
+        
+        // Update label sizes and positions
+        if (this.labelSelection) {
+            this.labelSelection
+                .transition()
+                .duration(150)
+                .style('font-size', this.calculateLabelSize() + 'px')
+                .attr('dy', d => this.calculateNodeRadius(d) + 8);
+        }
+        
+        // Update collision force radius
+        if (this.simulation) {
+            this.simulation
+                .force('collision', d3.forceCollide().radius(d => this.calculateNodeRadius(d) + 2))
+                .alpha(0.1)
+                .restart();
+        }
     }
     
     expandNode(nodeId) {
