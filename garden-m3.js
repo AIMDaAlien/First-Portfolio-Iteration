@@ -254,73 +254,96 @@ class ObsidianGarden {
             // Remove YAML frontmatter
             content = content.replace(/^---\n[\s\S]*?\n---\n/m, '');
             
-            // ESCAPE-RESISTANT WIKI LINK PROCESSING - Systematic approach
-            const wikiLinkReplacements = [];
-            let markerIndex = 0;
+            console.log('🔍 **DEBUG**: Starting wiki link processing...');
             
-            // Phase 1: Extract and replace [[link|text]] format with unique markers
+            // DIRECT APPROACH: Simple placeholder system with guaranteed unique markers
+            const linkReplacements = new Map();
+            let linkIndex = 0;
+            
+            // Process [[link|text]] format first
             content = content.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, (match, link, text) => {
                 const linkTrimmed = link.trim();
                 const textTrimmed = text.trim();
-                const marker = `___WIKI_LINK_MARKER_${markerIndex}___`;
+                const placeholder = `__WIKILINK_${linkIndex}__`;
                 
-                wikiLinkReplacements.push({
-                    marker: marker,
-                    html: `<a href="javascript:void(0)" class="note-link" data-link="${this.escapeHtml(linkTrimmed)}">${this.escapeHtml(textTrimmed)}</a>`
+                linkReplacements.set(placeholder, {
+                    html: `<a href="javascript:void(0)" class="note-link" data-link="${this.escapeHtml(linkTrimmed)}">${this.escapeHtml(textTrimmed)}</a>`,
+                    original: match
                 });
                 
-                markerIndex++;
-                return marker;
+                linkIndex++;
+                console.log(`🔗 Processed link with text: ${match} -> ${placeholder}`);
+                return placeholder;
             });
             
-            // Phase 2: Extract and replace [[link]] format with unique markers
+            // Process [[link]] format
             content = content.replace(/\[\[([^\]]+)\]\]/g, (match, link) => {
                 const linkTrimmed = link.trim();
-                const marker = `___WIKI_LINK_MARKER_${markerIndex}___`;
+                const placeholder = `__WIKILINK_${linkIndex}__`;
                 
-                wikiLinkReplacements.push({
-                    marker: marker,
-                    html: `<a href="javascript:void(0)" class="note-link" data-link="${this.escapeHtml(linkTrimmed)}">${this.escapeHtml(linkTrimmed)}</a>`
+                linkReplacements.set(placeholder, {
+                    html: `<a href="javascript:void(0)" class="note-link" data-link="${this.escapeHtml(linkTrimmed)}">${this.escapeHtml(linkTrimmed)}</a>`,
+                    original: match
                 });
                 
-                markerIndex++;
-                return marker;
+                linkIndex++;
+                console.log(`🔗 Processed simple link: ${match} -> ${placeholder}`);
+                return placeholder;
             });
+            
+            console.log(`📊 Found ${linkReplacements.size} wiki links to process`);
             
             // Convert Obsidian callouts to blockquotes
             content = content.replace(/^> \[!(\w+)\]\s*(.*)$/gm, (match, type, title) => {
                 return `> **${type.toUpperCase()}${title ? ': ' + title : ''}**`;
             });
             
-            // Configure marked.js with proper settings
+            // Configure marked.js with minimal interference
             const originalSanitize = marked.defaults.sanitize;
             marked.setOptions({ 
                 sanitize: false,
                 breaks: true,
-                gfm: true
+                gfm: true,
+                headerIds: false,
+                mangle: false
             });
             
-            // Parse with marked.js - markers will survive the process
+            // Parse with marked.js
             let html = marked.parse(content);
             
             // Restore original sanitize setting
             marked.setOptions({ sanitize: originalSanitize });
             
-            // Phase 3: Replace markers with actual HTML links after markdown processing
-            wikiLinkReplacements.forEach(replacement => {
-                html = html.replace(new RegExp(this.escapeRegex(replacement.marker), 'g'), replacement.html);
+            console.log('📝 **DEBUG**: Content after marked.js processing');
+            console.log('Sample:', html.substring(0, 300));
+            
+            // DIRECT STRING REPLACEMENT - No regex complications
+            linkReplacements.forEach((replacement, placeholder) => {
+                const beforeCount = (html.match(new RegExp(placeholder, 'g')) || []).length;
+                html = html.split(placeholder).join(replacement.html);
+                const afterCount = (html.match(new RegExp(placeholder, 'g')) || []).length;
+                
+                console.log(`🔄 Replaced "${placeholder}": ${beforeCount} -> ${afterCount} remaining`);
             });
             
-            // Process Obsidian tags after all other processing
+            // Process Obsidian tags after link processing
             html = html.replace(/(^|\s|>)(#[a-zA-Z][a-zA-Z0-9_-]*)/g, (match, prefix, tag) => {
                 return `${prefix}<span class="note-tag">${tag}</span>`;
             });
             
-            console.log(`✓ **wiki link processing**: ${wikiLinkReplacements.length} links processed with escape-resistant markers`);
+            // Final verification
+            const remainingPlaceholders = html.match(/__WIKILINK_\d+__/g) || [];
+            if (remainingPlaceholders.length > 0) {
+                console.warn(`⚠️ ${remainingPlaceholders.length} placeholders still remain:`, remainingPlaceholders);
+            } else {
+                console.log('✅ **SUCCESS**: All wiki link placeholders replaced successfully');
+            }
+            
+            console.log(`✓ **wiki link processing complete**: ${linkReplacements.size} links processed`);
             return html;
             
         } catch (error) {
-            console.error('Markdown parsing error:', error);
+            console.error('❌ **Markdown parsing error**:', error);
             return `<p><strong>Error parsing markdown:</strong> ${error.message}</p><pre>${this.escapeHtml(content)}</pre>`;
         }
     }

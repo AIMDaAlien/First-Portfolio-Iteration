@@ -985,27 +985,29 @@ footer {
  animation: rippleEffect 0.6s var(--ease-emphasized);
 }
 
-/* --- ENHANCED PROJECT CARDS SYSTEM --- */
-/* Enhanced project grid for modern specifications */
+/* --- PERFORMANCE-OPTIMIZED PROJECT CARDS SYSTEM --- */
+/* Optimized project grid for better performance */
 .projects-grid {
  display: grid !important;
  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)) !important;
  gap: calc(var(--spacing-unit) * 3) !important;
 }
 
-/* Enhanced project card base structure */
+/* Performance-optimized project card base structure */
 .project-card {
  background-color: rgba(255, 255, 255, 0.03) !important;
  padding: calc(var(--spacing-unit) * 4) !important;
  border-radius: var(--border-radius-lg) !important;
  border: 1px solid rgba(167, 129, 210, 0.2) !important;
- backdrop-filter: blur(10px) !important;
+ /* Removed backdrop-filter for better performance */
  position: relative !important;
  overflow: hidden !important;
- transition: all var(--duration-medium) var(--ease-emphasized) !important;
+ /* Simplified transition - only transform and box-shadow for performance */
+ transition: transform var(--duration-medium) var(--ease-emphasized), 
+            box-shadow var(--duration-medium) var(--ease-emphasized) !important;
 }
 
-/* Enhanced project card hover with top accent */
+/* Simplified top accent bar for better performance */
 .project-card::before {
  content: "" !important;
  position: absolute !important;
@@ -1013,20 +1015,21 @@ footer {
  left: 0 !important;
  right: 0 !important;
  height: 4px !important;
- background: linear-gradient(90deg, var(--accent-color), transparent, var(--accent-color)) !important;
- transform: translateX(-100%) !important;
+ background: var(--accent-color) !important; /* Simplified solid color */
+ transform: scaleX(0) !important;
+ transform-origin: left !important;
  transition: transform var(--duration-medium) var(--ease-emphasized) !important;
  z-index: 1 !important;
 }
 
 .project-card:hover::before {
- transform: translateX(0) !important;
+ transform: scaleX(1) !important;
 }
 
+/* Optimized hover state - reduced effects for better performance */
 .project-card:hover {
- transform: translateY(-12px) scale(1.02) !important;
- background-color: rgba(255, 255, 255, 0.08) !important;
- box-shadow: 0 20px 40px rgba(167, 129, 210, 0.3) !important;
+ transform: translateY(-8px) !important; /* Reduced movement */
+ box-shadow: 0 12px 24px rgba(167, 129, 210, 0.25) !important; /* Simplified shadow */
  border-color: rgba(167, 129, 210, 0.4) !important;
 }
 
@@ -1042,7 +1045,7 @@ footer {
  width: 48px;
  height: 48px;
  border-radius: 12px;
- background: linear-gradient(135deg, var(--accent-color), rgba(167, 129, 210, 0.8));
+ background: var(--accent-color); /* Simplified solid background */
  display: flex;
  align-items: center;
  justify-content: center;
@@ -1051,8 +1054,9 @@ footer {
  transition: transform var(--duration-short) var(--ease-emphasized);
 }
 
+/* Simplified hover effect for better performance */
 .project-card:hover .project-icon {
- transform: rotate(5deg) scale(1.1);
+ transform: scale(1.05); /* Reduced animation complexity */
 }
 
 .project-info {
@@ -1140,15 +1144,16 @@ footer {
  font-size: 0.85rem;
  font-weight: 500;
  border: 1px solid rgba(167, 129, 210, 0.3);
- transition: all var(--duration-short) var(--ease-emphasized);
- backdrop-filter: blur(5px);
+ /* Simplified transition for performance */
+ transition: background-color var(--duration-short) var(--ease-emphasized);
+ /* Removed backdrop-filter for better performance */
 }
 
+/* Simplified hover effect */
 .tech-tag:hover {
  background: rgba(167, 129, 210, 0.25);
  border-color: rgba(167, 129, 210, 0.5);
- transform: translateY(-2px);
- box-shadow: 0 4px 8px rgba(167, 129, 210, 0.2);
+ /* Removed transform and box-shadow for better performance */
 }
 
 /* Project achievements section */
@@ -1215,7 +1220,11 @@ footer {
  position: relative;
 }
 
-.complexity-fill::after {
+/* Removed shimmer animation for better performance */
+/* .complexity-fill::after and @keyframes shimmer removed */
+
+/* Optional: Add shimmer only on hover to reduce constant animation load */
+.project-card:hover .complexity-fill::after {
  content: "";
  position: absolute;
  top: 0;
@@ -1223,7 +1232,7 @@ footer {
  right: 0;
  bottom: 0;
  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
- animation: shimmer 2s ease-in-out infinite;
+ animation: shimmer 1s ease-in-out;
 }
 
 @keyframes shimmer {
@@ -1264,16 +1273,18 @@ footer {
  text-decoration: none;
  font-size: 0.9rem;
  font-weight: 500;
- transition: all var(--duration-short) var(--ease-emphasized);
- backdrop-filter: blur(5px);
+ /* Simplified transitions for better performance */
+ transition: background-color var(--duration-short) var(--ease-emphasized),
+            color var(--duration-short) var(--ease-emphasized);
+ /* Removed backdrop-filter for better performance */
 }
 
+/* Simplified hover state */
 .project-link:hover {
  background: var(--accent-color);
  color: var(--bg-dark);
- transform: translateY(-2px);
- box-shadow: 0 4px 12px rgba(167, 129, 210, 0.4);
  border-color: var(--accent-color);
+ /* Removed transform and box-shadow for better performance */
 }
 
 .project-link.live-demo::before {
