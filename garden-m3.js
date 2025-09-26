@@ -251,54 +251,72 @@ class ObsidianGarden {
         }
         
         try {
+            console.log('🔍 **DEBUG**: Starting BULLETPROOF wiki link processing...');
+            
+            // Store original content for reference
+            const originalContent = content;
+            
             // Remove YAML frontmatter
             content = content.replace(/^---\n[\s\S]*?\n---\n/m, '');
             
-            console.log('🔍 **DEBUG**: Starting wiki link processing...');
-            
-            // DIRECT APPROACH: Simple placeholder system with guaranteed unique markers
-            const linkReplacements = new Map();
+            // BULLETPROOF APPROACH: Store wiki links, then process markdown normally
+            // Extract all wiki links BEFORE any markdown processing
+            const wikiLinkDatabase = [];
             let linkIndex = 0;
             
-            // Process [[link|text]] format first
-            content = content.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, (match, link, text) => {
-                const linkTrimmed = link.trim();
-                const textTrimmed = text.trim();
-                const placeholder = `__WIKILINK_${linkIndex}__`;
+            // Phase 1: Catalog all wiki links for post-processing
+            const wikiLinkPattern1 = /\[\[([^\]|]+)\|([^\]]+)\]\]/g;
+            const wikiLinkPattern2 = /\[\[([^\]]+)\]\]/g;
+            
+            let match;
+            
+            // Find [[link|text]] format
+            while ((match = wikiLinkPattern1.exec(content)) !== null) {
+                const linkTrimmed = match[1].trim();
+                const textTrimmed = match[2].trim();
                 
-                linkReplacements.set(placeholder, {
-                    html: `<a href="javascript:void(0)" class="note-link" data-link="${this.escapeHtml(linkTrimmed)}">${this.escapeHtml(textTrimmed)}</a>`,
-                    original: match
+                wikiLinkDatabase.push({
+                    fullMatch: match[0],
+                    link: linkTrimmed,
+                    text: textTrimmed,
+                    html: `<a href="javascript:void(0)" class="note-link" data-link="${this.escapeHtml(linkTrimmed)}">${this.escapeHtml(textTrimmed)}</a>`
                 });
                 
-                linkIndex++;
-                console.log(`🔗 Processed link with text: ${match} -> ${placeholder}`);
-                return placeholder;
-            });
+                console.log(`🔗 Cataloged link with text: [[${linkTrimmed}|${textTrimmed}]]`);
+            }
             
-            // Process [[link]] format
-            content = content.replace(/\[\[([^\]]+)\]\]/g, (match, link) => {
-                const linkTrimmed = link.trim();
-                const placeholder = `__WIKILINK_${linkIndex}__`;
-                
-                linkReplacements.set(placeholder, {
-                    html: `<a href="javascript:void(0)" class="note-link" data-link="${this.escapeHtml(linkTrimmed)}">${this.escapeHtml(linkTrimmed)}</a>`,
-                    original: match
-                });
-                
-                linkIndex++;
-                console.log(`🔗 Processed simple link: ${match} -> ${placeholder}`);
-                return placeholder;
-            });
+            // Reset regex for [[link]] format (avoid conflicts with previous regex)
+            const contentForSimpleLinks = content.replace(wikiLinkPattern1, ''); // Remove already processed links
+            const simplePattern = /\[\[([^\]]+)\]\]/g;
             
-            console.log(`📊 Found ${linkReplacements.size} wiki links to process`);
+            while ((match = simplePattern.exec(contentForSimpleLinks)) !== null) {
+                const linkTrimmed = match[1].trim();
+                
+                // Skip if this was already processed as [[link|text]] format
+                const alreadyProcessed = wikiLinkDatabase.some(item => 
+                    item.fullMatch.includes(linkTrimmed)
+                );
+                
+                if (!alreadyProcessed) {
+                    wikiLinkDatabase.push({
+                        fullMatch: match[0],
+                        link: linkTrimmed,
+                        text: linkTrimmed,
+                        html: `<a href="javascript:void(0)" class="note-link" data-link="${this.escapeHtml(linkTrimmed)}">${this.escapeHtml(linkTrimmed)}</a>`
+                    });
+                    
+                    console.log(`🔗 Cataloged simple link: [[${linkTrimmed}]]`);
+                }
+            }
+            
+            console.log(`📊 Wiki link database: ${wikiLinkDatabase.length} links cataloged`);
             
             // Convert Obsidian callouts to blockquotes
             content = content.replace(/^> \[!(\w+)\]\s*(.*)$/gm, (match, type, title) => {
                 return `> **${type.toUpperCase()}${title ? ': ' + title : ''}**`;
             });
             
-            // Configure marked.js with minimal interference
+            // Configure marked.js with standard settings
             const originalSanitize = marked.defaults.sanitize;
             marked.setOptions({ 
                 sanitize: false,
@@ -308,7 +326,7 @@ class ObsidianGarden {
                 mangle: false
             });
             
-            // Parse with marked.js
+            // Process with marked.js - wiki links will remain as-is for now
             let html = marked.parse(content);
             
             // Restore original sanitize setting
@@ -317,29 +335,43 @@ class ObsidianGarden {
             console.log('📝 **DEBUG**: Content after marked.js processing');
             console.log('Sample:', html.substring(0, 300));
             
-            // DIRECT STRING REPLACEMENT - No regex complications
-            linkReplacements.forEach((replacement, placeholder) => {
-                const beforeCount = (html.match(new RegExp(placeholder, 'g')) || []).length;
-                html = html.split(placeholder).join(replacement.html);
-                const afterCount = (html.match(new RegExp(placeholder, 'g')) || []).length;
+            // PHASE 2: POST-PROCESSING - Replace wiki links in final HTML
+            console.log('🔄 **POST-PROCESSING**: Replacing wiki links in final HTML...');
+            
+            // Sort by length (longest first) to avoid partial replacements
+            wikiLinkDatabase.sort((a, b) => b.fullMatch.length - a.fullMatch.length);
+            
+            let replacementCount = 0;
+            wikiLinkDatabase.forEach((wikiLink, index) => {
+                const beforeCount = (html.split(wikiLink.fullMatch).length - 1);
                 
-                console.log(`🔄 Replaced "${placeholder}": ${beforeCount} -> ${afterCount} remaining`);
+                if (beforeCount > 0) {
+                    // Use split and join for guaranteed replacement
+                    html = html.split(wikiLink.fullMatch).join(wikiLink.html);
+                    replacementCount++;
+                    
+                    const afterCount = (html.split(wikiLink.fullMatch).length - 1);
+                    console.log(`🔄 Replaced "${wikiLink.fullMatch}": ${beforeCount} → ${afterCount} remaining`);
+                } else {
+                    console.log(`⚠️ Wiki link not found in HTML: "${wikiLink.fullMatch}"`);
+                }
             });
             
-            // Process Obsidian tags after link processing
+            // Process Obsidian tags after all other processing
             html = html.replace(/(^|\s|>)(#[a-zA-Z][a-zA-Z0-9_-]*)/g, (match, prefix, tag) => {
                 return `${prefix}<span class="note-tag">${tag}</span>`;
             });
             
-            // Final verification
-            const remainingPlaceholders = html.match(/__WIKILINK_\d+__/g) || [];
-            if (remainingPlaceholders.length > 0) {
-                console.warn(`⚠️ ${remainingPlaceholders.length} placeholders still remain:`, remainingPlaceholders);
+            // FINAL VERIFICATION
+            const remainingWikiLinks = html.match(/\[\[[^\]]+\]\]/g) || [];
+            
+            if (remainingWikiLinks.length > 0) {
+                console.warn(`⚠️ ${remainingWikiLinks.length} wiki links still remain:`, remainingWikiLinks);
             } else {
-                console.log('✅ **SUCCESS**: All wiki link placeholders replaced successfully');
+                console.log('✅ **SUCCESS**: All wiki links processed successfully');
             }
             
-            console.log(`✓ **wiki link processing complete**: ${linkReplacements.size} links processed`);
+            console.log(`✓ **BULLETPROOF processing complete**: ${replacementCount}/${wikiLinkDatabase.length} wiki links replaced`);
             return html;
             
         } catch (error) {
