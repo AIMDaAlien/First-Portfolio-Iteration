@@ -1213,7 +1213,7 @@ class CornerGraphWidget {
     }
     
     createNodeDrag(simulation) {
-        // RESEARCH-BASED DRAG IMPLEMENTATION - Resolves event propagation conflicts
+        // OBSIDIAN-STYLE DRAG IMPLEMENTATION - Persistent node positioning
         const self = this;
         
         function dragstarted(event, d) {
@@ -1251,11 +1251,12 @@ class CornerGraphWidget {
             d3.select(event.sourceEvent?.target || this)
                 .classed('dragging', false);
             
-            // Release node for physics simulation (recommended behavior)
-            d.fx = null;
-            d.fy = null;
+            // OBSIDIAN-STYLE BEHAVIOR: Keep nodes fixed at dragged position
+            // DO NOT reset d.fx and d.fy to null - this maintains user positioning
+            // d.fx = null;  // REMOVED: Would return node to physics simulation
+            // d.fy = null;  // REMOVED: Would return node to physics simulation
             
-            console.log('🎯 **ドラッグ終了** (doraggu shūryō - drag end):', d.name);
+            console.log('🎯 **固定位置** (kotei ichi - fixed position):', d.name, 'at', d.fx, d.fy);
         }
         
         return d3.drag()
