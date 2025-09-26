@@ -708,6 +708,12 @@ body {
   opacity: 0.3;
 }
 
+.graph-node.dragging {
+  stroke-width: 3;
+  filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
+  cursor: grabbing !important;
+}
+
 .graph-link {
   stroke: var(--md-sys-color-outline);
   stroke-opacity: 0.6;

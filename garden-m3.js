@@ -254,25 +254,35 @@ class ObsidianGarden {
             // Remove YAML frontmatter
             content = content.replace(/^---\n[\s\S]*?\n---\n/m, '');
             
-            // Use unique markers that won't be affected by HTML escaping
-            const WIKI_LINK_MARKER = '___WIKI_LINK___';
+            // ESCAPE-RESISTANT WIKI LINK PROCESSING - Systematic approach
             const wikiLinkReplacements = [];
             let markerIndex = 0;
             
-            // Preprocess: Convert Obsidian wiki links to temporary markers
-            // Format: [[link|text]] -> marker
+            // Phase 1: Extract and replace [[link|text]] format with unique markers
             content = content.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, (match, link, text) => {
-                const marker = `${WIKI_LINK_MARKER}${markerIndex}${WIKI_LINK_MARKER}`;
-                wikiLinkReplacements.push({ marker, link: link.trim(), text: text.trim() });
+                const linkTrimmed = link.trim();
+                const textTrimmed = text.trim();
+                const marker = `___WIKI_LINK_MARKER_${markerIndex}___`;
+                
+                wikiLinkReplacements.push({
+                    marker: marker,
+                    html: `<a href="javascript:void(0)" class="note-link" data-link="${this.escapeHtml(linkTrimmed)}">${this.escapeHtml(textTrimmed)}</a>`
+                });
+                
                 markerIndex++;
                 return marker;
             });
             
-            // Format: [[link]] -> marker
+            // Phase 2: Extract and replace [[link]] format with unique markers
             content = content.replace(/\[\[([^\]]+)\]\]/g, (match, link) => {
                 const linkTrimmed = link.trim();
-                const marker = `${WIKI_LINK_MARKER}${markerIndex}${WIKI_LINK_MARKER}`;
-                wikiLinkReplacements.push({ marker, link: linkTrimmed, text: linkTrimmed });
+                const marker = `___WIKI_LINK_MARKER_${markerIndex}___`;
+                
+                wikiLinkReplacements.push({
+                    marker: marker,
+                    html: `<a href="javascript:void(0)" class="note-link" data-link="${this.escapeHtml(linkTrimmed)}">${this.escapeHtml(linkTrimmed)}</a>`
+                });
+                
                 markerIndex++;
                 return marker;
             });
@@ -282,20 +292,31 @@ class ObsidianGarden {
                 return `> **${type.toUpperCase()}${title ? ': ' + title : ''}**`;
             });
             
-            // Parse with marked.js
-            let html = marked.parse(content);
-            
-            // Post-process: Replace markers with actual clickable links
-            wikiLinkReplacements.forEach(({ marker, link, text }) => {
-                const linkHtml = `<a href="javascript:void(0)" class="note-link" data-link="${this.escapeHtml(link)}">${this.escapeHtml(text)}</a>`;
-                html = html.replace(new RegExp(this.escapeRegex(marker), 'g'), linkHtml);
+            // Configure marked.js with proper settings
+            const originalSanitize = marked.defaults.sanitize;
+            marked.setOptions({ 
+                sanitize: false,
+                breaks: true,
+                gfm: true
             });
             
-            // Process Obsidian tags after marked.js to avoid conflicts
+            // Parse with marked.js - markers will survive the process
+            let html = marked.parse(content);
+            
+            // Restore original sanitize setting
+            marked.setOptions({ sanitize: originalSanitize });
+            
+            // Phase 3: Replace markers with actual HTML links after markdown processing
+            wikiLinkReplacements.forEach(replacement => {
+                html = html.replace(new RegExp(this.escapeRegex(replacement.marker), 'g'), replacement.html);
+            });
+            
+            // Process Obsidian tags after all other processing
             html = html.replace(/(^|\s|>)(#[a-zA-Z][a-zA-Z0-9_-]*)/g, (match, prefix, tag) => {
                 return `${prefix}<span class="note-tag">${tag}</span>`;
             });
             
+            console.log(`✓ **wiki link processing**: ${wikiLinkReplacements.length} links processed with escape-resistant markers`);
             return html;
             
         } catch (error) {
@@ -665,6 +686,28 @@ class CornerGraphWidget {
             .attr('height', height)
             .attr('viewBox', `0 0 ${width} ${height}`);
         
+        // RESEARCH-COMPLIANT ZOOM BEHAVIOR - Prevents drag conflicts
+        const zoom = d3.zoom()
+            .scaleExtent([0.3, 3])
+            .filter(event => {
+                // Critical filter: Only allow zoom on wheel events, not mouse drags
+                return event.type === 'wheel';
+            })
+            .on('zoom', (event) => {
+                // Apply zoom transform to graph content
+                graphGroup.attr('transform', event.transform);
+                this.currentTransform = event.transform;
+            });
+        
+        // Apply zoom behavior to SVG
+        this.svg.call(zoom);
+        
+        // Store zoom behavior for external controls
+        this.zoomBehavior = zoom;
+        
+        // Create main graph group for zoom/pan transforms
+        const graphGroup = this.svg.append('g').attr('class', 'graph-group');
+        
         const visibleNodeIds = this.getVisibleNodes();
         const visibleNodes = this.graphData.nodes.filter(n => visibleNodeIds.includes(n.id));
         const visibleLinks = this.graphData.links.filter(l => {
@@ -684,16 +727,16 @@ class CornerGraphWidget {
             .force('x', d3.forceX(width / 2).strength(0.1))
             .force('y', d3.forceY(height / 2).strength(0.1));
         
-        // Create links
-        const link = this.svg.append('g')
+        // Create links in graph group
+        const link = graphGroup.append('g')
             .attr('class', 'links')
             .selectAll('line')
             .data(visibleLinks)
             .enter().append('line')
             .attr('class', 'graph-link');
         
-        // Create nodes with proper event handling
-        const node = this.svg.append('g')
+        // Create nodes with corrected event handling - SYSTEMATIC FIX
+        const node = graphGroup.append('g')
             .attr('class', 'nodes')
             .selectAll('circle')
             .data(visibleNodes)
@@ -702,25 +745,21 @@ class CornerGraphWidget {
             .attr('r', d => d.type === 'folder' ? 14 : 10)
             .call(this.createNodeDrag(this.simulation))
             .on('click', (event, d) => {
-                // Prevent event bubbling to widget
-                event.stopPropagation();
-                if (event.detail === 1) {
-                    // Single click: expand/collapse
-                    setTimeout(() => {
-                        if (!event.defaultPrevented) {
-                            this.expandNode(d.id);
-                        }
-                    }, 200);
-                }
-            })
-            .on('dblclick', (event, d) => {
-                event.preventDefault();
-                event.stopPropagation();
-                // Double click: navigate to note (only for notes, not folders)
-                if (d.type === 'note') {
+                // CRITICAL FIX: Check defaultPrevented to distinguish drag from click
+                if (event.defaultPrevented) return;
+                
+                // Single click: expand/collapse for folders, navigate for notes
+                if (d.type === 'folder') {
+                    this.expandNode(d.id);
+                } else if (d.type === 'note') {
                     console.log('🔗 **ナビゲート** (nabigēto - navigate) to:', d.id);
                     this.garden.loadNote(d.id);
                 }
+            })
+            .on('dblclick', (event, d) => {
+                // Double click: always expand regardless of type
+                event.preventDefault();
+                this.expandNode(d.id);
             })
             .on('mouseover', (event, d) => {
                 this.showTooltip(event, d);
@@ -734,7 +773,7 @@ class CornerGraphWidget {
             });
         
         // Create labels for important nodes
-        const label = this.svg.append('g')
+        const label = graphGroup.append('g')
             .attr('class', 'labels')
             .selectAll('text')
             .data(visibleNodes.filter(d => d.connections > 2 || d.type === 'folder'))
@@ -742,7 +781,7 @@ class CornerGraphWidget {
             .attr('class', 'node-label visible')
             .text(d => d.name.length > 15 ? d.name.substring(0, 15) + '...' : d.name)
             .attr('dy', d => (d.type === 'folder' ? 18 : 14) + 4)
-            .style('pointer-events', 'none'); // Prevent label interference
+            .style('pointer-events', 'none');
         
         // Constrain nodes to container bounds
         const constrainToBounds = (node) => {
@@ -953,6 +992,17 @@ class CornerGraphWidget {
     }
     
     setupEventListeners() {
+        // Zoom control buttons
+        document.getElementById('zoomInBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.zoomIn();
+        });
+        
+        document.getElementById('zoomOutBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.zoomOut();
+        });
+        
         document.getElementById('cornerExpandBtn').addEventListener('click', (e) => {
             e.stopPropagation();
             this.setMode('expanded');
@@ -962,6 +1012,26 @@ class CornerGraphWidget {
             e.stopPropagation();
             this.setMode('mini');
         });
+    }
+    
+    zoomIn() {
+        if (this.zoomBehavior && this.svg) {
+            const currentTransform = this.currentTransform || d3.zoomIdentity;
+            const newScale = Math.min(currentTransform.k * 1.5, 3);
+            const transition = this.svg.transition().duration(300);
+            this.svg.call(this.zoomBehavior.scaleTo, newScale);
+            console.log('🔍 **ズームイン** (zūmu in - zoom in):', newScale);
+        }
+    }
+    
+    zoomOut() {
+        if (this.zoomBehavior && this.svg) {
+            const currentTransform = this.currentTransform || d3.zoomIdentity;
+            const newScale = Math.max(currentTransform.k * 0.75, 0.3);
+            const transition = this.svg.transition().duration(300);
+            this.svg.call(this.zoomBehavior.scaleTo, newScale);
+            console.log('🔍 **ズームアウト** (zūmu auto - zoom out):', newScale);
+        }
     }
     
     onNoteChanged(notePath) {
@@ -976,30 +1046,53 @@ class CornerGraphWidget {
     }
     
     createNodeDrag(simulation) {
-        // Separate node drag handler to prevent conflict with widget drag
+        // RESEARCH-BASED DRAG IMPLEMENTATION - Resolves event propagation conflicts
+        const self = this;
+        
         function dragstarted(event, d) {
-            // Stop event propagation to prevent widget dragging
-            event.stopPropagation();
+            // CRITICAL: Use sourceEvent.stopPropagation() to prevent zoom conflict
+            if (event.sourceEvent) event.sourceEvent.stopPropagation();
+            
+            // Set defaultPrevented to prevent click handlers from firing
+            if (event.sourceEvent) event.sourceEvent.defaultPrevented = true;
+            
+            // Restart simulation with minimal disruption
             if (!event.active) simulation.alphaTarget(0.3).restart();
+            
+            // Fix node position for dragging
             d.fx = d.x;
             d.fy = d.y;
+            
+            // Visual feedback for dragging state
+            d3.select(event.sourceEvent?.target || this)
+                .classed('dragging', true);
+            
+            console.log('🎯 **ドラッグ開始** (doraggu kaishi - drag start):', d.name);
         }
         
         function dragged(event, d) {
-            event.stopPropagation();
+            // Direct coordinate assignment - most reliable approach
             d.fx = event.x;
             d.fy = event.y;
         }
         
         function dragended(event, d) {
-            event.stopPropagation();
+            // Clean shutdown of drag interaction
             if (!event.active) simulation.alphaTarget(0);
-            // Keep node fixed at dragged position
-            d.fx = event.x;
-            d.fy = event.y;
+            
+            // Remove dragging visual state
+            d3.select(event.sourceEvent?.target || this)
+                .classed('dragging', false);
+            
+            // Release node for physics simulation (recommended behavior)
+            d.fx = null;
+            d.fy = null;
+            
+            console.log('🎯 **ドラッグ終了** (doraggu shūryō - drag end):', d.name);
         }
         
         return d3.drag()
+            .filter(event => event.button === 0) // Left mouse button only
             .on('start', dragstarted)
             .on('drag', dragged)
             .on('end', dragended);
