@@ -776,15 +776,33 @@ class CornerGraphWidget {
         
         console.log(`🎯 Rendering: ${visibleNodes.length} nodes, ${visibleLinks.length} links in ${width}x${height}`);
         
-        // Create D3 force simulation with dynamic collision radius
+        // DENSITY-BASED PHYSICS SYSTEM - Container size responsive gravity
+        const containerArea = width * height;
+        const nodeCount = visibleNodes.length;
+        const nodeDensity = nodeCount / (containerArea / 10000); // Nodes per 100x100 area
+        
+        // Calculate physics parameters based on container density
+        // Small containers = high gravity (like dense stellar environments)
+        // Large containers = lower gravity (like sparse space)
+        const gravityStrength = Math.max(0.05, Math.min(0.25, 0.8 / Math.sqrt(containerArea / 40000)));
+        const centerStrength = Math.max(0.02, Math.min(0.1, 0.4 / Math.sqrt(containerArea / 40000)));
+        const radialStrength = Math.max(0.01, Math.min(0.08, 0.3 / Math.sqrt(containerArea / 40000)));
+        
+        // Adaptive link distance and charge based on density
+        const linkDistance = Math.max(30, Math.min(80, 40 + (containerArea / 8000)));
+        const chargeStrength = Math.max(-600, Math.min(-200, -300 - (containerArea / 200)));
+        
+        console.log(`📊 **Physics Parameters**: gravity=${gravityStrength.toFixed(3)}, center=${centerStrength.toFixed(3)}, density=${nodeDensity.toFixed(2)}`);
+        
+        // DYNAMIC D3 FORCE SIMULATION - Physics parameters scale with container density
         this.simulation = d3.forceSimulation(visibleNodes)
-            .force('link', d3.forceLink(visibleLinks).id(d => d.id).distance(60)) // Increased distance for better separation
-            .force('charge', d3.forceManyBody().strength(-400)) // Stronger repulsion for better spacing
-            .force('center', d3.forceCenter(width / 2, height / 2).strength(0.15)) // Enhanced center force
-            .force('collision', d3.forceCollide().radius(d => this.calculateNodeRadius(d) + 2)) // Dynamic collision
-            .force('x', d3.forceX(width / 2).strength(0.2))
-            .force('y', d3.forceY(height / 2).strength(0.2))
-            .force('radial', d3.forceRadial(Math.min(width, height) * 0.35, width / 2, height / 2).strength(0.05)); // Radial containment
+            .force('link', d3.forceLink(visibleLinks).id(d => d.id).distance(linkDistance)) // Dynamic distance based on container size
+            .force('charge', d3.forceManyBody().strength(chargeStrength)) // Dynamic charge based on density
+            .force('center', d3.forceCenter(width / 2, height / 2).strength(centerStrength)) // Dynamic center force
+            .force('collision', d3.forceCollide().radius(d => (d.type === 'folder' ? 20 : 16))) // Static collision for consistency
+            .force('x', d3.forceX(width / 2).strength(gravityStrength)) // Dynamic X gravity
+            .force('y', d3.forceY(height / 2).strength(gravityStrength)) // Dynamic Y gravity
+            .force('radial', d3.forceRadial(Math.min(width, height) * 0.4, width / 2, height / 2).strength(radialStrength)); // Dynamic radial containment
         
         // Create links in graph group
         const link = graphGroup.append('g')
@@ -825,10 +843,10 @@ class CornerGraphWidget {
                 this.highlightConnections(d);
                 this.hoveredNode = d.id;
                 
-                // HOVER SCALING: Enhance node size on hover
+                // HOVER SCALING: Enhance node size on hover with shorter duration
                 d3.select(event.target)
                     .transition()
-                    .duration(200)
+                    .duration(150) // Reduced from 200 for snappier response
                     .attr('r', this.calculateNodeRadius(d, true)); // Pass hover state
             })
             .on('mouseout', (event, d) => {
@@ -836,10 +854,10 @@ class CornerGraphWidget {
                 this.clearHighlights();
                 this.hoveredNode = null;
                 
-                // HOVER SCALING: Return to normal size
+                // HOVER SCALING: Return to normal size with shorter duration
                 d3.select(event.target)
                     .transition()
-                    .duration(200)
+                    .duration(150) // Reduced from 200 for snappier response
                     .attr('r', this.calculateNodeRadius(d, false));
             });
         
@@ -974,7 +992,7 @@ class CornerGraphWidget {
         if (this.nodeSelection) {
             this.nodeSelection
                 .transition()
-                .duration(150)
+                .duration(100) // Reduced from 150 for snappier response
                 .attr('r', d => {
                     // Check if this node is currently hovered
                     const isHovered = d.id === this.hoveredNode;
@@ -986,7 +1004,7 @@ class CornerGraphWidget {
         if (this.labelSelection) {
             this.labelSelection
                 .transition()
-                .duration(150)
+                .duration(100) // Reduced from 150 for snappier response
                 .style('font-size', this.calculateLabelSize() + 'px')
                 .attr('dy', d => this.calculateNodeRadius(d) + 12);
         }

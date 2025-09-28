@@ -709,12 +709,12 @@ body {
   background: rgba(255, 255, 255, 0.45);
 }
 
-/* D3 Graph Styles */
+/* D3 Graph Styles - Enhanced Subtlety */
 .graph-node {
   cursor: pointer;
   stroke: #fff;
-  stroke-width: 2;
-  transition: all 0.3s;
+  stroke-width: 1; /* Reduced from 2 for thinner, more elegant appearance */
+  transition: all 0.2s; /* Shortened from 0.3s for snappier response */
 }
 
 .graph-node.folder {
@@ -726,7 +726,7 @@ body {
 }
 
 .graph-node.hovered {
-  stroke-width: 4;
+  stroke-width: 2; /* Reduced from 4 for subtlety */
   filter: brightness(1.2);
 }
 
@@ -739,23 +739,23 @@ body {
 }
 
 .graph-node.dragging {
-  stroke-width: 3;
+  stroke-width: 2; /* Reduced from 3 for consistency */
   filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
   cursor: grabbing !important;
 }
 
 .graph-link {
   stroke: var(--md-sys-color-outline);
-  stroke-opacity: 0.6;
-  stroke-width: 1.5;
+  stroke-opacity: 0.3; /* Reduced from 0.6 for more subtle connections */
+  stroke-width: 1; /* Reduced from 1.5 for subtlety */
   fill: none;
-  transition: all 0.3s;
+  transition: all 0.2s; /* Shortened for snappier response */
 }
 
 .graph-link.highlighted {
   stroke: var(--md-sys-color-primary);
-  stroke-width: 2.5;
-  stroke-opacity: 0.9;
+  stroke-width: 1.5; /* Reduced from 2.5 for subtlety */
+  stroke-opacity: 0.7; /* Reduced from 0.9 for balance */
 }
 
 .node-label {
