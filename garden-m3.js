@@ -778,12 +778,13 @@ class CornerGraphWidget {
         
         // Create D3 force simulation with dynamic collision radius
         this.simulation = d3.forceSimulation(visibleNodes)
-            .force('link', d3.forceLink(visibleLinks).id(d => d.id).distance(40)) // Reduced distance for smaller nodes
-            .force('charge', d3.forceManyBody().strength(-200)) // Reduced charge for smaller nodes
-            .force('center', d3.forceCenter(width / 2, height / 2))
+            .force('link', d3.forceLink(visibleLinks).id(d => d.id).distance(60)) // Increased distance for better separation
+            .force('charge', d3.forceManyBody().strength(-400)) // Stronger repulsion for better spacing
+            .force('center', d3.forceCenter(width / 2, height / 2).strength(0.15)) // Enhanced center force
             .force('collision', d3.forceCollide().radius(d => this.calculateNodeRadius(d) + 2)) // Dynamic collision
-            .force('x', d3.forceX(width / 2).strength(0.1))
-            .force('y', d3.forceY(height / 2).strength(0.1));
+            .force('x', d3.forceX(width / 2).strength(0.2))
+            .force('y', d3.forceY(height / 2).strength(0.2))
+            .force('radial', d3.forceRadial(Math.min(width, height) * 0.35, width / 2, height / 2).strength(0.05)); // Radial containment
         
         // Create links in graph group
         const link = graphGroup.append('g')
@@ -845,17 +846,27 @@ class CornerGraphWidget {
         // Store node reference for dynamic updates
         this.nodeSelection = node;
         
-        // Create labels for important nodes with dynamic positioning
+        // Enhanced labels with improved readability and collision avoidance
         const label = graphGroup.append('g')
             .attr('class', 'labels')
             .selectAll('text')
-            .data(visibleNodes.filter(d => d.connections > 2 || d.type === 'folder'))
+            .data(visibleNodes.filter(d => d.connections > 1 || d.type === 'folder')) // Show more labels
             .enter().append('text')
             .attr('class', 'node-label visible')
-            .text(d => d.name.length > 15 ? d.name.substring(0, 15) + '...' : d.name)
-            .attr('dy', d => this.calculateNodeRadius(d) + 8) // Dynamic label positioning
+            .text(d => {
+                // Smart text truncation based on node importance
+                const maxLength = d.type === 'folder' ? 20 : 15;
+                return d.name.length > maxLength ? d.name.substring(0, maxLength) + '...' : d.name;
+            })
+            .attr('dy', d => this.calculateNodeRadius(d) + 12) // Increased spacing from node
             .style('pointer-events', 'none')
-            .style('font-size', () => this.calculateLabelSize() + 'px'); // Dynamic font size
+            .style('font-size', () => this.calculateLabelSize() + 'px')
+            .style('font-weight', d => d.type === 'folder' ? '600' : '500') // Bolder folder labels
+            .style('text-shadow', '1px 1px 2px rgba(0,0,0,0.3), -1px -1px 2px rgba(255,255,255,0.1)') // Text outline for readability
+            .each(function(d) {
+                // Store initial position for collision detection
+                d.labelWidth = this.getBBox ? this.getBBox().width : d.name.length * 6;
+            });
         
         // Store label reference for dynamic updates
         this.labelSelection = label;
@@ -884,7 +895,7 @@ class CornerGraphWidget {
             
             label
                 .attr('x', d => d.x)
-                .attr('y', d => d.y + this.calculateNodeRadius(d) + 8);
+                .attr('y', d => d.y + this.calculateNodeRadius(d) + 12); // Consistent spacing
         });
         
         // Run simulation longer for proper settling
@@ -977,7 +988,7 @@ class CornerGraphWidget {
                 .transition()
                 .duration(150)
                 .style('font-size', this.calculateLabelSize() + 'px')
-                .attr('dy', d => this.calculateNodeRadius(d) + 8);
+                .attr('dy', d => this.calculateNodeRadius(d) + 12);
         }
         
         // Update collision force radius
