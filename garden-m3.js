@@ -889,28 +889,30 @@ class EnhancedCornerGraphWidget {
                 this.highlightConnections(d);
                 this.hoveredNode = d.id;
                 
-                // Enhanced hover scaling
+                // FIXED: Visual-only hover effect without collision update
                 d3.select(event.target)
                     .transition()
                     .duration(150)
-                    .attr('r', this.calculateNodeRadius(d, true));
+                    .attr('r', this.calculateNodeRadius(d, false) * 1.2)
+                    .attr('stroke-width', 2);
             })
             .on('mouseout', (event, d) => {
                 this.hideTooltip();
                 this.clearHighlights();
                 this.hoveredNode = null;
                 
-                // Return to normal size
+                // Return to normal size and stroke
                 d3.select(event.target)
                     .transition()
                     .duration(150)
-                    .attr('r', this.calculateNodeRadius(d, false));
+                    .attr('r', this.calculateNodeRadius(d, false))
+                    .attr('stroke-width', 1);
             });
         
         // Store node reference for dynamic updates
         this.nodeSelection = node;
         
-        // Enhanced labels with improved collision avoidance
+        // ENHANCED: Labels with boundary-aware positioning
         const label = this.graphGroup.append('g')
             .attr('class', 'labels')
             .selectAll('text')
@@ -927,7 +929,14 @@ class EnhancedCornerGraphWidget {
             .style('font-weight', d => d.type === 'folder' ? '600' : '500')
             .style('text-shadow', '1px 1px 2px rgba(0,0,0,0.3), -1px -1px 2px rgba(255,255,255,0.1)')
             .style('fill', 'var(--md-sys-color-on-surface-variant)')
-            .style('text-anchor', 'middle')
+            .style('text-anchor', d => {
+                // Smart anchor based on position to prevent cutoff
+                if (!d.x) return 'middle';
+                const margin = 50;
+                if (d.x < margin) return 'start';
+                if (d.x > width - margin) return 'end';
+                return 'middle';
+            })
             .each(function(d) {
                 d.labelWidth = this.getBBox ? this.getBBox().width : d.name.length * 6;
             });
@@ -959,22 +968,45 @@ class EnhancedCornerGraphWidget {
             
             label
                 .attr('x', d => d.x)
-                .attr('y', d => d.y + this.calculateNodeRadius(d) + 12);
+                .attr('y', d => d.y + this.calculateNodeRadius(d) + 12)
+                .style('text-anchor', d => {
+                    // DYNAMIC: Update anchor based on node position
+                    const margin = 50;
+                    if (d.x < margin) return 'start';
+                    if (d.x > width - margin) return 'end';
+                    return 'middle';
+                });
         });
         
-        // Enhanced simulation runtime for proper convergence
+        // OPTIMIZED: Faster convergence with entrance animation
         this.simulation.alpha(1).restart();
         
-        // Longer settling time for complex graphs
+        // Add entrance animation with bounce effect
+        node.style('opacity', 0)
+            .style('transform', 'scale(0.3)')
+            .transition()
+            .duration(600)
+            .delay((d, i) => i * 20) // Staggered entrance
+            .ease(d3.easeBounceOut)
+            .style('opacity', 1)
+            .style('transform', 'scale(1)');
+        
+        label.style('opacity', 0)
+            .transition()
+            .duration(600)
+            .delay((d, i) => i * 20 + 200)
+            .style('opacity', 1);
+        
+        // Reduced settling time - stop after 2 seconds
         setTimeout(() => {
             if (this.simulation) {
                 this.simulation.stop();
-                console.log('✓ Enhanced graph simulation converged');
+                console.log('✓ Enhanced graph simulation converged (2s)');
             }
-        }, 5000);
+        }, 2000);
     }
     
-    // ENHANCED NODE RADIUS CALCULATION with zoom responsiveness
+    // FIXED: Node radius calculation without hover-induced movement
     calculateNodeRadius(node, isHovered = false) {
         const baseRadius = node.type === 'folder' ? 8 : 6;
         const zoomLevel = this.currentTransform ? this.currentTransform.k : 1;
@@ -986,12 +1018,12 @@ class EnhancedCornerGraphWidget {
         const windowArea = window.innerWidth * window.innerHeight;
         const sizeFactor = Math.sqrt(containerArea / windowArea);
         
-        // Enhanced zoom-responsive scaling
+        // Zoom-responsive scaling (hover effect handled separately in D3 transitions)
         const zoomFactor = 0.75 + (zoomLevel * 0.25);
         const containerFactor = 0.8 + (sizeFactor * 0.4);
-        const hoverFactor = isHovered ? 1.4 : 1.0;
+        // REMOVED: hoverFactor to prevent collision force updates on hover
         
-        const finalRadius = baseRadius * zoomFactor * containerFactor * hoverFactor;
+        const finalRadius = baseRadius * zoomFactor * containerFactor;
         return Math.max(3, Math.min(finalRadius, 20));
     }
     
@@ -1014,16 +1046,13 @@ class EnhancedCornerGraphWidget {
         return Math.max(8, Math.min(finalSize, 14));
     }
     
-    // ENHANCED NODE SIZE UPDATE SYSTEM
+    // FIXED: Node size updates without triggering simulation restarts
     updateNodeSizes() {
         if (this.nodeSelection) {
             this.nodeSelection
                 .transition()
                 .duration(100)
-                .attr('r', d => {
-                    const isHovered = d.id === this.hoveredNode;
-                    return this.calculateNodeRadius(d, isHovered);
-                });
+                .attr('r', d => this.calculateNodeRadius(d, false));
         }
         
         if (this.labelSelection) {
@@ -1034,12 +1063,8 @@ class EnhancedCornerGraphWidget {
                 .attr('dy', d => this.calculateNodeRadius(d) + 12);
         }
         
-        if (this.simulation) {
-            this.simulation
-                .force('collision', d3.forceCollide().radius(d => this.calculateNodeRadius(d) + 2))
-                .alpha(0.1)
-                .restart();
-        }
+        // REMOVED: Collision force update to prevent hover-induced movement
+        // Collision radii remain constant, only visual radii change
     }
     
     // ENHANCED NODE DRAG BEHAVIOR - SYSTEMATIC EVENT ISOLATION
