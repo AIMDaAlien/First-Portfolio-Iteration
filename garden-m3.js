@@ -43,7 +43,7 @@ class ObsidianGarden {
             await this.loadNote('🗺️ Knowledge Base - Main Index.md');
             
             // 🎯 Initialize ENHANCED corner graph widget after everything loads
-            console.log('🌸 Initializing **Enhanced グラフ** (gurafu - graph) widget...');
+            console.log('🌸 Initializing Enhanced Graph widget...');
             this.cornerGraph = new EnhancedCornerGraphWidget(this);
             
         } catch (error) {
@@ -230,7 +230,7 @@ class ObsidianGarden {
             this.highlightActiveNote(path);
             this.currentNote = path;
             
-            // **Enhanced update** (kōshin - update) corner graph if loaded
+            // Enhanced update corner graph if loaded
             if (this.cornerGraph) {
                 this.cornerGraph.onNoteChanged(path);
             }
@@ -585,7 +585,7 @@ class EnhancedCornerGraphWidget {
     }
     
     async initializeWidget() {
-        console.log('🌸 **ENHANCED 初期化** (shoki-ka - initialization) corner graph widget...');
+        console.log('🌸 ENHANCED initialization corner graph widget...');
         
         // Build graph data from vault
         await this.buildGraphFromVault();
@@ -876,7 +876,7 @@ class EnhancedCornerGraphWidget {
                 if (d.type === 'folder') {
                     this.expandNode(d.id);
                 } else if (d.type === 'note') {
-                    console.log('🔗 **Enhanced ナビゲート** (nabigēto - navigate) to:', d.id);
+                    console.log('🔗 Enhanced navigation to:', d.id);
                     this.garden.loadNote(d.id);
                 }
             })
@@ -1093,7 +1093,7 @@ class EnhancedCornerGraphWidget {
                 .classed('dragging', true)
                 .style('cursor', 'grabbing');
             
-            console.log('🎯 **Enhanced ドラッグ開始** (doraggu kaishi - drag start):', d.name);
+            console.log('🎯 Enhanced drag start:', d.name);
         }
         
         function dragged(event, d) {
@@ -1116,7 +1116,7 @@ class EnhancedCornerGraphWidget {
             
             // OBSIDIAN-STYLE: Keep nodes fixed at dragged position
             // Do NOT reset d.fx and d.fy - maintains user positioning
-            console.log('🎯 **Enhanced 固定位置** (kotei ichi - fixed position):', d.name, 'at', d.fx, d.fy);
+            console.log('🎯 Enhanced fixed position:', d.name, 'at', d.fx, d.fy);
         }
         
         return d3.drag()
@@ -1133,7 +1133,7 @@ class EnhancedCornerGraphWidget {
                 .duration(200)
                 .ease(d3.easeCubicOut)
                 .call(this.zoomBehavior.scaleBy, 1.5);
-            console.log('🔍 **Enhanced ズームイン** (zūmu in - zoom in)');
+            console.log('🔍 Enhanced zoom in');
         }
     }
     
@@ -1143,7 +1143,7 @@ class EnhancedCornerGraphWidget {
                 .duration(200)
                 .ease(d3.easeCubicOut)
                 .call(this.zoomBehavior.scaleBy, 1 / 1.5);
-            console.log('🔍 **Enhanced ズームアウト** (zūmu auto - zoom out)');
+            console.log('🔍 Enhanced zoom out');
         }
     }
     
@@ -1153,7 +1153,7 @@ class EnhancedCornerGraphWidget {
                 .duration(300)
                 .ease(d3.easeCubicOut)
                 .call(this.zoomBehavior.transform, d3.zoomIdentity);
-            console.log('🔍 **Enhanced リセット** (risetto - reset)');
+            console.log('🔍 Enhanced reset');
         }
     }
     
@@ -1161,10 +1161,10 @@ class EnhancedCornerGraphWidget {
     expandNode(nodeId) {
         if (this.expandedNodes.has(nodeId)) {
             this.expandedNodes.delete(nodeId);
-            console.log(`🔄 **Enhanced 折りたたみ** (oritata-mi - collapse): ${nodeId}`);
+            console.log(`🔄 Enhanced collapse: ${nodeId}`);
         } else {
             this.expandedNodes.add(nodeId);
-            console.log(`🔄 **Enhanced 展開** (tenkai - expand): ${nodeId}`);
+            console.log(`🔄 Enhanced expand: ${nodeId}`);
         }
         
         this.renderGraph();

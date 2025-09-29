@@ -189,4 +189,4 @@ Modify the typescale in `garden-m3.css`:
 
 ---
 
-Built with ❤️ and Material Design 3 | よろしくお願いします (Yoroshiku onegaishimasu)
+Built with ❤️ and Material Design 3
