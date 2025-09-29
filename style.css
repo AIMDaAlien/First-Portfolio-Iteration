@@ -1325,3 +1325,562 @@ footer {
   font-size: 0.8rem;
  }
 }
+/* POC 3: FULLY EXPRESSIVE MATERIAL DESIGN 3 ENHANCEMENTS */
+/* This file contains ONLY the new/modified styles for POC 3 */
+/* Include this AFTER style.css for enhanced sections */
+
+/* Performance fallback for reduced motion - CRITICAL */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    body::before {
+        animation: none !important;
+    }
+}
+
+/* === POC 3: ENHANCED ABOUT SECTION === */
+.stats-grid-enhanced {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: calc(var(--spacing-unit) * 3);
+}
+
+.stat-card-enhanced {
+    background: rgba(255, 255, 255, 0.04);
+    padding: calc(var(--spacing-unit) * 4) calc(var(--spacing-unit) * 3);
+    border-radius: var(--border-radius-lg);
+    text-align: center;
+    border: 1px solid rgba(167, 129, 210, 0.2);
+    transition: all var(--duration-medium) var(--ease-emphasized);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Top accent bar animation */
+.stat-card-enhanced::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent-color);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--duration-medium) var(--ease-emphasized);
+    z-index: 2;
+}
+
+.stat-card-enhanced:hover::before {
+    transform: scaleX(1);
+}
+
+/* Ripple effect background */
+.stat-card-enhanced::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(167, 129, 210, 0.15);
+    transform: translate(-50%, -50%);
+    transition: width var(--duration-long) var(--ease-emphasized),
+                height var(--duration-long) var(--ease-emphasized);
+    z-index: 0;
+}
+
+.stat-card-enhanced:hover::after {
+    width: 400px;
+    height: 400px;
+}
+
+.stat-card-enhanced:hover {
+    transform: translateY(-8px);
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(167, 129, 210, 0.4);
+    box-shadow: 0 12px 24px rgba(167, 129, 210, 0.2);
+}
+
+.stat-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto calc(var(--spacing-unit) * 2.5) auto;
+    background: linear-gradient(135deg, rgba(167, 129, 210, 0.3), rgba(167, 129, 210, 0.1));
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    transition: all var(--duration-medium) var(--ease-emphasized);
+    position: relative;
+    z-index: 1;
+}
+
+.stat-card-enhanced:hover .stat-icon {
+    transform: scale(1.15) rotate(-8deg);
+    background: linear-gradient(135deg, rgba(167, 129, 210, 0.5), rgba(167, 129, 210, 0.2));
+    box-shadow: 0 8px 16px rgba(167, 129, 210, 0.3);
+}
+
+.stat-card-enhanced h3 {
+    margin: 0 0 calc(var(--spacing-unit) * 1) 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    position: relative;
+    z-index: 1;
+}
+
+.stat-card-enhanced p {
+    margin: 0;
+    opacity: 0.85;
+    position: relative;
+    z-index: 1;
+    transition: opacity var(--duration-short);
+    line-height: 1.6;
+}
+
+.stat-card-enhanced:hover p {
+    opacity: 1;
+}
+
+/* === POC 3: ENHANCED SKILLS SECTION === */
+.skills-grid-enhanced {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: calc(var(--spacing-unit) * 3);
+}
+
+.skill-card-enhanced {
+    background: rgba(255, 255, 255, 0.04);
+    padding: calc(var(--spacing-unit) * 4);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid rgba(167, 129, 210, 0.2);
+    transition: all var(--duration-medium) var(--ease-emphasized);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Gradient border effect */
+.skill-card-enhanced::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    background: linear-gradient(135deg, var(--accent-color), transparent);
+    border-radius: var(--border-radius-lg);
+    opacity: 0;
+    z-index: -1;
+    transition: opacity var(--duration-medium) var(--ease-emphasized);
+}
+
+.skill-card-enhanced:hover::before {
+    opacity: 0.5;
+}
+
+.skill-card-enhanced:hover {
+    transform: translateY(-8px) rotate(-1deg);
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(167, 129, 210, 0.4);
+    box-shadow: 0 12px 24px rgba(167, 129, 210, 0.25);
+}
+
+.skill-header {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--spacing-unit) * 2);
+    margin-bottom: calc(var(--spacing-unit) * 2);
+}
+
+.skill-icon-large {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, rgba(167, 129, 210, 0.3), rgba(167, 129, 210, 0.1));
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+    transition: all var(--duration-medium) cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.skill-card-enhanced:hover .skill-icon-large {
+    transform: scale(1.15) rotate(8deg);
+    background: linear-gradient(135deg, rgba(167, 129, 210, 0.5), rgba(167, 129, 210, 0.2));
+    box-shadow: 0 6px 12px rgba(167, 129, 210, 0.3);
+}
+
+.skill-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    transition: color var(--duration-short) var(--ease-emphasized);
+}
+
+.skill-card-enhanced:hover .skill-header h3 {
+    color: var(--accent-color);
+}
+
+.skill-card-enhanced p {
+    margin: 0 0 calc(var(--spacing-unit) * 2) 0;
+    opacity: 0.85;
+    line-height: 1.6;
+    transition: opacity var(--duration-short);
+}
+
+.skill-card-enhanced:hover p {
+    opacity: 1;
+}
+
+.skill-progress {
+    background: rgba(220, 213, 228, 0.1);
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+}
+
+.skill-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-color), #d0bcff);
+    border-radius: 3px;
+    transition: width 0.8s var(--ease-emphasized) 0.2s;
+    position: relative;
+}
+
+/* Shimmer effect on hover only (performance optimization) */
+.skill-card-enhanced:hover .skill-progress-fill::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer 1.5s ease-in-out;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Performance fallback */
+@media (prefers-reduced-motion: reduce) {
+    .skill-card-enhanced:hover .skill-progress-fill::after {
+        animation: none;
+    }
+}
+
+/* === POC 3: ENHANCED EXPERIENCE SECTION === */
+.experience-grid-enhanced {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: calc(var(--spacing-unit) * 4);
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0;
+}
+
+.experience-card-enhanced {
+    background: rgba(255, 255, 255, 0.04);
+    padding: calc(var(--spacing-unit) * 4.5);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid rgba(167, 129, 210, 0.2);
+    transition: all var(--duration-medium) var(--ease-emphasized);
+    position: relative;
+    overflow: hidden;
+    margin-left: 0;
+    border-left-width: 1px;
+}
+
+/* Remove timeline styling for experience cards */
+.experience-grid-enhanced::before {
+    display: none;
+}
+
+.experience-card-enhanced::before {
+    display: none;
+}
+
+/* Animated gradient border */
+.experience-card-enhanced::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, var(--accent-color), transparent, var(--accent-color));
+    background-size: 400% 400%;
+    border-radius: var(--border-radius-lg);
+    opacity: 0;
+    z-index: -1;
+    transition: opacity var(--duration-medium) ease;
+}
+
+.experience-card-enhanced:hover::after {
+    opacity: 1;
+    animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Performance fallback */
+@media (prefers-reduced-motion: reduce) {
+    .experience-card-enhanced:hover::after {
+        animation: none;
+        background: linear-gradient(45deg, var(--accent-color), transparent);
+    }
+}
+
+.experience-card-enhanced:hover {
+    transform: translateY(-10px);
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 16px 32px rgba(167, 129, 210, 0.25);
+    border-color: rgba(167, 129, 210, 0.4);
+}
+
+.experience-header {
+    display: flex;
+    align-items: flex-start;
+    gap: calc(var(--spacing-unit) * 2.5);
+    margin-bottom: calc(var(--spacing-unit) * 2.5);
+}
+
+.experience-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--accent-color), #d0bcff);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    flex-shrink: 0;
+    transition: all var(--duration-medium) cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 4px 12px rgba(167, 129, 210, 0.3);
+}
+
+.experience-card-enhanced:hover .experience-icon {
+    transform: scale(1.1) rotate(-10deg);
+    box-shadow: 0 8px 20px rgba(167, 129, 210, 0.5);
+}
+
+.experience-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.experience-info h3 {
+    margin: 0 0 calc(var(--spacing-unit) * 0.5) 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+    transition: color var(--duration-short) var(--ease-emphasized);
+}
+
+.experience-card-enhanced:hover .experience-info h3 {
+    color: var(--accent-color);
+}
+
+.experience-company {
+    font-weight: 500;
+    opacity: 0.9;
+    margin: 0 0 calc(var(--spacing-unit) * 1) 0;
+    font-size: 1rem;
+}
+
+.experience-status {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--spacing-unit) * 1);
+    font-size: 0.9rem;
+    color: rgba(220, 213, 228, 0.7);
+    font-weight: 500;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    animation: statusPulse 2s ease-in-out infinite;
+}
+
+.status-dot-active {
+    background: #10b981;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
+
+.status-dot-past {
+    background: var(--accent-color);
+    box-shadow: 0 0 8px rgba(167, 129, 210, 0.6);
+}
+
+.status-dot-ongoing {
+    background: #3b82f6;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+}
+
+.status-dot-planning {
+    background: #f59e0b;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+}
+
+@keyframes statusPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+/* Performance fallback */
+@media (prefers-reduced-motion: reduce) {
+    .status-dot {
+        animation: none;
+    }
+}
+
+.experience-description {
+    margin: calc(var(--spacing-unit) * 2) 0 calc(var(--spacing-unit) * 2.5) 0;
+    line-height: 1.7;
+    opacity: 0.85;
+    transition: opacity var(--duration-short);
+    font-size: 1rem;
+}
+
+.experience-card-enhanced:hover .experience-description {
+    opacity: 1;
+}
+
+.experience-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--spacing-unit) * 1);
+    margin-bottom: calc(var(--spacing-unit) * 2.5);
+}
+
+.experience-tag {
+    background: rgba(167, 129, 210, 0.15);
+    color: rgba(220, 213, 228, 0.9);
+    padding: calc(var(--spacing-unit) * 0.75) calc(var(--spacing-unit) * 1.75);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid rgba(167, 129, 210, 0.3);
+    transition: all var(--duration-short) var(--ease-emphasized);
+}
+
+.experience-tag:hover {
+    background: rgba(167, 129, 210, 0.25);
+    border-color: rgba(167, 129, 210, 0.5);
+    transform: translateY(-2px);
+}
+
+.experience-achievements {
+    padding-top: calc(var(--spacing-unit) * 2.5);
+    border-top: 1px solid rgba(167, 129, 210, 0.2);
+}
+
+.experience-achievements h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 calc(var(--spacing-unit) * 1.5) 0;
+    color: rgba(220, 213, 228, 0.9);
+}
+
+.experience-achievements ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.experience-achievements li {
+    position: relative;
+    padding-left: calc(var(--spacing-unit) * 3);
+    margin-bottom: calc(var(--spacing-unit) * 1);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: rgba(220, 213, 228, 0.8);
+    transition: color var(--duration-short);
+}
+
+.experience-achievements li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: var(--accent-color);
+    font-weight: bold;
+    font-size: 1.1rem;
+    transition: transform var(--duration-short) var(--ease-emphasized);
+}
+
+.experience-card-enhanced:hover .experience-achievements li {
+    color: rgba(220, 213, 228, 0.95);
+}
+
+.experience-card-enhanced:hover .experience-achievements li::before {
+    transform: translateX(4px);
+}
+
+/* Special styling for startup card */
+.experience-card-startup {
+    border: 2px solid rgba(167, 129, 210, 0.4);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .stats-grid-enhanced,
+    .skills-grid-enhanced {
+        grid-template-columns: 1fr;
+    }
+    
+    .experience-grid-enhanced {
+        grid-template-columns: 1fr;
+        gap: calc(var(--spacing-unit) * 3);
+    }
+    
+    .experience-header {
+        gap: calc(var(--spacing-unit) * 2);
+    }
+    
+    .experience-icon {
+        width: 56px;
+        height: 56px;
+        font-size: 28px;
+    }
+    
+    .experience-card-enhanced {
+        padding: calc(var(--spacing-unit) * 3);
+    }
+    
+    .stat-card-enhanced {
+        padding: calc(var(--spacing-unit) * 3);
+    }
+    
+    .skill-card-enhanced {
+        padding: calc(var(--spacing-unit) * 3);
+    }
+}
+
+/* Maintain animation classes compatibility */
+.stat-card-enhanced.animate-on-scroll,
+.skill-card-enhanced.animate-on-scroll,
+.experience-card-enhanced.animate-on-scroll {
+    opacity: 0;
+    transform: translateY(50px) scale(0.8);
+}
+
+.stat-card-enhanced.animate-on-scroll.is-visible,
+.skill-card-enhanced.animate-on-scroll.is-visible,
+.experience-card-enhanced.animate-on-scroll.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition: all var(--duration-long) var(--ease-emphasized-decelerate);
+}
