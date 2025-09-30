@@ -156,7 +156,7 @@ body::before {
  color: var(--fg-dark);
  text-align: center;
  opacity: 0;
- margin-top: 2rem;
+ margin-top: 3.5rem;
  margin-right: 8vw; /* Right margin to prevent flush positioning */
  animation: fadeInPulse 2s ease-in-out 1.5s forwards;
 }
@@ -1401,7 +1401,7 @@ footer {
     width: 0;
     height: 0;
     border-radius: 50%;
-    background: rgba(167, 129, 210, 0.08);
+    background: rgba(167, 129, 210, 0.03);
     transform: translate(-50%, -50%);
     transition: width var(--duration-long) var(--ease-emphasized),
                 height var(--duration-long) var(--ease-emphasized);
