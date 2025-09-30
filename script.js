@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loader = document.getElementById('loader');
     const startupIntro = document.getElementById('startup-intro');
     const startupQuote = document.getElementById('startup-quote');
+    const startupQuoter = document.getElementById('startup-quoter');
     const startupSound = document.getElementById('startup-sound');
     const mainContent = document.getElementById('main-content');
     const heroTitle = document.querySelector('.hero-title');
@@ -85,11 +86,18 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             startupQuote.style.opacity = '1';
             startupQuote.style.transform = 'scale(1.6)';
+            if (startupQuoter) {
+                startupQuoter.style.opacity = '1';
+                startupQuoter.style.transform = 'translateY(0)';
+            }
         }, 100);
 
         setTimeout(() => {
             startupQuote.style.transform = 'scale(0.6)';
             startupQuote.style.opacity = '0';
+            if (startupQuoter) {
+                startupQuoter.style.opacity = '0';
+            }
         }, 5000);  // Extended from 2500ms
 
         setTimeout(() => {
