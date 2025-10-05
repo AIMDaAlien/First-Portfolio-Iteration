@@ -1392,7 +1392,7 @@ footer {
     transform: scaleX(1);
 }
 
-/* Ripple effect background */
+/* Ripple effect background - removed for cleaner hover */
 .stat-card-enhanced::after {
     content: '';
     position: absolute;
@@ -1401,16 +1401,17 @@ footer {
     width: 0;
     height: 0;
     border-radius: 50%;
-    background: rgba(167, 129, 210, 0.03);
+    background: transparent;
     transform: translate(-50%, -50%);
     transition: width var(--duration-long) var(--ease-emphasized),
                 height var(--duration-long) var(--ease-emphasized);
     z-index: 0;
+    pointer-events: none;
 }
 
 .stat-card-enhanced:hover::after {
-    width: 400px;
-    height: 400px;
+    width: 0;
+    height: 0;
 }
 
 .stat-card-enhanced:hover {
