@@ -486,24 +486,25 @@ body::before {
  overflow: hidden;
 }
 
-/* Ripple effect for cards */
+/* Ripple effect for cards - DISABLED for enhanced cards */
 .stat-card::before {
- content: "";
- position: absolute;
- top: 50%;
- left: 50%;
- width: 0;
- height: 0;
- border-radius: 50%;
- background: rgba(167, 129, 210, 0.2);
- transform: translate(-50%, -50%);
- transition: width var(--duration-long) var(--ease-emphasized),
-  height var(--duration-long) var(--ease-emphasized);
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: transparent; /* Changed from rgba(167, 129, 210, 0.2) */
+  transform: translate(-50%, -50%);
+  transition: width var(--duration-long) var(--ease-emphasized),
+   height var(--duration-long) var(--ease-emphasized);
+  pointer-events: none;
 }
 
 .stat-card:hover::before {
- width: 400px;
- height: 400px;
+  width: 0; /* Changed from 400px */
+  height: 0; /* Changed from 400px */
 }
 
 .stat-card:hover {
