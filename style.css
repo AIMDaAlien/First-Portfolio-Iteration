@@ -156,9 +156,11 @@ body::before {
  color: var(--fg-dark);
  text-align: center;
  opacity: 0;
- margin-top: 3.5rem;
- margin-right: 8vw; /* Right margin to prevent flush positioning */
- animation: fadeInPulse 2s ease-in-out 1.5s forwards;
+ margin-top: 4.5rem; /* Increased from 3.5rem for better spacing */
+ margin-left: auto;
+ margin-right: auto;
+ max-width: 80%; /* Constrains width for better centering */
+ animation: fadeInPulse 2s ease-in-out 0.5s forwards; /* Changed delay from 1.5s to 0.5s */
 }
 
 @keyframes fadeInPulse {
