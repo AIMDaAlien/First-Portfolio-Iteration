@@ -15,6 +15,7 @@
     
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="garden-m3.css">
+    <link rel="stylesheet" href="garden-featured-styles.css">
     
     <!-- Marked.js for proper markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -82,6 +83,126 @@
 
     <!-- Main Content Area -->
     <main class="content-area" id="contentArea">
+        <!-- Featured Projects Section -->
+        <section class="featured-projects-section" id="featuredProjects">
+            <div class="featured-header">
+                <span class="material-symbols-outlined featured-icon">stars</span>
+                <h2>Featured Technical Projects</h2>
+                <p class="featured-subtitle">Showcasing practical implementation of IT concepts and systems architecture</p>
+            </div>
+            
+            <div class="featured-grid">
+                <!-- GrapheneOS Migration -->
+                <div class="featured-card" onclick="garden.loadNote('GrapheneOS Migration Guide - Complete Documentation.md')">
+                    <div class="featured-card-header">
+                        <div class="featured-card-icon">🛡️</div>
+                        <div class="featured-badge privacy">Privacy & Security</div>
+                    </div>
+                    <h3>GrapheneOS Migration</h3>
+                    <p>Complete documentation of privacy-focused mobile OS migration, including carrier compatibility analysis and security hardening.</p>
+                    <div class="featured-tags">
+                        <span class="featured-tag">GrapheneOS</span>
+                        <span class="featured-tag">Privacy</span>
+                        <span class="featured-tag">Android</span>
+                        <span class="featured-tag">Security</span>
+                    </div>
+                    <div class="complexity-meter"><div class="complexity-fill advanced"></div></div>
+                    <div class="complexity-label">Complexity: Advanced</div>
+                </div>
+                
+                <!-- TrueNAS Build -->
+                <div class="featured-card" onclick="garden.loadNote('TrueNAS Build Guide.md')">
+                    <div class="featured-card-header">
+                        <div class="featured-card-icon">💾</div>
+                        <div class="featured-badge storage">Storage & Infrastructure</div>
+                    </div>
+                    <h3>Enterprise NAS Architecture</h3>
+                    <p>Custom TrueNAS build with ZFS RAID-Z2, enterprise SAS drives, and LSI controller integration for reliable data storage.</p>
+                    <div class="featured-tags">
+                        <span class="featured-tag">TrueNAS</span>
+                        <span class="featured-tag">ZFS</span>
+                        <span class="featured-tag">SAS</span>
+                        <span class="featured-tag">Homelab</span>
+                    </div>
+                    <div class="complexity-meter"><div class="complexity-fill expert"></div></div>
+                    <div class="complexity-label">Complexity: Expert</div>
+                </div>
+                
+                <!-- Pi-hole -->
+                <div class="featured-card" onclick="garden.loadNote('Homelab/Pi-hole Setup Guide - Complete Journey.md')">
+                    <div class="featured-card-header">
+                        <div class="featured-card-icon">🌐</div>
+                        <div class="featured-badge network">Network Security</div>
+                    </div>
+                    <h3>DNS-Level Ad Blocking</h3>
+                    <p>Pi-hole deployment with Unbound recursive DNS and WireGuard VPN integration for network-wide privacy protection.</p>
+                    <div class="featured-tags">
+                        <span class="featured-tag">Pi-hole</span>
+                        <span class="featured-tag">DNS</span>
+                        <span class="featured-tag">Raspberry Pi</span>
+                        <span class="featured-tag">VPN</span>
+                    </div>
+                    <div class="complexity-meter"><div class="complexity-fill intermediate"></div></div>
+                    <div class="complexity-label">Complexity: Intermediate</div>
+                </div>
+                
+                <!-- WireGuard VPN -->
+                <div class="featured-card" onclick="garden.loadNote('WireGuard VPN Setup.md')">
+                    <div class="featured-card-header">
+                        <div class="featured-card-icon">🔐</div>
+                        <div class="featured-badge network">Network Security</div>
+                    </div>
+                    <h3>WireGuard VPN Implementation</h3>
+                    <p>Modern VPN setup with WireGuard protocol for secure remote access and network traffic encryption.</p>
+                    <div class="featured-tags">
+                        <span class="featured-tag">WireGuard</span>
+                        <span class="featured-tag">VPN</span>
+                        <span class="featured-tag">Networking</span>
+                        <span class="featured-tag">Security</span>
+                    </div>
+                    <div class="complexity-meter"><div class="complexity-fill intermediate"></div></div>
+                    <div class="complexity-label">Complexity: Intermediate</div>
+                </div>
+                
+                <!-- Budget NAS -->
+                <div class="featured-card" onclick="garden.loadNote('Projects/Budget SAS Drive NAS Build Guide.md')">
+                    <div class="featured-card-header">
+                        <div class="featured-card-icon">💰</div>
+                        <div class="featured-badge storage">Cost Optimization</div>
+                    </div>
+                    <h3>Budget SAS NAS Build</h3>
+                    <p>Cost-effective enterprise storage solution using 10x SAS drives ($5 each) with LSI controller for high-capacity homelab storage.</p>
+                    <div class="featured-tags">
+                        <span class="featured-tag">SAS Drives</span>
+                        <span class="featured-tag">Budget Build</span>
+                        <span class="featured-tag">LSI Controller</span>
+                        <span class="featured-tag">Storage</span>
+                    </div>
+                    <div class="complexity-meter"><div class="complexity-fill advanced"></div></div>
+                    <div class="complexity-label">Complexity: Advanced</div>
+                </div>
+                
+                <!-- Interactive Knowledge Graph -->
+                <div class="featured-card featured-card-special">
+                    <div class="featured-card-header">
+                        <div class="featured-card-icon">🌸</div>
+                        <div class="featured-badge dev">Web Development</div>
+                    </div>
+                    <h3>Interactive Knowledge Graph</h3>
+                    <p>D3.js-powered force-directed graph visualization integrated with GitHub API. Features zoom controls, node dragging, and Material Design 3 aesthetics.</p>
+                    <div class="featured-tags">
+                        <span class="featured-tag">D3.js</span>
+                        <span class="featured-tag">JavaScript</span>
+                        <span class="featured-tag">Material Design</span>
+                        <span class="featured-tag">GitHub API</span>
+                    </div>
+                    <div class="complexity-meter"><div class="complexity-fill expert"></div></div>
+                    <div class="complexity-label">Complexity: Expert</div>
+                    <div class="current-page-indicator">📍 You are here</div>
+                </div>
+            </div>
+        </section>
+        
         <div class="note-container">
             <article class="note-card">
                 <div class="note-content" id="noteContent">
