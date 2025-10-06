@@ -806,10 +806,61 @@ footer {
  opacity: 0.7;
 }
 
+.footer-links {
+ display: flex;
+ justify-content: center;
+ align-items: center;
+ gap: calc(var(--spacing-unit) * 2);
+ margin-bottom: calc(var(--spacing-unit) * 2);
+ flex-wrap: wrap;
+}
+
+.footer-links a {
+ color: inherit;
+ text-decoration: none;
+ position: relative;
+ transition: var(--transition-smooth);
+ padding: calc(var(--spacing-unit) * 0.5);
+ opacity: 0.8;
+}
+
+.footer-links a:hover {
+ opacity: 1;
+ color: var(--accent-color);
+}
+
+.footer-links a::after {
+ content: "";
+ position: absolute;
+ bottom: 0;
+ left: 0;
+ width: 0%;
+ height: 1px;
+ background-color: var(--accent-color);
+ transition: width 0.3s ease-out;
+}
+
+.footer-links a:hover::after {
+ width: 100%;
+}
+
+.footer-separator {
+ opacity: 0.5;
+ user-select: none;
+}
+
+.mal-link {
+ font-size: 0.85rem;
+ opacity: 0.7;
+}
+
 .footer-music-credit {
  opacity: 0.6;
  transition: opacity 0.3s ease;
+ display: block;
+ margin-bottom: calc(var(--spacing-unit) * 1);
 }
+
 .footer-music-credit:hover {
  opacity: 1;
 }

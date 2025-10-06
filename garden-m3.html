@@ -19,9 +19,6 @@
     
     <!-- Marked.js for proper markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    
-    <!-- D3.js for graph visualization -->
-    <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
     <!-- Top App Bar -->
@@ -64,10 +61,6 @@
         
         <button class="nav-destination" data-destination="search" title="Search">
             <span class="material-symbols-outlined">search</span>
-        </button>
-        
-        <button class="nav-destination" id="graphToggleBtn" title="Toggle Graph">
-            <span class="material-symbols-outlined">account_tree</span>
         </button>
     </nav>
 
@@ -214,38 +207,6 @@
 
     <!-- Loading Spinner -->
     <div class="loading-spinner" id="loadingSpinner"></div>
-
-    <!-- Corner Knowledge Graph Widget -->
-    <div class="corner-graph-widget" id="cornerGraphWidget">
-        <div class="corner-graph-header" id="cornerGraphHeader">
-            <div class="graph-title">
-                <span class="material-symbols-outlined">account_tree</span>
-                <span id="cornerGraphTitle">Knowledge Map</span>
-            </div>
-            <div class="connection-count" id="connectionCount">Loading...</div>
-            <div class="graph-controls">
-                <button class="icon-button" id="zoomInBtn" title="Zoom In">
-                    <span class="material-symbols-outlined">add</span>
-                </button>
-                <button class="icon-button" id="zoomOutBtn" title="Zoom Out">
-                    <span class="material-symbols-outlined">remove</span>
-                </button>
-                <button class="icon-button" id="cornerExpandBtn" title="Expand">
-                    <span class="material-symbols-outlined">open_in_full</span>
-                </button>
-                <button class="icon-button" id="cornerMinimizeBtn" title="Minimize">
-                    <span class="material-symbols-outlined">minimize</span>
-                </button>
-            </div>
-        </div>
-        
-        <div class="corner-graph-container" id="cornerGraphContainer">
-            <svg id="cornerGraphSvg" width="100%" height="100%"></svg>
-            <div class="graph-status-indicator"></div>
-        </div>
-        
-        <div class="graph-tooltip" id="graphTooltip"></div>
-    </div>
 
     <script src="garden-m3.js"></script>
     <script>
