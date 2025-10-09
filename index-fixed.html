@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abdullah "Aim" Ibn Masud - IT Professional</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Core Styles -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Material Design 3 Enhancements -->
+    <link rel="stylesheet" href="garden-m3.css">
+    <link rel="stylesheet" href="scrollbar-m3.css">
+    <link rel="stylesheet" href="knowledge-garden-section.css">
+    <link rel="stylesheet" href="garden-featured-styles.css">
+    
+    <!-- Feature Components -->
+    <link rel="stylesheet" href="contact-form.css">
+    <link rel="stylesheet" href="terminal-privacy.css">
+    
+    <!-- EmailJS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+</head>
+<body>
+
+    <div id="loader">
+        <p>Your system does not seem to be efficient enough if you are able to read this whole sentence. (>_<) </p>
+    loading...</div>
+
+    <div id="startup-intro">
+        <p id="startup-quote">"Aim at nothing, and you'll hit it every time"</p>
+    </div>
+
+    <audio id="startup-sound" src="windows xp.mp3" preload="auto"></audio>
+
+    <div id="main-content" style="display: none;">
+
+        <nav id="main-nav">
+            <div class="nav-logo">Aim</div>
+            <div class="hamburger-menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul>
+                <li><a href="#hero" class="nav-link">Home</a></li>
+                <li><a href="#about" class="nav-link">About</a></li>
+                <li><a href="#skills" class="nav-link">Skills</a></li>
+                <li><a href="#experience" class="nav-link">Experience</a></li>
+                <li><a href="#projects" class="nav-link">Projects</a></li>
+                <li><a href="garden-m3.html" class="nav-link">Knowledge Garden</a></li>
+                <li><a href="#contact" class="nav-link">Contact</a></li>
+            </ul>
+            <button class="privacy-toggle" id="privacy-toggle" title="Toggle Privacy Mode">
+                <span class="privacy-icon">👁️</span>
+                <span class="privacy-label">Privacy</span>
+            </button>
+        </nav>
+
+        <section id="hero">
+            <h1 class="hero-title">Aim</h1>
+            <p class="hero-subtitle">IT Professional (in the making) • Systems Optimization</p>
+            <div class="scroll-indicator">
+                <span>↓</span>
+            </div>
+        </section>
+
+        <section id="about" class="content-section">
+            <h2 class="section-title">Hi there,</h2>
+            <p class="bio-text animate-on-scroll fade-in">I'm a detail-oriented IT professional with a passion for hands-on problem solving. I approach technical expertise with creative thinking, whether I'm optimizing system performance, troubleshooting hardware issues, or exploring innovative solutions I'd hope I can afford. Outside the tech world, I cultivate patience through gardening and foraging for rare flora in unexpected places, while mountain biking keeps me sharp (just a cool excuse to touch grass).</p>
+            <div class="stats-cards">
+                <div class="stat-card animate-on-scroll stagger">George Mason University - B.S. Information Technology (In Progress)</div>
+                <div class="stat-card animate-on-scroll stagger">7 years hardware & software troubleshooting experience</div>
+                <div class="stat-card animate-on-scroll stagger">Linux enthusiast since age 13 <br>🐧 </div>
+            </div>
+        </section>
+
+        <section id="skills" class="content-section">
+            <h2 class="section-title">Skills & Expertise</h2>
+            <div class="skills-grid">
+                <div class="skill-category animate-on-scroll stagger">
+                    <h3>Hardware & Software</h3>
+                    <p>PC building, laptop repair, component troubleshooting, performance optimization, diagnostics</p>
+                </div>
+                <div class="skill-category animate-on-scroll stagger">
+                    <h3>Operating Systems</h3>
+                    <p>Windows optimization, Linux distributions, Virtual machines</p>
+                </div>
+                <div class="skill-category animate-on-scroll stagger">
+                    <h3>Professional Experience</h3>
+                    <p>Team management, inventory control, technical support</p>
+                </div>
+                <div class="skill-category animate-on-scroll stagger">
+                    <h3>Emerging Tech</h3>
+                    <p>Homelab setup, NAS configuration, server management</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="experience" class="content-section">
+            <h2 class="section-title">Experience Timeline</h2>
+            <div class="timeline">
+                <div class="timeline-item animate-on-scroll fade-in-up">
+                    <h4>Assistant Store Manager - National Tire & Battery</h4>
+                    <ul>
+                        <li>Managed technical team and inventory systems</li>
+                        <li>Developed customer service and leadership skills</li>
+                        <li>Applied problem-solving to automotive services</li>
+                    </ul>
+                </div>
+                <div class="timeline-item animate-on-scroll fade-in-up">
+                    <h4>Gaining more professional experiences soon…</h4>
+                    <p>Actively seeking opportunities to apply and expand my IT skills.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="projects" class="content-section">
+            <h2 class="section-title">I'm working on</h2>
+            <div class="projects-grid">
+                <div class="project-card animate-on-scroll stagger">
+                    <h3>Homelab Development</h3>
+                    <p>Building a custom server starting with NAS and web hosting functionality.</p>
+                </div>
+                <div class="project-card animate-on-scroll stagger">
+                    <h3>Website Hosting</h3>
+                    <p>Self-hosting portfolio and a knowledge garden eventually...</p>
+                </div>
+                <div class="project-card animate-on-scroll stagger">
+                    <h3>System Optimization</h3>
+                    <p>Ongoing hardware and software ameliorating projects.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Terminal Emulator Section -->
+        <section class="content-section terminal-section">
+            <h2 class="section-title">Terminal Interface</h2>
+            
+            <div class="terminal-container animate-on-scroll fade-in">
+                <div class="terminal-header">
+                    <span class="terminal-dot red"></span>
+                    <span class="terminal-dot yellow"></span>
+                    <span class="terminal-dot green"></span>
+                    <span class="terminal-title">aim@portfolio:~$</span>
+                </div>
+                <div class="terminal-body">
+                    <div id="terminal-output">
+                        <div class="terminal-line">
+                            <span class="terminal-prompt">aim@portfolio:~$</span>
+                            <span class="terminal-text">Welcome to Aim's Interactive Terminal</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="terminal-text">Type 'help' for available commands or click the hint button below</span>
+                        </div>
+                    </div>
+                    <div class="terminal-input-line">
+                        <span class="terminal-prompt">aim@portfolio:~$</span>
+                        <input type="text" id="terminal-input" class="terminal-input" autocomplete="off" spellcheck="false">
+                        <span class="terminal-cursor"></span>
+                    </div>
+                </div>
+                <button class="terminal-hint-btn" id="terminal-hint">
+                    <span>💡 Show Commands</span>
+                </button>
+            </div>
+        </section>
+
+        <section id="contact" class="content-section contact-section">
+            <h2 class="section-title">Get In Touch</h2>
+            <p class="contact-intro">Have a question or want to work together? Drop me a message!</p>
+            
+            <form id="contact-form" novalidate>
+                <div class="form-group">
+                    <label for="from_name">Name</label>
+                    <input 
+                        type="text" 
+                        id="from_name" 
+                        name="from_name" 
+                        placeholder="Your name"
+                        required
+                        autocomplete="name"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="reply_to">Email</label>
+                    <input 
+                        type="email" 
+                        id="reply_to" 
+                        name="reply_to" 
+                        placeholder="your.email@example.com"
+                        required
+                        autocomplete="email"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea 
+                        id="message" 
+                        name="message" 
+                        placeholder="What would you like to discuss?"
+                        rows="5"
+                        required
+                    ></textarea>
+                </div>
+                
+                <button type="submit" id="submit-btn" aria-label="Send message">
+                    <span class="btn-text">Send Message</span>
+                    <span class="btn-loading" style="display:none;">Sending</span>
+                </button>
+                
+                <div id="form-status" style="display:none;" role="alert" aria-live="polite"></div>
+            </form>
+            
+            <div class="fallback-contact">
+                <p>Prefer email? Reach me at: <a href="mailto:aim@outlook.com">aim [at] outlook [dot] com</a></p>
+            </div>
+        </section>
+
+        <footer>
+            <span class="footer-music-credit">Background music by Nato Kitchen "windows xp"</span>
+            <p class="footer-copyright-text">&copy; 1984 Abdullah "Aim" Ibn Masud. Few rights reserved.</p>
+        </footer>
+
+    </div> 
+
+    <div id="cursor-aura"></div>
+    
+    <script src="script.js" defer></script>
+    <script src="contact.js"></script>
+    <script src="terminal.js"></script>
+</body>
+</html>
