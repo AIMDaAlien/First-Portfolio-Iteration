@@ -16,10 +16,15 @@
     
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="style-poc3.css">
+    <link rel="stylesheet" href="cards-m3-balanced.css">
     <link rel="stylesheet" href="knowledge-garden-section.css">
     <link rel="stylesheet" href="terminal-privacy.css">
 </head>
 <body>
+    <!-- Load SVG Sprites -->
+    <div style="display: none;">
+        <object data="icons-sprite.svg" type="image/svg+xml" id="svg-sprite"></object>
+    </div>
 
     <div id="loader">
         <p>Your system does not seem to be efficient enough if you are able to read this whole sentence. (>_<) </p>
@@ -61,97 +66,113 @@
             </div>
         </section>
 
-        <!-- POC 3 ENHANCED ABOUT SECTION -->
+        <!-- M3 BALANCED ABOUT SECTION -->
         <section id="about" class="content-section">
             <h2 class="section-title">Hi there,</h2>
             <p class="bio-text animate-on-scroll fade-in">I'm a detail-oriented IT professional with a passion for hands-on problem solving. I approach technical expertise with creative thinking, whether I'm optimizing system performance, troubleshooting hardware issues, or exploring innovative solutions I'd hope I can afford. Outside the tech world, I cultivate patience through gardening and foraging for rare flora in unexpected places, while mountain biking keeps me sharp (just a cool excuse to touch grass).</p>
-            <div class="stats-cards stats-grid-enhanced">
-                <div class="stat-card stat-card-enhanced animate-on-scroll stagger">
-                    <div class="stat-icon">🎓</div>
+            <div class="stats-cards">
+                <div class="stat-card animate-on-scroll stagger">
+                    <div class="card-icon">
+                        <svg><use href="icons-sprite.svg#icon-school"></use></svg>
+                    </div>
                     <h3>George Mason University</h3>
                     <p>B.S. Information Technology<br>(Expected 2028)</p>
                 </div>
-                <div class="stat-card stat-card-enhanced animate-on-scroll stagger">
-                    <div class="stat-icon">🔧</div>
+                <div class="stat-card animate-on-scroll stagger">
+                    <div class="card-icon">
+                        <svg><use href="icons-sprite.svg#icon-build"></use></svg>
+                    </div>
                     <h3>6+ Years Experience</h3>
                     <p>Technical troubleshooting & team management</p>
                 </div>
-                <div class="stat-card stat-card-enhanced animate-on-scroll stagger">
-                    <div class="stat-icon">🐧</div>
+                <div class="stat-card animate-on-scroll stagger">
+                    <div class="card-icon">
+                        <svg><use href="icons-sprite.svg#icon-terminal"></use></svg>
+                    </div>
                     <h3>Linux Enthusiast</h3>
                     <p>Since age 13</p>
                 </div>
             </div>
         </section>
 
-        <!-- POC 3 ENHANCED SKILLS SECTION -->
+        <!-- M3 BALANCED SKILLS SECTION -->
         <section id="skills" class="content-section">
             <h2 class="section-title">Skills & Expertise</h2>
-            <div class="skills-grid skills-grid-enhanced">
-                <div class="skill-category skill-card-enhanced animate-on-scroll stagger">
+            <div class="skills-grid">
+                <div class="skill-category animate-on-scroll stagger">
                     <div class="skill-header">
-                        <div class="skill-icon-large">💻</div>
+                        <div class="skill-icon-wrapper">
+                            <svg><use href="icons-sprite.svg#icon-memory"></use></svg>
+                        </div>
                         <div>
                             <h3>Hardware & Software</h3>
                         </div>
                     </div>
                     <p>PC building, laptop repair, component troubleshooting, performance optimization, diagnostics</p>
-                    <div class="skill-progress">
-                        <div class="skill-progress-fill" style="width: 85%;"></div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 85%;"></div>
                     </div>
                 </div>
-                <div class="skill-category skill-card-enhanced animate-on-scroll stagger">
+                <div class="skill-category animate-on-scroll stagger">
                     <div class="skill-header">
-                        <div class="skill-icon-large">🖥️</div>
+                        <div class="skill-icon-wrapper">
+                            <svg><use href="icons-sprite.svg#icon-computer"></use></svg>
+                        </div>
                         <div>
                             <h3>Operating Systems</h3>
                         </div>
                     </div>
                     <p>Windows optimization, Linux distributions, Virtual machines</p>
-                    <div class="skill-progress">
-                        <div class="skill-progress-fill" style="width: 80%;"></div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 80%;"></div>
                     </div>
                 </div>
-                <div class="skill-category skill-card-enhanced animate-on-scroll stagger">
+                <div class="skill-category animate-on-scroll stagger">
                     <div class="skill-header">
-                        <div class="skill-icon-large">👨‍💼</div>
+                        <div class="skill-icon-wrapper">
+                            <svg><use href="icons-sprite.svg#icon-groups"></use></svg>
+                        </div>
                         <div>
                             <h3>Professional Experience</h3>
                         </div>
                     </div>
                     <p>Team management, inventory control, technical support, process improvement</p>
-                    <div class="skill-progress">
-                        <div class="skill-progress-fill" style="width: 90%;"></div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 90%;"></div>
                     </div>
                 </div>
-                <div class="skill-category skill-card-enhanced animate-on-scroll stagger">
+                <div class="skill-category animate-on-scroll stagger">
                     <div class="skill-header">
-                        <div class="skill-icon-large">🔬</div>
+                        <div class="skill-icon-wrapper">
+                            <svg><use href="icons-sprite.svg#icon-science"></use></svg>
+                        </div>
                         <div>
                             <h3>Emerging Tech</h3>
                         </div>
                     </div>
                     <p>Homelab setup, NAS configuration, server management, 3D printing</p>
-                    <div class="skill-progress">
-                        <div class="skill-progress-fill" style="width: 75%;"></div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 75%;"></div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- POC 3 ENHANCED EXPERIENCE SECTION -->
+        <!-- M3 BALANCED EXPERIENCE SECTION -->
         <section id="experience" class="content-section">
             <h2 class="section-title">Experience Timeline</h2>
-            <div class="timeline experience-grid-enhanced">
+            <div class="experience-grid-enhanced">
                 <!-- Assistant Store Manager -->
-                <div class="timeline-item experience-card-enhanced animate-on-scroll fade-in-up">
+                <div class="experience-card-enhanced animate-on-scroll fade-in-up">
                     <div class="experience-header">
-                        <div class="experience-icon">👨‍💼</div>
+                        <div class="experience-icon">
+                            <svg><use href="icons-sprite.svg#icon-badge"></use></svg>
+                        </div>
                         <div class="experience-info">
                             <h3>Assistant Store Manager</h3>
                             <p class="experience-company">NTB/Mavis Tires</p>
-                            <div class="experience-status">
-                                <div class="status-dot status-dot-past"></div>
+                            <div class="experience-date">
+                                <div class="status-dot"></div>
                                 <span>April 2024 - June 2025</span>
                             </div>
                         </div>
@@ -167,27 +188,19 @@
                         <span class="experience-tag">Process Improvement</span>
                         <span class="experience-tag">Quality Control</span>
                     </div>
-                    
-                    <div class="experience-achievements">
-                        <h4>Key Achievements:</h4>
-                        <ul>
-                            <li>Reduced turnaround time by 15% through scheduling system optimization</li>
-                            <li>Processed 50+ work orders weekly using ticketing systems</li>
-                            <li>Maintained safety protocol compliance and quality standards</li>
-                            <li>Troubleshot computer and diagnostic equipment issues</li>
-                        </ul>
-                    </div>
                 </div>
                 
                 <!-- Data Annotation Contractor -->
-                <div class="timeline-item experience-card-enhanced animate-on-scroll fade-in-up">
+                <div class="experience-card-enhanced animate-on-scroll fade-in-up">
                     <div class="experience-header">
-                        <div class="experience-icon">🏷️</div>
+                        <div class="experience-icon">
+                            <svg><use href="icons-sprite.svg#icon-label"></use></svg>
+                        </div>
                         <div class="experience-info">
                             <h3>Data Annotation Contractor</h3>
                             <p class="experience-company">Remote Platforms</p>
-                            <div class="experience-status">
-                                <div class="status-dot status-dot-ongoing"></div>
+                            <div class="experience-date">
+                                <div class="status-dot"></div>
                                 <span>January 2023 - Present</span>
                             </div>
                         </div>
@@ -202,89 +215,6 @@
                         <span class="experience-tag">Quality Assurance</span>
                         <span class="experience-tag">Attention to Detail</span>
                         <span class="experience-tag">AI Training</span>
-                    </div>
-                    
-                    <div class="experience-achievements">
-                        <h4>Specializations:</h4>
-                        <ul>
-                            <li>Bounding box annotation and image classification</li>
-                            <li>Quality rating and data entry with specification adherence</li>
-                            <li>Multi-platform workflow adaptation</li>
-                            <li>Consistent quality standards across varying project requirements</li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <!-- HomeLab Experience -->
-                <div class="timeline-item experience-card-enhanced animate-on-scroll fade-in-up">
-                    <div class="experience-header">
-                        <div class="experience-icon">🔬</div>
-                        <div class="experience-info">
-                            <h3>Computer Hardware Testing</h3>
-                            <p class="experience-company">HomeLab Projects</p>
-                            <div class="experience-status">
-                                <div class="status-dot status-dot-active"></div>
-                                <span>September 2016 - Present • 40+ clients served</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <p class="experience-description">
-                        Extensive hands-on experience with hardware diagnostics, system optimization, and OS testing. Provided troubleshooting services for 40+ personal clients across smartphones, tablets, laptops, and PCs.
-                    </p>
-                    
-                    <div class="experience-tags">
-                        <span class="experience-tag">Hardware Testing</span>
-                        <span class="experience-tag">Benchmarking</span>
-                        <span class="experience-tag">System Optimization</span>
-                        <span class="experience-tag">Client Support</span>
-                    </div>
-                    
-                    <div class="experience-achievements">
-                        <h4>Technical Experience:</h4>
-                        <ul>
-                            <li>Tested multiple OS environments (Windows 7-11, Linux distributions)</li>
-                            <li>Conducted hardware benchmarking using Passmark and Cinebench</li>
-                            <li>Performed system troubleshooting and performance optimization</li>
-                            <li>Experimented with 3D modeling (Blender, Tinkercad)</li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <!-- 3D Printing Startup -->
-                <div class="timeline-item experience-card-enhanced experience-card-startup animate-on-scroll fade-in-up">
-                    <div class="experience-header">
-                        <div class="experience-icon">🎨</div>
-                        <div class="experience-info">
-                            <h3>Custom 3D Printed Decor</h3>
-                            <p class="experience-company">Entrepreneurial Venture</p>
-                            <div class="experience-status">
-                                <div class="status-dot status-dot-planning"></div>
-                                <span>Market Research Phase</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <p class="experience-description">
-                        Developing custom 3D printed home decor and functional accessories business. Currently conducting market research and seeking customer feedback. Open to printing B2B prototypes for potential partners.
-                    </p>
-                    
-                    <div class="experience-tags">
-                        <span class="experience-tag">3D Printing</span>
-                        <span class="experience-tag">Product Design</span>
-                        <span class="experience-tag">Entrepreneurship</span>
-                        <span class="experience-tag">Market Research</span>
-                        <span class="experience-tag">CAD Modeling</span>
-                    </div>
-                    
-                    <div class="experience-achievements">
-                        <h4>Current Focus:</h4>
-                        <ul>
-                            <li>Conducting market research for product-market fit</li>
-                            <li>Exploring target demographics and pricing strategies</li>
-                            <li>Seeking feedback on prototype designs and concepts</li>
-                            <li>Open to B2B prototype printing opportunities</li>
-                        </ul>
                     </div>
                 </div>
             </div>
