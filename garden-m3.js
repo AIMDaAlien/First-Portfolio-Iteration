@@ -47,7 +47,7 @@ class ObsidianGarden {
         try {
             const structure = await this.fetchVaultStructure();
             this.buildEnhancedSidebar(structure);
-            await this.loadNote('🗺️ Knowledge Base - Main Index.md');
+            await this.loadMainIndex(); // Use loadMainIndex to show featured projects
             this.extractAllTags();
             this.renderTagFilter();
             
