@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Knowledge Garden - Material Design 3</title>
     
-    <!-- Material Design 3 Typography -->
+    <!-- Ubuntu & JetBrains Mono Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
     <!-- Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
@@ -16,9 +16,13 @@
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="garden-m3.css">
     <link rel="stylesheet" href="garden-featured-styles.css">
+    <link rel="stylesheet" href="garden-graph-view.css">
     
-    <!-- Marked.js for proper markdown parsing -->
+    <!-- Marked.js for markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- Vis.js for graph visualization -->
+    <script src="https://unpkg.com/vis-network@latest/standalone/umd/vis-network.min.js"></script>
 </head>
 <body>
     <!-- Top App Bar -->
@@ -55,8 +59,8 @@
             <span class="material-symbols-outlined">description</span>
         </button>
         
-        <button class="nav-destination" data-destination="recent" title="Recent">
-            <span class="material-symbols-outlined">schedule</span>
+        <button class="nav-destination" data-destination="graph" title="Graph View">
+            <span class="material-symbols-outlined">hub</span>
         </button>
         
         <button class="nav-destination" data-destination="search" title="Search">
@@ -182,12 +186,12 @@
                         <div class="featured-badge dev">Web Development</div>
                     </div>
                     <h3>Interactive Knowledge Graph</h3>
-                    <p>D3.js-powered force-directed graph visualization integrated with GitHub API. Features zoom controls, node dragging, and Material Design 3 aesthetics.</p>
+                    <p>Vis.js-powered force-directed graph visualization. Features node clustering, zoom controls, and Material 3 aesthetics with periwinkle theme.</p>
                     <div class="featured-tags">
-                        <span class="featured-tag">D3.js</span>
+                        <span class="featured-tag">Vis.js</span>
                         <span class="featured-tag">JavaScript</span>
-                        <span class="featured-tag">Material Design</span>
-                        <span class="featured-tag">GitHub API</span>
+                        <span class="featured-tag">Material 3</span>
+                        <span class="featured-tag">Graph Theory</span>
                     </div>
                     <div class="complexity-meter"><div class="complexity-fill expert"></div></div>
                     <div class="complexity-label">Complexity: Expert</div>
@@ -209,6 +213,7 @@
     <div class="loading-spinner" id="loadingSpinner"></div>
 
     <script src="garden-m3.js"></script>
+    <script src="garden-graph-view.js"></script>
     <script>
         // Theme Toggle
         const themeToggle = document.getElementById('themeToggle');

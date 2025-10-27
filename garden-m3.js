@@ -336,6 +336,12 @@ class ObsidianGarden {
     async loadNote(path) {
         this.showLoading();
         
+        // Hide featured projects when navigating to a note
+        const featuredSection = document.getElementById('featuredProjects');
+        if (featuredSection) {
+            featuredSection.style.display = 'none';
+        }
+        
         try {
             const content = await this.fetchNoteContent(path);
             const html = this.parseMarkdown(content);
@@ -494,6 +500,11 @@ class ObsidianGarden {
     }
 
     loadMainIndex() {
+        // Show featured projects on home
+        const featuredSection = document.getElementById('featuredProjects');
+        if (featuredSection) {
+            featuredSection.style.display = 'block';
+        }
         this.loadNote('🗺️ Knowledge Base - Main Index.md');
     }
 
@@ -519,6 +530,12 @@ class ObsidianGarden {
     
     // Navigation Rail Functions
     showAllNotes() {
+        // Hide featured projects
+        const featuredSection = document.getElementById('featuredProjects');
+        if (featuredSection) {
+            featuredSection.style.display = 'none';
+        }
+        
         let html = '<h1>📚 All Notes</h1>';
         
         const folders = {};
@@ -550,6 +567,12 @@ class ObsidianGarden {
     }
     
     showSearch() {
+        // Hide featured projects
+        const featuredSection = document.getElementById('featuredProjects');
+        if (featuredSection) {
+            featuredSection.style.display = 'none';
+        }
+        
         const html = `
             <h1>🔍 Search Knowledge Garden</h1>
             <div style="max-width: 600px; margin: 2rem auto;">
@@ -609,8 +632,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'notes':
                     garden.showAllNotes();
                     break;
-                case 'recent':
-                    garden.showRecentNotes();
+                case 'graph':
+                    if (!graphView) {
+                        graphView = new KnowledgeGraphView(garden);
+                    }
+                    graphView.render();
                     break;
                 case 'search':
                     garden.showSearch();
