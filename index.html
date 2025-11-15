@@ -8,52 +8,89 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <meta name="description" content="Abdullah Masud - IT Professional specializing in systems optimization, hardware troubleshooting, and emerging tech.">
     
     <!-- Material Symbols for icons -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
     
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="style-poc3.css">
     <link rel="stylesheet" href="cards-m3-balanced.css">
     <link rel="stylesheet" href="knowledge-garden-section.css">
-    <link rel="stylesheet" href="terminal-privacy.css">
 </head>
 <body>
-    <!-- Load SVG Sprites -->
+    <!-- Load SVG Icons -->
     <div style="display: none;">
         <object data="icons-sprite.svg" type="image/svg+xml" id="svg-sprite"></object>
     </div>
+    
+    <!-- Inline SVG Icons for immediate availability -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+        <symbol id="icon-school" viewBox="0 0 24 24">
+            <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
+        </symbol>
+        <symbol id="icon-build" viewBox="0 0 24 24">
+            <path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/>
+        </symbol>
+        <symbol id="icon-terminal" viewBox="0 0 24 24">
+            <path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4V8h16v10zm-2-1h-6v-2h6v2zM7.5 17l-1.41-1.41L8.67 13l-2.58-2.59L7.5 9l4 4-4 4z"/>
+        </symbol>
+        <symbol id="icon-memory" viewBox="0 0 24 24">
+            <path d="M15 9H9v6h6V9zm-2 4h-2v-2h2v2zm8-2V9h-2V7c0-1.1-.9-2-2-2h-2V3h-2v2h-2V3H9v2H7c-1.1 0-2 .9-2 2v2H3v2h2v2H3v2h2v2c0 1.1.9 2 2 2h2v2h2v-2h2v2h2v-2h2c1.1 0 2-.9 2-2v-2h2v-2h-2v-2h2zm-4 6H7V7h10v10z"/>
+        </symbol>
+        <symbol id="icon-computer" viewBox="0 0 24 24">
+            <path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/>
+        </symbol>
+        <symbol id="icon-groups" viewBox="0 0 24 24">
+            <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+        </symbol>
+        <symbol id="icon-science" viewBox="0 0 24 24">
+            <path d="M13 11.33L18 18H6l5-6.67V6h2m0-2H9v7.67L4 18c-.55.66-.09 1.66.8 1.66h14.4c.89 0 1.35-1 .8-1.66l-5-6.67V4z"/>
+        </symbol>
+        <symbol id="icon-badge" viewBox="0 0 24 24">
+            <path d="M20 7h-5V4c0-1.1-.9-2-2-2h-2c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM9 12c.83 0 1.5.67 1.5 1.5S9.83 15 9 15s-1.5-.67-1.5-1.5S8.17 12 9 12zm3 6H6v-.75c0-1 2-1.5 3-1.5s3 .5 3 1.5V18zm1-9h-2V4h2v5zm5 9h-5v-1h5v1zm0-2h-5v-1h5v1zm0-2h-5v-1h5v1z"/>
+        </symbol>
+        <symbol id="icon-label" viewBox="0 0 24 24">
+            <path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z"/>
+        </symbol>
+        <symbol id="icon-book" viewBox="0 0 24 24">
+            <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/>
+        </symbol>
+    </svg>
 
     <div id="loader">
-        <p>Your system does not seem to be efficient enough if you are able to read this whole sentence. (>_<) </p>
-    loading...</div>
+        <p>Loading your experience...</p>
+    </div>
 
     <div id="startup-intro">
         <p id="startup-quote">"Aim at nothing, and you'll hit it every time"</p>
         <p id="startup-quoter">- Zig Ziglar</p>
-        <p id="startup-prompt">Press any key to get into the mood</p>
+        <p id="startup-prompt">Press any key to continue</p>
     </div>
 
     <audio id="startup-sound" src="windows xp.mp3" preload="auto"></audio>
 
     <div id="main-content" style="display: none;">
+        <!-- Skip Navigation Link -->
+        <a href="#main" class="skip-link">Skip to main content</a>
 
-        <nav id="main-nav">
+        <nav id="main-nav" role="navigation" aria-label="Main navigation">
             <div class="nav-logo">Aim</div>
-            <div class="hamburger-menu">
+            <button class="hamburger-menu" aria-label="Toggle navigation menu" aria-expanded="false">
                 <span></span>
                 <span></span>
                 <span></span>
-            </div>
+            </button>
             <ul>
                 <li><a href="#hero" class="nav-link">Home</a></li>
                 <li><a href="#about" class="nav-link">About</a></li>
                 <li><a href="#skills" class="nav-link">Skills</a></li>
                 <li><a href="#experience" class="nav-link">Experience</a></li>
                 <li><a href="#projects" class="nav-link">Projects</a></li>
-                <li><a href="garden-m3.html" class="nav-link">📚 Knowledge Garden</a></li>
+                <li><a href="garden-m3.html" class="nav-link">
+                    <svg class="nav-icon" width="16" height="16"><use href="#icon-book"></use></svg>
+                    Knowledge Garden
+                </a></li>
                 <li><a href="#contact" class="nav-link">Contact</a></li>
             </ul>
         </nav>
@@ -61,386 +98,391 @@
         <section id="hero">
             <h1 class="hero-title">Aim</h1>
             <p class="hero-subtitle">IT Professional (in the making) • Systems Optimization</p>
-            <div class="scroll-indicator">
+            <div class="scroll-indicator" aria-hidden="true">
                 <span>↓</span>
             </div>
         </section>
 
-        <!-- M3 BALANCED ABOUT SECTION -->
-        <section id="about" class="content-section">
-            <h2 class="section-title">Hi there,</h2>
-            <p class="bio-text animate-on-scroll fade-in">I'm a detail-oriented IT professional with a passion for hands-on problem solving. I approach technical expertise with creative thinking, whether I'm optimizing system performance, troubleshooting hardware issues, or exploring innovative solutions I'd hope I can afford. Outside the tech world, I cultivate patience through gardening and foraging for rare flora in unexpected places, while mountain biking keeps me sharp (just a cool excuse to touch grass).</p>
-            <div class="stats-cards">
-                <div class="stat-card animate-on-scroll stagger">
-                    <div class="card-icon">
-                        <svg><use href="icons-sprite.svg#icon-school"></use></svg>
+        <main id="main">
+            <!-- About Section -->
+            <section id="about" class="content-section">
+                <h2 class="section-title">Hi there,</h2>
+                <p class="bio-text animate-on-scroll fade-in">I'm a detail-oriented IT professional with a passion for hands-on problem solving. I approach technical expertise with creative thinking, whether I'm optimizing system performance, troubleshooting hardware issues, or exploring innovative solutions I'd hope I can afford. Outside the tech world, I cultivate patience through gardening and foraging for rare flora in unexpected places, while mountain biking keeps me sharp (just a cool excuse to touch grass).</p>
+                <div class="stats-cards">
+                    <div class="stat-card animate-on-scroll stagger">
+                        <div class="card-icon" aria-hidden="true">
+                            <svg><use href="#icon-school"></use></svg>
+                        </div>
+                        <h3>George Mason University</h3>
+                        <p>B.S. Information Technology<br>(Expected 2028)</p>
                     </div>
-                    <h3>George Mason University</h3>
-                    <p>B.S. Information Technology<br>(Expected 2028)</p>
-                </div>
-                <div class="stat-card animate-on-scroll stagger">
-                    <div class="card-icon">
-                        <svg><use href="icons-sprite.svg#icon-build"></use></svg>
+                    <div class="stat-card animate-on-scroll stagger">
+                        <div class="card-icon" aria-hidden="true">
+                            <svg><use href="#icon-build"></use></svg>
+                        </div>
+                        <h3>6+ Years Experience</h3>
+                        <p>Technical troubleshooting & team management</p>
                     </div>
-                    <h3>6+ Years Experience</h3>
-                    <p>Technical troubleshooting & team management</p>
-                </div>
-                <div class="stat-card animate-on-scroll stagger">
-                    <div class="card-icon">
-                        <svg><use href="icons-sprite.svg#icon-terminal"></use></svg>
+                    <div class="stat-card animate-on-scroll stagger">
+                        <div class="card-icon" aria-hidden="true">
+                            <svg><use href="#icon-terminal"></use></svg>
+                        </div>
+                        <h3>Linux Enthusiast</h3>
+                        <p>Since age 13</p>
                     </div>
-                    <h3>Linux Enthusiast</h3>
-                    <p>Since age 13</p>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <!-- M3 BALANCED SKILLS SECTION -->
-        <section id="skills" class="content-section">
-            <h2 class="section-title">Skills & Expertise</h2>
-            <div class="skills-grid">
-                <div class="skill-category animate-on-scroll stagger">
-                    <div class="skill-header">
-                        <div class="skill-icon-wrapper">
-                            <svg><use href="icons-sprite.svg#icon-memory"></use></svg>
-                        </div>
-                        <div>
-                            <h3>Hardware & Software</h3>
-                        </div>
-                    </div>
-                    <p>PC building, laptop repair, component troubleshooting, performance optimization, diagnostics</p>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: 85%;"></div>
-                    </div>
-                </div>
-                <div class="skill-category animate-on-scroll stagger">
-                    <div class="skill-header">
-                        <div class="skill-icon-wrapper">
-                            <svg><use href="icons-sprite.svg#icon-computer"></use></svg>
-                        </div>
-                        <div>
-                            <h3>Operating Systems</h3>
-                        </div>
-                    </div>
-                    <p>Windows optimization, Linux distributions, Virtual machines</p>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: 80%;"></div>
-                    </div>
-                </div>
-                <div class="skill-category animate-on-scroll stagger">
-                    <div class="skill-header">
-                        <div class="skill-icon-wrapper">
-                            <svg><use href="icons-sprite.svg#icon-groups"></use></svg>
-                        </div>
-                        <div>
-                            <h3>Professional Experience</h3>
-                        </div>
-                    </div>
-                    <p>Team management, inventory control, technical support, process improvement</p>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: 90%;"></div>
-                    </div>
-                </div>
-                <div class="skill-category animate-on-scroll stagger">
-                    <div class="skill-header">
-                        <div class="skill-icon-wrapper">
-                            <svg><use href="icons-sprite.svg#icon-science"></use></svg>
-                        </div>
-                        <div>
-                            <h3>Emerging Tech</h3>
-                        </div>
-                    </div>
-                    <p>Homelab setup, NAS configuration, server management, 3D printing</p>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: 75%;"></div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- M3 BALANCED EXPERIENCE SECTION -->
-        <section id="experience" class="content-section">
-            <h2 class="section-title">Experience Timeline</h2>
-            <div class="experience-grid-enhanced">
-                <!-- Assistant Store Manager -->
-                <div class="experience-card-enhanced animate-on-scroll fade-in-up">
-                    <div class="experience-header">
-                        <div class="experience-icon">
-                            <svg><use href="icons-sprite.svg#icon-badge"></use></svg>
-                        </div>
-                        <div class="experience-info">
-                            <h3>Assistant Store Manager</h3>
-                            <p class="experience-company">NTB/Mavis Tires</p>
-                            <div class="experience-date">
-                                <div class="status-dot"></div>
-                                <span>April 2024 - June 2025</span>
+            <!-- Skills Section -->
+            <section id="skills" class="content-section">
+                <h2 class="section-title">Skills & Expertise</h2>
+                <div class="skills-grid">
+                    <div class="skill-category animate-on-scroll stagger">
+                        <div class="skill-header">
+                            <div class="skill-icon-wrapper" aria-hidden="true">
+                                <svg><use href="#icon-memory"></use></svg>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <p class="experience-description">
-                        Directed daily operations for automotive service center, managing team of 8+ technicians. Implemented systematic improvements reducing turnaround time by 15% through shop management software optimization.
-                    </p>
-                    
-                    <div class="experience-tags">
-                        <span class="experience-tag">Team Leadership</span>
-                        <span class="experience-tag">Operations Management</span>
-                        <span class="experience-tag">Process Improvement</span>
-                        <span class="experience-tag">Quality Control</span>
-                    </div>
-                </div>
-                
-                <!-- Data Annotation Contractor -->
-                <div class="experience-card-enhanced animate-on-scroll fade-in-up">
-                    <div class="experience-header">
-                        <div class="experience-icon">
-                            <svg><use href="icons-sprite.svg#icon-label"></use></svg>
-                        </div>
-                        <div class="experience-info">
-                            <h3>Data Annotation Contractor</h3>
-                            <p class="experience-company">Remote Platforms</p>
-                            <div class="experience-date">
-                                <div class="status-dot"></div>
-                                <span>January 2023 - Present</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <p class="experience-description">
-                        Complete data labeling tasks for machine learning and AI training projects. Execute precise annotation work across multiple platforms while maintaining high quality standards.
-                    </p>
-                    
-                    <div class="experience-tags">
-                        <span class="experience-tag">Data Labeling</span>
-                        <span class="experience-tag">Quality Assurance</span>
-                        <span class="experience-tag">Attention to Detail</span>
-                        <span class="experience-tag">AI Training</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="projects" class="content-section">
-            <h2 class="section-title">Technical Projects</h2>
-            <div class="projects-grid">
-                <div class="project-card animate-on-scroll stagger">
-                    <div class="project-header">
-                        <div class="project-icon">🛡️</div>
-                        <div class="project-info">
-                            <h3>Pi-hole Network Security</h3>
-                            <div class="project-status">
-                                <div class="status-indicator active"></div>
-                                <span>Production Deployment</span>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="project-description">Deployed DNS-level ad blocking using Raspberry Pi 3B+ with Unbound recursive DNS resolver. Integrated with WireGuard VPN for complete network privacy protection.</p>
-                    
-                    <div class="tech-stack">
-                        <span class="tech-tag">Raspberry Pi</span>
-                        <span class="tech-tag">Pi-hole</span>
-                        <span class="tech-tag">Unbound DNS</span>
-                        <span class="tech-tag">WireGuard VPN</span>
-                        <span class="tech-tag">Linux</span>
-                    </div>
-                    
-                    <div class="project-achievements">
-                        <h4>Key Achievements:</h4>
-                        <ul>
-                            <li>Blocked 40,000+ DNS queries daily with 15% block rate</li>
-                            <li>Zero-logging privacy configuration</li>
-                            <li>VPN integration for remote protection</li>
-                            <li>Custom blocklist optimization</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="complexity-meter">
-                        <div class="complexity-fill intermediate"></div>
-                    </div>
-                    <div class="complexity-label">Complexity: Intermediate</div>
-                </div>
-                
-                <div class="project-card animate-on-scroll stagger">
-                    <div class="project-header">
-                        <div class="project-icon">💾</div>
-                        <div class="project-info">
-                            <h3>Enterprise SAS NAS Build</h3>
-                            <div class="project-status">
-                                <div class="status-indicator active"></div>
-                                <span>Production Deployment</span>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="project-description">Built cost-effective TrueNAS server with 10x enterprise SAS drives and LSI controller. Achieved 5.46TB RAID-Z2 storage with Immich self-hosted photo backup, replacing Google Photos.</p>
-                    
-                    <div class="tech-stack">
-                        <span class="tech-tag">TrueNAS</span>
-                        <span class="tech-tag">ZFS RAID-Z2</span>
-                        <span class="tech-tag">LSI 9207-8i</span>
-                        <span class="tech-tag">Immich</span>
-                        <span class="tech-tag">i5-11400</span>
-                    </div>
-                    
-                    <div class="project-achievements">
-                        <h4>Key Achievements:</h4>
-                        <ul>
-                            <li>Built $270 NAS with enterprise-grade reliability (vs $800+ prebuilt)</li>
-                            <li>5.46TB usable storage with dual-drive failure protection</li>
-                            <li>Self-hosted Immich replacing Google Photos subscription</li>
-                            <li>Automated SMART monitoring and monthly scrubs</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="complexity-meter">
-                        <div class="complexity-fill expert"></div>
-                    </div>
-                    <div class="complexity-label">Complexity: Expert</div>
-                </div>
-                
-                <div class="project-card animate-on-scroll stagger">
-                    <div class="project-header">
-                        <div class="project-icon">🛡️</div>
-                        <div class="project-info">
-                            <h3>GrapheneOS Migration</h3>
-                            <div class="project-status">
-                                <div class="status-indicator completed"></div>
-                                <span>Successfully Deployed</span>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="project-description">Complete privacy-focused mobile OS migration from carrier-locked failure to successful GrapheneOS deployment. Documented bootloader unlock verification, damaged device acquisition strategy, and dual-device privacy architecture.</p>
-                    
-                    <div class="tech-stack">
-                        <span class="tech-tag">GrapheneOS</span>
-                        <span class="tech-tag">Pixel 7 Pro</span>
-                        <span class="tech-tag">Privacy Hardening</span>
-                        <span class="tech-tag">ADB</span>
-                        <span class="tech-tag">eSIM</span>
-                    </div>
-                    
-                    <div class="project-achievements">
-                        <h4>Key Achievements:</h4>
-                        <ul>
-                            <li>Bypassed carrier bootloader restrictions through systematic verification</li>
-                            <li>50% cost reduction via cosmetically damaged device acquisition</li>
-                            <li>Implemented dual-device privacy architecture for risk isolation</li>
-                            <li>Documented complete migration guide with troubleshooting protocols</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="complexity-meter">
-                        <div class="complexity-fill advanced"></div>
-                    </div>
-                    <div class="complexity-label">Complexity: Advanced</div>
-                </div>
-                
-                <div class="project-card animate-on-scroll stagger">
-                    <div class="project-header">
-                        <div class="project-icon">🌐</div>
-                        <div class="project-info">
-                            <h3>Router Optimization & Hardening</h3>
-                            <div class="project-status">
-                                <div class="status-indicator active"></div>
-                                <span>Active Configuration</span>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="project-description">Comprehensive TP-Link router optimization for performance and privacy. Systematic configuration of DNS, wireless settings, ALG management, and security hardening with documented methodology.</p>
-                    
-                    <div class="tech-stack">
-                        <span class="tech-tag">TP-Link</span>
-                        <span class="tech-tag">DNS Privacy</span>
-                        <span class="tech-tag">QoS</span>
-                        <span class="tech-tag">MU-MIMO</span>
-                        <span class="tech-tag">Network Security</span>
-                    </div>
-                    
-                    <div class="project-achievements">
-                        <h4>Optimization Results:</h4>
-                        <ul>
-                            <li>Privacy-focused DNS configuration with custom servers</li>
-                            <li>Wireless performance optimization (Airtime Fairness, Beamforming)</li>
-                            <li>Disabled unnecessary ALG settings for cleaner NAT traversal</li>
-                            <li>Comprehensive security hardening with cloud service isolation</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="complexity-meter">
-                        <div class="complexity-fill intermediate"></div>
-                    </div>
-                    <div class="complexity-label">Complexity: Intermediate</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- KNOWLEDGE GARDEN SHOWCASE SECTION -->
-        <section id="knowledge-garden-showcase" class="content-section">
-            <h2 class="section-title">📚 Technical Documentation</h2>
-            <div class="knowledge-garden-container">
-                <div class="knowledge-garden-content">
-                    <h3>Explore the Knowledge Garden</h3>
-                    <p class="garden-description">A comprehensive collection of technical documentation, project guides, and system configurations. Over 70+ curated notes covering homelab implementations, privacy configurations, and infrastructure optimizations.</p>
-                    
-                    <div class="garden-highlights">
-                        <div class="garden-highlight-item">
-                            <span class="highlight-icon">🔬</span>
                             <div>
-                                <h4>Homelab Projects</h4>
-                                <p>Detailed guides on Pi-hole, TrueNAS, and enterprise storage configurations</p>
+                                <h3>Hardware & Software</h3>
                             </div>
                         </div>
-                        <div class="garden-highlight-item">
-                            <span class="highlight-icon">🛡️</span>
+                        <p>PC building, laptop repair, component troubleshooting, performance optimization, diagnostics</p>
+                        <div class="progress-bar" role="progressbar" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100" aria-label="Hardware & Software proficiency: 85%">
+                            <div class="progress-fill" style="width: 85%;"></div>
+                        </div>
+                    </div>
+                    <div class="skill-category animate-on-scroll stagger">
+                        <div class="skill-header">
+                            <div class="skill-icon-wrapper" aria-hidden="true">
+                                <svg><use href="#icon-computer"></use></svg>
+                            </div>
                             <div>
-                                <h4>Privacy & Security</h4>
-                                <p>GrapheneOS migration, router hardening, and network optimization documentation</p>
+                                <h3>Operating Systems</h3>
                             </div>
                         </div>
-                        <div class="garden-highlight-item">
-                            <span class="highlight-icon">💻</span>
-                            <div>
-                                <h4>Programming & Systems</h4>
-                                <p>Python fundamentals, C programming, and computer science concepts</p>
+                        <p>Windows optimization, Linux distributions, Virtual machines</p>
+                        <div class="progress-bar" role="progressbar" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100" aria-label="Operating Systems proficiency: 80%">
+                            <div class="progress-fill" style="width: 80%;"></div>
+                        </div>
+                    </div>
+                    <div class="skill-category animate-on-scroll stagger">
+                        <div class="skill-header">
+                            <div class="skill-icon-wrapper" aria-hidden="true">
+                                <svg><use href="#icon-groups"></use></svg>
                             </div>
+                            <div>
+                                <h3>Professional Experience</h3>
+                            </div>
+                        </div>
+                        <p>Team management, inventory control, technical support, process improvement</p>
+                        <div class="progress-bar" role="progressbar" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100" aria-label="Professional Experience proficiency: 90%">
+                            <div class="progress-fill" style="width: 90%;"></div>
+                        </div>
+                    </div>
+                    <div class="skill-category animate-on-scroll stagger">
+                        <div class="skill-header">
+                            <div class="skill-icon-wrapper" aria-hidden="true">
+                                <svg><use href="#icon-science"></use></svg>
+                            </div>
+                            <div>
+                                <h3>Emerging Tech</h3>
+                            </div>
+                        </div>
+                        <p>Homelab setup, NAS configuration, server management, 3D printing</p>
+                        <div class="progress-bar" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" aria-label="Emerging Tech proficiency: 75%">
+                            <div class="progress-fill" style="width: 75%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Experience Section -->
+            <section id="experience" class="content-section">
+                <h2 class="section-title">Experience Timeline</h2>
+                <div class="experience-grid-enhanced">
+                    <!-- Assistant Store Manager -->
+                    <div class="experience-card-enhanced animate-on-scroll fade-in-up">
+                        <div class="experience-header">
+                            <div class="experience-icon" aria-hidden="true">
+                                <svg><use href="#icon-badge"></use></svg>
+                            </div>
+                            <div class="experience-info">
+                                <h3>Assistant Store Manager</h3>
+                                <p class="experience-company">NTB/Mavis Tires</p>
+                                <div class="experience-date">
+                                    <div class="status-dot" aria-label="Currently active"></div>
+                                    <span>April 2024 - June 2025</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p class="experience-description">
+                            Directed daily operations for automotive service center, managing team of 8+ technicians. Implemented systematic improvements reducing turnaround time by 15% through shop management software optimization.
+                        </p>
+                        
+                        <div class="experience-tags">
+                            <span class="experience-tag">Team Leadership</span>
+                            <span class="experience-tag">Operations Management</span>
+                            <span class="experience-tag">Process Improvement</span>
+                            <span class="experience-tag">Quality Control</span>
                         </div>
                     </div>
                     
-                    <div class="garden-cta">
-                        <a href="garden-m3.html" class="garden-button">
-                            <span>Explore Knowledge Garden</span>
-                            <span class="material-symbols-outlined">arrow_forward</span>
-                        </a>
-                        <p class="garden-note" id="gardenLastUpdated">Interactive visualization with 6 featured projects • Live documentation • Updated last Oct 5, 2025 11:30 PM</p>
+                    <!-- Data Annotation Contractor -->
+                    <div class="experience-card-enhanced animate-on-scroll fade-in-up">
+                        <div class="experience-header">
+                            <div class="experience-icon" aria-hidden="true">
+                                <svg><use href="#icon-label"></use></svg>
+                            </div>
+                            <div class="experience-info">
+                                <h3>Data Annotation Contractor</h3>
+                                <p class="experience-company">Remote Platforms</p>
+                                <div class="experience-date">
+                                    <div class="status-dot" aria-label="Currently active"></div>
+                                    <span>January 2023 - Present</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p class="experience-description">
+                            Complete data labeling tasks for machine learning and AI training projects. Execute precise annotation work across multiple platforms while maintaining high quality standards.
+                        </p>
+                        
+                        <div class="experience-tags">
+                            <span class="experience-tag">Data Labeling</span>
+                            <span class="experience-tag">Quality Assurance</span>
+                            <span class="experience-tag">Attention to Detail</span>
+                            <span class="experience-tag">AI Training</span>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="garden-visual">
-                    <div class="garden-stats-grid">
-                        <div class="garden-stat">
-                            <div class="stat-number">70+</div>
-                            <div class="stat-label">Technical Notes</div>
-                        </div>
-                        <div class="garden-stat">
-                            <div class="stat-number">6</div>
-                            <div class="stat-label">Featured Projects</div>
-                        </div>
-                        <div class="garden-stat">
-                            <div class="stat-number">5</div>
-                            <div class="stat-label">Topic Domains</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+            </section>
 
-        <section id="contact" class="content-section">
-            <h2 class="section-title">Hi there wasn't enough?</h2>
-            <div class="contact-info">
-                <p>Email: <a href="mailto:amasud.tech@gmail.com">amasud.tech@gmail.com</a></p>
-                <p>Phone: <a href="tel:571-866-3024">571-866-3024</a></p>
-                <p>GitHub: <a href="https://github.com/AIMDaAlien" target="_blank" rel="noopener noreferrer" id="github-link">AIMDaAlien</a></p>
-            </div>
-        </section>
+            <section id="projects" class="content-section">
+                <h2 class="section-title">Technical Projects</h2>
+                <div class="projects-grid">
+                    <div class="project-card animate-on-scroll stagger">
+                        <div class="project-header">
+                            <div class="project-icon">🛡️</div>
+                            <div class="project-info">
+                                <h3>Pi-hole Network Security</h3>
+                                <div class="project-status">
+                                    <div class="status-indicator active" aria-label="Production deployment"></div>
+                                    <span>Production Deployment</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="project-description">Deployed DNS-level ad blocking using Raspberry Pi 3B+ with Unbound recursive DNS resolver. Integrated with WireGuard VPN for complete network privacy protection.</p>
+                        
+                        <div class="tech-stack">
+                            <span class="tech-tag">Raspberry Pi</span>
+                            <span class="tech-tag">Pi-hole</span>
+                            <span class="tech-tag">Unbound DNS</span>
+                            <span class="tech-tag">WireGuard VPN</span>
+                            <span class="tech-tag">Linux</span>
+                        </div>
+                        
+                        <div class="project-achievements">
+                            <h4>Key Achievements:</h4>
+                            <ul>
+                                <li>Blocked 40,000+ DNS queries daily with 15% block rate</li>
+                                <li>Zero-logging privacy configuration</li>
+                                <li>VPN integration for remote protection</li>
+                                <li>Custom blocklist optimization</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="complexity-meter" role="meter" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" aria-label="Project complexity: Intermediate">
+                            <div class="complexity-fill intermediate"></div>
+                        </div>
+                        <div class="complexity-label">Complexity: Intermediate</div>
+                    </div>
+                    
+                    <div class="project-card animate-on-scroll stagger">
+                        <div class="project-header">
+                            <div class="project-icon">💾</div>
+                            <div class="project-info">
+                                <h3>Enterprise SAS NAS Build</h3>
+                                <div class="project-status">
+                                    <div class="status-indicator active" aria-label="Production deployment"></div>
+                                    <span>Production Deployment</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="project-description">Built cost-effective TrueNAS server with 10x enterprise SAS drives and LSI controller. Achieved 5.46TB RAID-Z2 storage with Immich self-hosted photo backup, replacing Google Photos.</p>
+                        
+                        <div class="tech-stack">
+                            <span class="tech-tag">TrueNAS</span>
+                            <span class="tech-tag">ZFS RAID-Z2</span>
+                            <span class="tech-tag">LSI 9207-8i</span>
+                            <span class="tech-tag">Immich</span>
+                            <span class="tech-tag">i5-11400</span>
+                        </div>
+                        
+                        <div class="project-achievements">
+                            <h4>Key Achievements:</h4>
+                            <ul>
+                                <li>Built $270 NAS with enterprise-grade reliability (vs $800+ prebuilt)</li>
+                                <li>5.46TB usable storage with dual-drive failure protection</li>
+                                <li>Self-hosted Immich replacing Google Photos subscription</li>
+                                <li>Automated SMART monitoring and monthly scrubs</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="complexity-meter" role="meter" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" aria-label="Project complexity: Expert">
+                            <div class="complexity-fill expert"></div>
+                        </div>
+                        <div class="complexity-label">Complexity: Expert</div>
+                    </div>
+                    
+                    <div class="project-card animate-on-scroll stagger">
+                        <div class="project-header">
+                            <div class="project-icon">🛡️</div>
+                            <div class="project-info">
+                                <h3>GrapheneOS Migration</h3>
+                                <div class="project-status">
+                                    <div class="status-indicator completed" aria-label="Successfully deployed"></div>
+                                    <span>Successfully Deployed</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="project-description">Complete privacy-focused mobile OS migration from carrier-locked failure to successful GrapheneOS deployment. Documented bootloader unlock verification, damaged device acquisition strategy, and dual-device privacy architecture.</p>
+                        
+                        <div class="tech-stack">
+                            <span class="tech-tag">GrapheneOS</span>
+                            <span class="tech-tag">Pixel 7 Pro</span>
+                            <span class="tech-tag">Privacy Hardening</span>
+                            <span class="tech-tag">ADB</span>
+                            <span class="tech-tag">eSIM</span>
+                        </div>
+                        
+                        <div class="project-achievements">
+                            <h4>Key Achievements:</h4>
+                            <ul>
+                                <li>Bypassed carrier bootloader restrictions through systematic verification</li>
+                                <li>50% cost reduction via cosmetically damaged device acquisition</li>
+                                <li>Implemented dual-device privacy architecture for risk isolation</li>
+                                <li>Documented complete migration guide with troubleshooting protocols</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="complexity-meter" role="meter" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100" aria-label="Project complexity: Advanced">
+                            <div class="complexity-fill advanced"></div>
+                        </div>
+                        <div class="complexity-label">Complexity: Advanced</div>
+                    </div>
+                    
+                    <div class="project-card animate-on-scroll stagger">
+                        <div class="project-header">
+                            <div class="project-icon">🌐</div>
+                            <div class="project-info">
+                                <h3>Router Optimization & Hardening</h3>
+                                <div class="project-status">
+                                    <div class="status-indicator active" aria-label="Active configuration"></div>
+                                    <span>Active Configuration</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="project-description">Comprehensive TP-Link router optimization for performance and privacy. Systematic configuration of DNS, wireless settings, ALG management, and security hardening with documented methodology.</p>
+                        
+                        <div class="tech-stack">
+                            <span class="tech-tag">TP-Link</span>
+                            <span class="tech-tag">DNS Privacy</span>
+                            <span class="tech-tag">QoS</span>
+                            <span class="tech-tag">MU-MIMO</span>
+                            <span class="tech-tag">Network Security</span>
+                        </div>
+                        
+                        <div class="project-achievements">
+                            <h4>Optimization Results:</h4>
+                            <ul>
+                                <li>Privacy-focused DNS configuration with custom servers</li>
+                                <li>Wireless performance optimization (Airtime Fairness, Beamforming)</li>
+                                <li>Disabled unnecessary ALG settings for cleaner NAT traversal</li>
+                                <li>Comprehensive security hardening with cloud service isolation</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="complexity-meter" role="meter" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" aria-label="Project complexity: Intermediate">
+                            <div class="complexity-fill intermediate"></div>
+                        </div>
+                        <div class="complexity-label">Complexity: Intermediate</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Knowledge Garden Showcase Section -->
+            <section id="knowledge-garden-showcase" class="content-section">
+                <h2 class="section-title">
+                    <svg class="section-icon" width="32" height="32" aria-hidden="true"><use href="#icon-book"></use></svg>
+                    Technical Documentation
+                </h2>
+                <div class="knowledge-garden-container">
+                    <div class="knowledge-garden-content">
+                        <h3>Explore the Knowledge Garden</h3>
+                        <p class="garden-description">A comprehensive collection of technical documentation, project guides, and system configurations. Over 70+ curated notes covering homelab implementations, privacy configurations, and infrastructure optimizations.</p>
+                        
+                        <div class="garden-highlights">
+                            <div class="garden-highlight-item">
+                                <span class="highlight-icon" aria-hidden="true">🔬</span>
+                                <div>
+                                    <h4>Homelab Projects</h4>
+                                    <p>Detailed guides on Pi-hole, TrueNAS, and enterprise storage configurations</p>
+                                </div>
+                            </div>
+                            <div class="garden-highlight-item">
+                                <span class="highlight-icon" aria-hidden="true">🛡️</span>
+                                <div>
+                                    <h4>Privacy & Security</h4>
+                                    <p>GrapheneOS migration, router hardening, and network optimization documentation</p>
+                                </div>
+                            </div>
+                            <div class="garden-highlight-item">
+                                <span class="highlight-icon" aria-hidden="true">💻</span>
+                                <div>
+                                    <h4>Programming & Systems</h4>
+                                    <p>Python fundamentals, C programming, and computer science concepts</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="garden-cta">
+                            <a href="garden-m3.html" class="garden-button">
+                                <span>Explore Knowledge Garden</span>
+                                <span class="material-symbols-outlined">arrow_forward</span>
+                            </a>
+                            <p class="garden-note" id="gardenLastUpdated">Interactive documentation • 70+ technical notes • Last updated Oct 5, 2025</p>
+                        </div>
+                    </div>
+                    
+                    <div class="garden-visual">
+                        <div class="garden-stats-grid">
+                            <div class="garden-stat">
+                                <div class="stat-number">70+</div>
+                                <div class="stat-label">Technical Notes</div>
+                            </div>
+                            <div class="garden-stat">
+                                <div class="stat-number">6</div>
+                                <div class="stat-label">Featured Projects</div>
+                            </div>
+                            <div class="garden-stat">
+                                <div class="stat-number">5</div>
+                                <div class="stat-label">Topic Domains</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="contact" class="content-section">
+                <h2 class="section-title">Hi there wasn't enough?</h2>
+                <div class="contact-info">
+                    <p>Email: <a href="mailto:amasud.tech@gmail.com">amasud.tech@gmail.com</a></p>
+                    <p>Phone: <a href="tel:571-866-3024">571-866-3024</a></p>
+                    <p>GitHub: <a href="https://github.com/AIMDaAlien" target="_blank" rel="noopener noreferrer" id="github-link">AIMDaAlien</a></p>
+                </div>
+            </section>
+        </main>
 
         <footer>
             <div class="footer-links">
@@ -455,12 +497,10 @@
             <span class="footer-music-credit">Background music by Nato Kitchen "windows xp"</span>
             <p class="footer-copyright-text">&copy; 1984 Abdullah Masud. Few rights reserved.</p>
         </footer>
-
-    </div> 
+    </div>
 
     <div id="cursor-aura"></div>
     
     <script src="script.js" defer></script>
-    <script src="terminal.js" defer></script>
 </body>
 </html>

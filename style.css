@@ -39,10 +39,55 @@ body {
  line-height: 1.7;
  -webkit-font-smoothing: antialiased;
  -moz-osx-font-smoothing: grayscale;
- position: relative; /* For noise overlay */
- overflow-x: hidden; /* Prevent horizontal scroll */
+ position: relative;
+ overflow-x: hidden;
  background-color: var(--bg-dark);
  color: var(--fg-dark);
+}
+
+/* Skip Navigation Link - Accessibility */
+.skip-link {
+ position: absolute;
+ top: -40px;
+ left: 0;
+ background: var(--accent-color);
+ color: white;
+ padding: 8px 16px;
+ text-decoration: none;
+ border-radius: 0 0 4px 0;
+ z-index: 10000;
+ transition: top 0.2s;
+}
+
+.skip-link:focus {
+ top: 0;
+ outline: 2px solid white;
+ outline-offset: 2px;
+}
+
+/* Screen Reader Only Text */
+.sr-only {
+ position: absolute;
+ width: 1px;
+ height: 1px;
+ padding: 0;
+ margin: -1px;
+ overflow: hidden;
+ clip: rect(0, 0, 0, 0);
+ white-space: nowrap;
+ border-width: 0;
+}
+
+/* Improved Focus Indicators */
+*:focus-visible {
+ outline: 2px solid var(--accent-color);
+ outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible {
+ outline: 2px solid var(--accent-color);
+ outline-offset: 2px;
 }
 
 /* --- Body Noise Texture Overlay --- */

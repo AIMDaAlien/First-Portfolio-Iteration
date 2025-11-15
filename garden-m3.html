@@ -5,29 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Knowledge Garden - Material Design 3</title>
     
-    <!-- Ubuntu & JetBrains Mono Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    
-    <!-- Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
     
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="garden-m3.css">
     <link rel="stylesheet" href="garden-featured-styles.css">
-    <link rel="stylesheet" href="garden-graph-view.css">
     
-    <!-- Marked.js for markdown parsing -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    
-    <!-- Vis.js for graph visualization -->
-    <script src="https://unpkg.com/vis-network@latest/standalone/umd/vis-network.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
 </head>
 <body>
+    <!-- Inline SVG Icons -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+        <symbol id="icon-shield" viewBox="0 0 24 24">
+            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+        </symbol>
+        <symbol id="icon-storage" viewBox="0 0 24 24">
+            <path d="M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2zm4 3H4V5h2v2zm-4 7h20v-4H2v4zm2-3h2v2H4v-2z"/>
+        </symbol>
+        <symbol id="icon-network" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+        </symbol>
+        <symbol id="icon-lock" viewBox="0 0 24 24">
+            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+        </symbol>
+        <symbol id="icon-budget" viewBox="0 0 24 24">
+            <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
+        </symbol>
+        <symbol id="icon-lab" viewBox="0 0 24 24">
+            <path d="M13 11.33L18 18H6l5-6.67V6h2m0-2H9v7.67L4 18c-.55.66-.09 1.66.8 1.66h14.4c.89 0 1.35-1 .8-1.66l-5-6.67V4z"/>
+        </symbol>
+        <symbol id="icon-code" viewBox="0 0 24 24">
+            <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
+        </symbol>
+        <symbol id="icon-book" viewBox="0 0 24 24">
+            <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/>
+        </symbol>
+    </svg>
+
     <!-- Top App Bar -->
     <header class="top-app-bar">
-        <button class="icon-button" id="menuButton" title="Toggle navigation">
+        <button class="icon-button" id="menuButton" title="Toggle navigation" aria-label="Toggle navigation drawer">
             <span class="material-symbols-outlined">menu</span>
         </button>
         
@@ -40,7 +60,7 @@
         </div>
         
         <div class="top-app-bar-actions">
-            <button class="icon-button" id="themeToggle" title="Toggle theme">
+            <button class="icon-button" id="themeToggle" title="Toggle theme" aria-label="Toggle dark mode">
                 <span class="material-symbols-outlined">dark_mode</span>
             </button>
             <button class="filled-tonal-button" onclick="window.location.href='index.html'">
@@ -50,20 +70,16 @@
     </header>
 
     <!-- Navigation Rail (Desktop) -->
-    <nav class="navigation-rail">
-        <button class="nav-fab" onclick="garden.loadMainIndex()" title="Home">
+    <nav class="navigation-rail" aria-label="Main navigation">
+        <button class="nav-fab" onclick="garden.loadMainIndex()" title="Home" aria-label="Go to home">
             <span class="material-symbols-outlined">home</span>
         </button>
         
-        <button class="nav-destination" data-destination="notes" title="All Notes">
+        <button class="nav-destination" data-destination="notes" title="All Notes" aria-label="View all notes">
             <span class="material-symbols-outlined">description</span>
         </button>
         
-        <button class="nav-destination" data-destination="graph" title="Graph View">
-            <span class="material-symbols-outlined">hub</span>
-        </button>
-        
-        <button class="nav-destination" data-destination="search" title="Search">
+        <button class="nav-destination" data-destination="search" title="Search" aria-label="Search notes">
             <span class="material-symbols-outlined">search</span>
         </button>
     </nav>
@@ -71,7 +87,8 @@
     <!-- Navigation Drawer (Sidebar) -->
     <aside class="navigation-drawer" id="navigationDrawer">
         <div class="drawer-header">
-            <h2>📚 Table of Contents</h2>
+            <svg width="20" height="20" class="drawer-icon" aria-hidden="true"><use href="#icon-book"></use></svg>
+            <h2>Table of Contents</h2>
         </div>
         <ul class="folder-list" id="folderStructure">
             <!-- Will be populated dynamically -->
@@ -83,16 +100,18 @@
         <!-- Featured Projects Section -->
         <section class="featured-projects-section" id="featuredProjects">
             <div class="featured-header">
-                <span class="material-symbols-outlined featured-icon">stars</span>
+                <span class="material-symbols-outlined featured-icon" aria-hidden="true">stars</span>
                 <h2>Featured Technical Projects</h2>
-                <p class="featured-subtitle">Showcasing practical implementation of IT concepts and systems architecture</p>
+                <p class="featured-subtitle">Practical implementation of IT concepts and systems architecture</p>
             </div>
             
             <div class="featured-grid">
                 <!-- GrapheneOS Migration -->
-                <div class="featured-card" onclick="garden.loadNote('GrapheneOS Migration Guide - Complete Documentation.md')">
+                <article class="featured-card" onclick="garden.loadNote('GrapheneOS Migration Guide - Complete Documentation.md')">
                     <div class="featured-card-header">
-                        <div class="featured-card-icon">🛡️</div>
+                        <div class="featured-card-icon" aria-hidden="true">
+                            <svg><use href="#icon-shield"></use></svg>
+                        </div>
                         <div class="featured-badge privacy">Privacy & Security</div>
                     </div>
                     <h3>GrapheneOS Migration</h3>
@@ -103,14 +122,18 @@
                         <span class="featured-tag">Android</span>
                         <span class="featured-tag">Security</span>
                     </div>
-                    <div class="complexity-meter"><div class="complexity-fill advanced"></div></div>
+                    <div class="complexity-meter" role="meter" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100" aria-label="Complexity: Advanced">
+                        <div class="complexity-fill advanced"></div>
+                    </div>
                     <div class="complexity-label">Complexity: Advanced</div>
-                </div>
+                </article>
                 
                 <!-- TrueNAS Build -->
-                <div class="featured-card" onclick="garden.loadNote('TrueNAS Build Guide.md')">
+                <article class="featured-card" onclick="garden.loadNote('TrueNAS Build Guide.md')">
                     <div class="featured-card-header">
-                        <div class="featured-card-icon">💾</div>
+                        <div class="featured-card-icon" aria-hidden="true">
+                            <svg><use href="#icon-storage"></use></svg>
+                        </div>
                         <div class="featured-badge storage">Storage & Infrastructure</div>
                     </div>
                     <h3>Enterprise NAS Architecture</h3>
@@ -121,14 +144,18 @@
                         <span class="featured-tag">SAS</span>
                         <span class="featured-tag">Homelab</span>
                     </div>
-                    <div class="complexity-meter"><div class="complexity-fill expert"></div></div>
+                    <div class="complexity-meter" role="meter" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" aria-label="Complexity: Expert">
+                        <div class="complexity-fill expert"></div>
+                    </div>
                     <div class="complexity-label">Complexity: Expert</div>
-                </div>
+                </article>
                 
                 <!-- Pi-hole -->
-                <div class="featured-card" onclick="garden.loadNote('Homelab/Pi-hole Setup Guide - Complete Journey.md')">
+                <article class="featured-card" onclick="garden.loadNote('Homelab/Pi-hole Setup Guide - Complete Journey.md')">
                     <div class="featured-card-header">
-                        <div class="featured-card-icon">🌐</div>
+                        <div class="featured-card-icon" aria-hidden="true">
+                            <svg><use href="#icon-network"></use></svg>
+                        </div>
                         <div class="featured-badge network">Network Security</div>
                     </div>
                     <h3>DNS-Level Ad Blocking</h3>
@@ -139,14 +166,18 @@
                         <span class="featured-tag">Raspberry Pi</span>
                         <span class="featured-tag">VPN</span>
                     </div>
-                    <div class="complexity-meter"><div class="complexity-fill intermediate"></div></div>
+                    <div class="complexity-meter" role="meter" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" aria-label="Complexity: Intermediate">
+                        <div class="complexity-fill intermediate"></div>
+                    </div>
                     <div class="complexity-label">Complexity: Intermediate</div>
-                </div>
+                </article>
                 
                 <!-- WireGuard VPN -->
-                <div class="featured-card" onclick="garden.loadNote('WireGuard VPN Setup.md')">
+                <article class="featured-card" onclick="garden.loadNote('WireGuard VPN Setup.md')">
                     <div class="featured-card-header">
-                        <div class="featured-card-icon">🔐</div>
+                        <div class="featured-card-icon" aria-hidden="true">
+                            <svg><use href="#icon-lock"></use></svg>
+                        </div>
                         <div class="featured-badge network">Network Security</div>
                     </div>
                     <h3>WireGuard VPN Implementation</h3>
@@ -157,14 +188,18 @@
                         <span class="featured-tag">Networking</span>
                         <span class="featured-tag">Security</span>
                     </div>
-                    <div class="complexity-meter"><div class="complexity-fill intermediate"></div></div>
+                    <div class="complexity-meter" role="meter" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" aria-label="Complexity: Intermediate">
+                        <div class="complexity-fill intermediate"></div>
+                    </div>
                     <div class="complexity-label">Complexity: Intermediate</div>
-                </div>
+                </article>
                 
                 <!-- Budget NAS -->
-                <div class="featured-card" onclick="garden.loadNote('Projects/Budget SAS Drive NAS Build Guide.md')">
+                <article class="featured-card" onclick="garden.loadNote('Projects/Budget SAS Drive NAS Build Guide.md')">
                     <div class="featured-card-header">
-                        <div class="featured-card-icon">💰</div>
+                        <div class="featured-card-icon" aria-hidden="true">
+                            <svg><use href="#icon-budget"></use></svg>
+                        </div>
                         <div class="featured-badge storage">Cost Optimization</div>
                     </div>
                     <h3>Budget SAS NAS Build</h3>
@@ -175,51 +210,35 @@
                         <span class="featured-tag">LSI Controller</span>
                         <span class="featured-tag">Storage</span>
                     </div>
-                    <div class="complexity-meter"><div class="complexity-fill advanced"></div></div>
+                    <div class="complexity-meter" role="meter" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100" aria-label="Complexity: Advanced">
+                        <div class="complexity-fill advanced"></div>
+                    </div>
                     <div class="complexity-label">Complexity: Advanced</div>
-                </div>
-                
-                <!-- Interactive Knowledge Graph -->
-                <div class="featured-card featured-card-special">
-                    <div class="featured-card-header">
-                        <div class="featured-card-icon">🌸</div>
-                        <div class="featured-badge dev">Web Development</div>
-                    </div>
-                    <h3>Interactive Knowledge Graph</h3>
-                    <p>Vis.js-powered force-directed graph visualization. Features node clustering, zoom controls, and Material 3 aesthetics with periwinkle theme.</p>
-                    <div class="featured-tags">
-                        <span class="featured-tag">Vis.js</span>
-                        <span class="featured-tag">JavaScript</span>
-                        <span class="featured-tag">Material 3</span>
-                        <span class="featured-tag">Graph Theory</span>
-                    </div>
-                    <div class="complexity-meter"><div class="complexity-fill expert"></div></div>
-                    <div class="complexity-label">Complexity: Expert</div>
-                    <div class="current-page-indicator">📍 You are here</div>
-                </div>
+                </article>
             </div>
         </section>
         
         <div class="note-container">
             <article class="note-card">
                 <div class="note-content" id="noteContent">
-                    <!-- Content will be loaded here -->
+                    <h1>Welcome to the Knowledge Garden</h1>
+                    <p>Select a featured project above or browse the table of contents to explore technical documentation.</p>
                 </div>
             </article>
         </div>
     </main>
 
     <!-- Loading Spinner -->
-    <div class="loading-spinner" id="loadingSpinner"></div>
+    <div class="loading-spinner" id="loadingSpinner" aria-label="Loading content" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
 
-    <script src="garden-m3.js"></script>
-    <script src="garden-graph-view.js"></script>
+    <script src="garden-m3.js" defer></script>
     <script>
         // Theme Toggle
         const themeToggle = document.getElementById('themeToggle');
         const themeIcon = themeToggle.querySelector('.material-symbols-outlined');
         
-        // Check for saved theme preference or default to light mode
         const currentTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', currentTheme);
         themeIcon.textContent = currentTheme === 'dark' ? 'light_mode' : 'dark_mode';
@@ -239,8 +258,10 @@
         const contentArea = document.getElementById('contentArea');
         
         menuButton.addEventListener('click', () => {
+            const isOpen = navigationDrawer.classList.contains('open');
             navigationDrawer.classList.toggle('open');
             contentArea.classList.toggle('drawer-open');
+            menuButton.setAttribute('aria-expanded', !isOpen);
         });
     </script>
 </body>
