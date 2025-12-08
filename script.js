@@ -347,3 +347,47 @@ function preloadImages() {
     });
 }
 document.addEventListener('DOMContentLoaded', preloadImages);
+
+// --- Dynamic Knowledge Garden Stats ---
+function updateGardenStats() {
+    // Update "Last Updated" with relative date
+    const lastUpdatedEl = document.getElementById('gardenLastUpdated');
+    if (lastUpdatedEl && lastUpdatedEl.dataset.updated) {
+        const updatedDate = new Date(lastUpdatedEl.dataset.updated);
+        const now = new Date();
+        const diffMs = now - updatedDate;
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+        let relativeText;
+        if (diffDays === 0) {
+            if (diffHours < 1) {
+                relativeText = 'Updated just now';
+            } else if (diffHours === 1) {
+                relativeText = 'Updated 1 hour ago';
+            } else {
+                relativeText = `Updated ${diffHours} hours ago`;
+            }
+        } else if (diffDays === 1) {
+            relativeText = 'Updated yesterday';
+        } else if (diffDays < 7) {
+            relativeText = `Updated ${diffDays} days ago`;
+        } else if (diffDays < 30) {
+            const weeks = Math.floor(diffDays / 7);
+            relativeText = weeks === 1 ? 'Updated 1 week ago' : `Updated ${weeks} weeks ago`;
+        } else {
+            // Show the actual date for older updates
+            relativeText = `Updated ${updatedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+        }
+
+        lastUpdatedEl.textContent = relativeText;
+    }
+
+    // Update note count with + suffix if over threshold
+    const noteCountEl = document.getElementById('technicalNotesCount');
+    if (noteCountEl && noteCountEl.dataset.count) {
+        const count = parseInt(noteCountEl.dataset.count, 10);
+        noteCountEl.textContent = count >= 10 ? `${count}+` : count.toString();
+    }
+}
+document.addEventListener('DOMContentLoaded', updateGardenStats);
