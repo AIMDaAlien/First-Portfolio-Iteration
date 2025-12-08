@@ -1,8 +1,6 @@
 /* Material Design 3 - Knowledge Garden Stylesheet */
 /* ENHANCED: Comprehensive interaction support with systematic visual improvements */
-/* Periwinkle/Lavender Color Palette - PRESERVED */
-
-@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+/* Fonts loaded via HTML link tags - no @import needed */
 
 :root {
   /* Primary Colors - Periwinkle - PRESERVED */
@@ -10,19 +8,19 @@
   --md-sys-color-on-primary: #FFFFFF;
   --md-sys-color-primary-container: #E8DEFF;
   --md-sys-color-on-primary-container: #260062;
-  
+
   /* Secondary Colors - Lavender - PRESERVED */
   --md-sys-color-secondary: #B388FF;
   --md-sys-color-on-secondary: #000000;
   --md-sys-color-secondary-container: #E1BEE7;
   --md-sys-color-on-secondary-container: #311B92;
-  
+
   /* Tertiary Colors - PRESERVED */
   --md-sys-color-tertiary: #9575CD;
   --md-sys-color-on-tertiary: #FFFFFF;
   --md-sys-color-tertiary-container: #EDE7F6;
   --md-sys-color-on-tertiary-container: #4527A0;
-  
+
   /* Surface & Background - PRESERVED */
   --md-sys-color-surface: #FDFBFF;
   --md-sys-color-on-surface: #1C1B1E;
@@ -33,17 +31,17 @@
   --md-sys-color-surface-container: #F3EDF7;
   --md-sys-color-surface-container-high: #ECE6F0;
   --md-sys-color-surface-container-highest: #E6E0E9;
-  
+
   /* Outline - PRESERVED */
   --md-sys-color-outline: #79747E;
   --md-sys-color-outline-variant: #C9C5D0;
-  
+
   /* Error - PRESERVED */
   --md-sys-color-error: #BA1A1A;
   --md-sys-color-on-error: #FFFFFF;
   --md-sys-color-error-container: #FFDAD6;
   --md-sys-color-on-error-container: #410002;
-  
+
   /* Elevation Shadows - PRESERVED */
   --md-sys-elevation-0: none;
   --md-sys-elevation-1: 0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
@@ -51,7 +49,7 @@
   --md-sys-elevation-3: 0px 4px 8px 3px rgba(0, 0, 0, 0.15), 0px 1px 3px rgba(0, 0, 0, 0.3);
   --md-sys-elevation-4: 0px 6px 10px 4px rgba(0, 0, 0, 0.15), 0px 2px 3px rgba(0, 0, 0, 0.3);
   --md-sys-elevation-5: 0px 8px 12px 6px rgba(0, 0, 0, 0.15), 0px 4px 4px rgba(0, 0, 0, 0.3);
-  
+
   /* Shape Corners - PRESERVED */
   --md-sys-shape-corner-none: 0px;
   --md-sys-shape-corner-extra-small: 4px;
@@ -59,24 +57,24 @@
   --md-sys-shape-corner-medium: 12px;
   --md-sys-shape-corner-large: 16px;
   --md-sys-shape-corner-extra-large: 28px;
-  
+
   /* Typography Scale - PRESERVED */
   --md-sys-typescale-display-large: 400 57px/64px 'Ubuntu', sans-serif;
   --md-sys-typescale-display-medium: 400 45px/52px 'Ubuntu', sans-serif;
   --md-sys-typescale-display-small: 400 36px/44px 'Ubuntu', sans-serif;
-  
+
   --md-sys-typescale-headline-large: 400 32px/40px 'Ubuntu', sans-serif;
   --md-sys-typescale-headline-medium: 400 28px/36px 'Ubuntu', sans-serif;
   --md-sys-typescale-headline-small: 400 24px/32px 'Ubuntu', sans-serif;
-  
+
   --md-sys-typescale-title-large: 400 22px/28px 'Ubuntu', sans-serif;
   --md-sys-typescale-title-medium: 500 16px/24px 'Ubuntu', sans-serif;
   --md-sys-typescale-title-small: 500 14px/20px 'Ubuntu', sans-serif;
-  
+
   --md-sys-typescale-body-large: 400 16px/24px 'Ubuntu', sans-serif;
   --md-sys-typescale-body-medium: 400 14px/20px 'Ubuntu', sans-serif;
   --md-sys-typescale-body-small: 400 12px/16px 'Ubuntu', sans-serif;
-  
+
   --md-sys-typescale-label-large: 500 14px/20px 'Ubuntu', sans-serif;
   --md-sys-typescale-label-medium: 500 12px/16px 'Ubuntu', sans-serif;
   --md-sys-typescale-label-small: 500 11px/16px 'Ubuntu', sans-serif;
@@ -88,12 +86,12 @@
   --md-sys-color-on-primary: #381E72;
   --md-sys-color-primary-container: #4F378A;
   --md-sys-color-on-primary-container: #E8DEFF;
-  
+
   --md-sys-color-secondary: #CCC2DC;
   --md-sys-color-on-secondary: #332D41;
   --md-sys-color-secondary-container: #4A4458;
   --md-sys-color-on-secondary-container: #E8DEF8;
-  
+
   --md-sys-color-surface: #1C1B1E;
   --md-sys-color-on-surface: #E6E1E6;
   --md-sys-color-surface-variant: #49454E;
@@ -103,7 +101,7 @@
   --md-sys-color-surface-container: #211F26;
   --md-sys-color-surface-container-high: #2B2930;
   --md-sys-color-surface-container-highest: #36343B;
-  
+
   --md-sys-color-outline: #948F99;
   --md-sys-color-outline-variant: #49454E;
 }
@@ -437,7 +435,8 @@ body {
   margin: 16px 0;
 }
 
-.note-content ul, .note-content ol {
+.note-content ul,
+.note-content ol {
   margin: 16px 0;
   padding-left: 24px;
 }
@@ -557,8 +556,13 @@ body {
 }
 
 @keyframes spin {
-  0% { transform: translate(-50%, -50%) rotate(0deg); }
-  100% { transform: translate(-50%, -50%) rotate(360deg); }
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
 }
 
 /* ENHANCED CORNER KNOWLEDGE GRAPH WIDGET - SYSTEMATIC IMPROVEMENTS */
@@ -814,8 +818,8 @@ body {
   opacity: 0;
   transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   /* ENHANCED: Improved text contrast */
-  text-shadow: 
-    1px 1px 2px rgba(0, 0, 0, 0.4), 
+  text-shadow:
+    1px 1px 2px rgba(0, 0, 0, 0.4),
     -1px -1px 2px rgba(255, 255, 255, 0.15),
     0 0 4px rgba(0, 0, 0, 0.2);
   font-weight: 500;
@@ -840,9 +844,20 @@ body {
 }
 
 @keyframes pulse {
-  0% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.1); }
-  100% { opacity: 1; transform: scale(1); }
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(1.1);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* ENHANCED Graph Tooltip - SYSTEMATIC INFORMATION PRESENTATION */
@@ -912,12 +927,12 @@ body {
     bottom: 16px;
     right: 16px;
   }
-  
+
   .corner-graph-widget.maximized {
     left: 16px;
     top: 80px;
   }
-  
+
   .graph-controls .icon-button {
     width: 30px;
     height: 30px;
@@ -932,14 +947,14 @@ body {
     bottom: 12px;
     right: 12px;
   }
-  
+
   .corner-graph-widget.expanded {
     width: calc(100vw - 24px);
     height: 280px;
     bottom: 60px;
     right: 12px;
   }
-  
+
   .graph-controls .icon-button {
     width: 28px;
     height: 28px;
@@ -953,23 +968,23 @@ body {
     width: 0;
     overflow: hidden;
   }
-  
+
   .top-app-bar {
     left: 0;
   }
-  
+
   .content-area {
     margin-left: 0;
   }
-  
+
   .navigation-drawer {
     left: -360px;
   }
-  
+
   .navigation-drawer.open {
     left: 0;
   }
-  
+
   .content-area.drawer-open {
     margin-left: 0;
   }
@@ -979,15 +994,15 @@ body {
   .top-app-bar {
     padding: 0 16px;
   }
-  
+
   .content-area {
     padding: 16px;
   }
-  
+
   .note-card {
     padding: 24px 16px;
   }
-  
+
   .note-content h1 {
     font: var(--md-sys-typescale-display-small);
   }
@@ -1004,12 +1019,15 @@ body * {
 
 /* ENHANCED Accessibility - SYSTEMATIC IMPROVEMENTS */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  
+
   .corner-graph-widget,
   .graph-node,
   .graph-link,
@@ -1023,16 +1041,16 @@ body * {
     border: 2px solid var(--md-sys-color-outline);
     background: var(--md-sys-color-surface);
   }
-  
+
   .graph-controls .icon-button {
     border: 2px solid rgba(255, 255, 255, 0.8);
     background: rgba(255, 255, 255, 0.4);
   }
-  
+
   .graph-node {
     stroke-width: 2;
   }
-  
+
   .graph-link {
     stroke-opacity: 0.6;
     stroke-width: 1.5;
@@ -1080,6 +1098,7 @@ body * {
     height: 40px;
     opacity: 0.8;
   }
+
   to {
     height: 200px;
     opacity: 1;
@@ -1091,6 +1110,7 @@ body * {
     height: 200px;
     opacity: 1;
   }
+
   to {
     height: 40px;
     opacity: 0.8;
