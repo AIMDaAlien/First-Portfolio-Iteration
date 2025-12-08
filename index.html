@@ -1,25 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Abdullah Masud - IT Professional</title>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
-    <meta name="description" content="Abdullah Masud - IT Professional specializing in systems optimization, hardware troubleshooting, and emerging tech.">
-    
+    <meta name="description"
+        content="Abdullah Masud - IT Professional specializing in systems optimization, hardware troubleshooting, and emerging tech.">
+
     <!-- Material Symbols for icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        rel="stylesheet">
+
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="style-poc3.css">
     <link rel="stylesheet" href="cards-m3-balanced.css">
     <link rel="stylesheet" href="knowledge-garden-section.css">
     <link rel="stylesheet" href="terminal-privacy.css">
 </head>
+
 <body>
     <!-- Load SVG Sprites -->
     <div style="display: none;">
@@ -28,7 +33,8 @@
 
     <div id="loader">
         <p>Your system does not seem to be efficient enough if you are able to read this whole sentence. (>_<) </p>
-    loading...</div>
+                loading...
+    </div>
 
     <div id="startup-intro">
         <p id="startup-quote">"Aim at nothing, and you'll hit it every time"</p>
@@ -36,24 +42,26 @@
         <p id="startup-prompt">Press any key to get into the mood</p>
     </div>
 
-    <audio id="startup-sound" src="windows xp.mp3" preload="auto"></audio>
+
 
     <div id="main-content" style="display: none;">
 
         <nav id="main-nav">
             <div class="nav-logo">Aim</div>
-            <div class="hamburger-menu">
+            <button class="hamburger-menu" aria-label="Toggle navigation menu" aria-expanded="false">
                 <span></span>
                 <span></span>
                 <span></span>
-            </div>
+            </button>
             <ul>
                 <li><a href="#hero" class="nav-link">Home</a></li>
                 <li><a href="#about" class="nav-link">About</a></li>
                 <li><a href="#skills" class="nav-link">Skills</a></li>
                 <li><a href="#experience" class="nav-link">Experience</a></li>
                 <li><a href="#projects" class="nav-link">Projects</a></li>
-                <li><a href="garden-m3.html" class="nav-link">📚 Knowledge Garden</a></li>
+                <li><a href="garden-m3.html" class="nav-link"><svg class="nav-icon" aria-hidden="true">
+                            <use href="icons-sprite.svg#icon-book"></use>
+                        </svg> Knowledge Garden</a></li>
                 <li><a href="#contact" class="nav-link">Contact</a></li>
             </ul>
         </nav>
@@ -69,25 +77,35 @@
         <!-- M3 BALANCED ABOUT SECTION -->
         <section id="about" class="content-section">
             <h2 class="section-title">Hi there,</h2>
-            <p class="bio-text animate-on-scroll fade-in">I'm a detail-oriented IT professional with a passion for hands-on problem solving. I approach technical expertise with creative thinking, whether I'm optimizing system performance, troubleshooting hardware issues, or exploring innovative solutions I'd hope I can afford. Outside the tech world, I cultivate patience through gardening and foraging for rare flora in unexpected places, while mountain biking keeps me sharp (just a cool excuse to touch grass).</p>
+            <p class="bio-text animate-on-scroll fade-in">I'm a detail-oriented IT professional with a passion for
+                hands-on problem solving. I approach technical challenges with creative thinking, whether I'm optimizing
+                system performance, troubleshooting hardware issues, or exploring cutting-edge solutions to everyday
+                problems. Outside the tech world, I cultivate patience through gardening and foraging for rare flora in
+                unexpected places, while mountain biking keeps me sharp (just a cool excuse to touch grass).</p>
             <div class="stats-cards">
                 <div class="stat-card animate-on-scroll stagger">
                     <div class="card-icon">
-                        <svg><use href="icons-sprite.svg#icon-school"></use></svg>
+                        <svg>
+                            <use href="icons-sprite.svg#icon-school"></use>
+                        </svg>
                     </div>
                     <h3>George Mason University</h3>
                     <p>B.S. Information Technology<br>(Expected 2028)</p>
                 </div>
                 <div class="stat-card animate-on-scroll stagger">
                     <div class="card-icon">
-                        <svg><use href="icons-sprite.svg#icon-build"></use></svg>
+                        <svg>
+                            <use href="icons-sprite.svg#icon-build"></use>
+                        </svg>
                     </div>
                     <h3>6+ Years Experience</h3>
                     <p>Technical troubleshooting & team management</p>
                 </div>
                 <div class="stat-card animate-on-scroll stagger">
                     <div class="card-icon">
-                        <svg><use href="icons-sprite.svg#icon-terminal"></use></svg>
+                        <svg>
+                            <use href="icons-sprite.svg#icon-terminal"></use>
+                        </svg>
                     </div>
                     <h3>Linux Enthusiast</h3>
                     <p>Since age 13</p>
@@ -102,58 +120,54 @@
                 <div class="skill-category animate-on-scroll stagger">
                     <div class="skill-header">
                         <div class="skill-icon-wrapper">
-                            <svg><use href="icons-sprite.svg#icon-memory"></use></svg>
+                            <svg>
+                                <use href="icons-sprite.svg#icon-memory"></use>
+                            </svg>
                         </div>
                         <div>
                             <h3>Hardware & Software</h3>
                         </div>
                     </div>
                     <p>PC building, laptop repair, component troubleshooting, performance optimization, diagnostics</p>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: 85%;"></div>
-                    </div>
                 </div>
                 <div class="skill-category animate-on-scroll stagger">
                     <div class="skill-header">
                         <div class="skill-icon-wrapper">
-                            <svg><use href="icons-sprite.svg#icon-computer"></use></svg>
+                            <svg>
+                                <use href="icons-sprite.svg#icon-computer"></use>
+                            </svg>
                         </div>
                         <div>
                             <h3>Operating Systems</h3>
                         </div>
                     </div>
                     <p>Windows optimization, Linux distributions, Virtual machines</p>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: 80%;"></div>
-                    </div>
                 </div>
                 <div class="skill-category animate-on-scroll stagger">
                     <div class="skill-header">
                         <div class="skill-icon-wrapper">
-                            <svg><use href="icons-sprite.svg#icon-groups"></use></svg>
+                            <svg>
+                                <use href="icons-sprite.svg#icon-groups"></use>
+                            </svg>
                         </div>
                         <div>
                             <h3>Professional Experience</h3>
                         </div>
                     </div>
                     <p>Team management, inventory control, technical support, process improvement</p>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: 90%;"></div>
-                    </div>
                 </div>
                 <div class="skill-category animate-on-scroll stagger">
                     <div class="skill-header">
                         <div class="skill-icon-wrapper">
-                            <svg><use href="icons-sprite.svg#icon-science"></use></svg>
+                            <svg>
+                                <use href="icons-sprite.svg#icon-science"></use>
+                            </svg>
                         </div>
                         <div>
                             <h3>Emerging Tech</h3>
                         </div>
                     </div>
                     <p>Homelab setup, NAS configuration, server management, 3D printing</p>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: 75%;"></div>
-                    </div>
                 </div>
             </div>
         </section>
@@ -166,7 +180,9 @@
                 <div class="experience-card-enhanced animate-on-scroll fade-in-up">
                     <div class="experience-header">
                         <div class="experience-icon">
-                            <svg><use href="icons-sprite.svg#icon-badge"></use></svg>
+                            <svg>
+                                <use href="icons-sprite.svg#icon-badge"></use>
+                            </svg>
                         </div>
                         <div class="experience-info">
                             <h3>Assistant Store Manager</h3>
@@ -177,11 +193,13 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <p class="experience-description">
-                        Directed daily operations for automotive service center, managing team of 8+ technicians. Implemented systematic improvements reducing turnaround time by 15% through shop management software optimization.
+                        Directed daily operations for automotive service center, managing team of 8+ technicians.
+                        Implemented systematic improvements reducing turnaround time by 15% through shop management
+                        software optimization.
                     </p>
-                    
+
                     <div class="experience-tags">
                         <span class="experience-tag">Team Leadership</span>
                         <span class="experience-tag">Operations Management</span>
@@ -189,12 +207,14 @@
                         <span class="experience-tag">Quality Control</span>
                     </div>
                 </div>
-                
+
                 <!-- Data Annotation Contractor -->
                 <div class="experience-card-enhanced animate-on-scroll fade-in-up">
                     <div class="experience-header">
                         <div class="experience-icon">
-                            <svg><use href="icons-sprite.svg#icon-label"></use></svg>
+                            <svg>
+                                <use href="icons-sprite.svg#icon-label"></use>
+                            </svg>
                         </div>
                         <div class="experience-info">
                             <h3>Data Annotation Contractor</h3>
@@ -205,11 +225,12 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <p class="experience-description">
-                        Complete data labeling tasks for machine learning and AI training projects. Execute precise annotation work across multiple platforms while maintaining high quality standards.
+                        Complete data labeling tasks for machine learning and AI training projects. Execute precise
+                        annotation work across multiple platforms while maintaining high quality standards.
                     </p>
-                    
+
                     <div class="experience-tags">
                         <span class="experience-tag">Data Labeling</span>
                         <span class="experience-tag">Quality Assurance</span>
@@ -225,7 +246,9 @@
             <div class="projects-grid">
                 <div class="project-card animate-on-scroll stagger">
                     <div class="project-header">
-                        <div class="project-icon">🛡️</div>
+                        <div class="project-icon"><svg aria-hidden="true">
+                                <use href="icons-sprite.svg#icon-shield"></use>
+                            </svg></div>
                         <div class="project-info">
                             <h3>Pi-hole Network Security</h3>
                             <div class="project-status">
@@ -234,8 +257,10 @@
                             </div>
                         </div>
                     </div>
-                    <p class="project-description">Deployed DNS-level ad blocking using Raspberry Pi 3B+ with Unbound recursive DNS resolver. Integrated with WireGuard VPN for complete network privacy protection.</p>
-                    
+                    <p class="project-description">Deployed DNS-level ad blocking using Raspberry Pi 3B+ with Unbound
+                        recursive DNS resolver. Integrated with WireGuard VPN for complete network privacy protection.
+                    </p>
+
                     <div class="tech-stack">
                         <span class="tech-tag">Raspberry Pi</span>
                         <span class="tech-tag">Pi-hole</span>
@@ -243,7 +268,7 @@
                         <span class="tech-tag">WireGuard VPN</span>
                         <span class="tech-tag">Linux</span>
                     </div>
-                    
+
                     <div class="project-achievements">
                         <h4>Key Achievements:</h4>
                         <ul>
@@ -253,16 +278,18 @@
                             <li>Custom blocklist optimization</li>
                         </ul>
                     </div>
-                    
+
                     <div class="complexity-meter">
                         <div class="complexity-fill intermediate"></div>
                     </div>
                     <div class="complexity-label">Complexity: Intermediate</div>
                 </div>
-                
+
                 <div class="project-card animate-on-scroll stagger">
                     <div class="project-header">
-                        <div class="project-icon">💾</div>
+                        <div class="project-icon"><svg aria-hidden="true">
+                                <use href="icons-sprite.svg#icon-storage"></use>
+                            </svg></div>
                         <div class="project-info">
                             <h3>Enterprise SAS NAS Build</h3>
                             <div class="project-status">
@@ -271,8 +298,10 @@
                             </div>
                         </div>
                     </div>
-                    <p class="project-description">Built cost-effective TrueNAS server with 10x enterprise SAS drives and LSI controller. Achieved 5.46TB RAID-Z2 storage with Immich self-hosted photo backup, replacing Google Photos.</p>
-                    
+                    <p class="project-description">Built cost-effective TrueNAS server with 10x enterprise SAS drives
+                        and LSI controller. Achieved 5.46TB RAID-Z2 storage with Immich self-hosted photo backup,
+                        replacing Google Photos.</p>
+
                     <div class="tech-stack">
                         <span class="tech-tag">TrueNAS</span>
                         <span class="tech-tag">ZFS RAID-Z2</span>
@@ -280,7 +309,7 @@
                         <span class="tech-tag">Immich</span>
                         <span class="tech-tag">i5-11400</span>
                     </div>
-                    
+
                     <div class="project-achievements">
                         <h4>Key Achievements:</h4>
                         <ul>
@@ -290,16 +319,18 @@
                             <li>Automated SMART monitoring and monthly scrubs</li>
                         </ul>
                     </div>
-                    
+
                     <div class="complexity-meter">
                         <div class="complexity-fill expert"></div>
                     </div>
                     <div class="complexity-label">Complexity: Expert</div>
                 </div>
-                
+
                 <div class="project-card animate-on-scroll stagger">
                     <div class="project-header">
-                        <div class="project-icon">🛡️</div>
+                        <div class="project-icon"><svg aria-hidden="true">
+                                <use href="icons-sprite.svg#icon-phone-android"></use>
+                            </svg></div>
                         <div class="project-info">
                             <h3>GrapheneOS Migration</h3>
                             <div class="project-status">
@@ -308,8 +339,10 @@
                             </div>
                         </div>
                     </div>
-                    <p class="project-description">Complete privacy-focused mobile OS migration from carrier-locked failure to successful GrapheneOS deployment. Documented bootloader unlock verification, damaged device acquisition strategy, and dual-device privacy architecture.</p>
-                    
+                    <p class="project-description">Complete privacy-focused mobile OS migration from carrier-locked
+                        failure to successful GrapheneOS deployment. Documented bootloader unlock verification, damaged
+                        device acquisition strategy, and dual-device privacy architecture.</p>
+
                     <div class="tech-stack">
                         <span class="tech-tag">GrapheneOS</span>
                         <span class="tech-tag">Pixel 7 Pro</span>
@@ -317,7 +350,7 @@
                         <span class="tech-tag">ADB</span>
                         <span class="tech-tag">eSIM</span>
                     </div>
-                    
+
                     <div class="project-achievements">
                         <h4>Key Achievements:</h4>
                         <ul>
@@ -327,16 +360,18 @@
                             <li>Documented complete migration guide with troubleshooting protocols</li>
                         </ul>
                     </div>
-                    
+
                     <div class="complexity-meter">
                         <div class="complexity-fill advanced"></div>
                     </div>
                     <div class="complexity-label">Complexity: Advanced</div>
                 </div>
-                
+
                 <div class="project-card animate-on-scroll stagger">
                     <div class="project-header">
-                        <div class="project-icon">🌐</div>
+                        <div class="project-icon"><svg aria-hidden="true">
+                                <use href="icons-sprite.svg#icon-router"></use>
+                            </svg></div>
                         <div class="project-info">
                             <h3>Router Optimization & Hardening</h3>
                             <div class="project-status">
@@ -345,8 +380,10 @@
                             </div>
                         </div>
                     </div>
-                    <p class="project-description">Comprehensive TP-Link router optimization for performance and privacy. Systematic configuration of DNS, wireless settings, ALG management, and security hardening with documented methodology.</p>
-                    
+                    <p class="project-description">Comprehensive TP-Link router optimization for performance and
+                        privacy. Systematic configuration of DNS, wireless settings, ALG management, and security
+                        hardening with documented methodology.</p>
+
                     <div class="tech-stack">
                         <span class="tech-tag">TP-Link</span>
                         <span class="tech-tag">DNS Privacy</span>
@@ -354,7 +391,7 @@
                         <span class="tech-tag">MU-MIMO</span>
                         <span class="tech-tag">Network Security</span>
                     </div>
-                    
+
                     <div class="project-achievements">
                         <h4>Optimization Results:</h4>
                         <ul>
@@ -364,7 +401,7 @@
                             <li>Comprehensive security hardening with cloud service isolation</li>
                         </ul>
                     </div>
-                    
+
                     <div class="complexity-meter">
                         <div class="complexity-fill intermediate"></div>
                     </div>
@@ -375,45 +412,56 @@
 
         <!-- KNOWLEDGE GARDEN SHOWCASE SECTION -->
         <section id="knowledge-garden-showcase" class="content-section">
-            <h2 class="section-title">📚 Technical Documentation</h2>
+            <h2 class="section-title"><svg class="section-title-icon" aria-hidden="true">
+                    <use href="icons-sprite.svg#icon-book"></use>
+                </svg> Technical Documentation</h2>
             <div class="knowledge-garden-container">
                 <div class="knowledge-garden-content">
                     <h3>Explore the Knowledge Garden</h3>
-                    <p class="garden-description">A comprehensive collection of technical documentation, project guides, and system configurations. Over 70+ curated notes covering homelab implementations, privacy configurations, and infrastructure optimizations.</p>
-                    
+                    <p class="garden-description">A comprehensive collection of technical documentation, project guides,
+                        and system configurations. Over 70+ curated notes covering homelab implementations, privacy
+                        configurations, and infrastructure optimizations.</p>
+
                     <div class="garden-highlights">
                         <div class="garden-highlight-item">
-                            <span class="highlight-icon">🔬</span>
+                            <span class="highlight-icon"><svg aria-hidden="true">
+                                    <use href="icons-sprite.svg#icon-homelab"></use>
+                                </svg></span>
                             <div>
                                 <h4>Homelab Projects</h4>
                                 <p>Detailed guides on Pi-hole, TrueNAS, and enterprise storage configurations</p>
                             </div>
                         </div>
                         <div class="garden-highlight-item">
-                            <span class="highlight-icon">🛡️</span>
+                            <span class="highlight-icon"><svg aria-hidden="true">
+                                    <use href="icons-sprite.svg#icon-shield"></use>
+                                </svg></span>
                             <div>
                                 <h4>Privacy & Security</h4>
                                 <p>GrapheneOS migration, router hardening, and network optimization documentation</p>
                             </div>
                         </div>
                         <div class="garden-highlight-item">
-                            <span class="highlight-icon">💻</span>
+                            <span class="highlight-icon"><svg aria-hidden="true">
+                                    <use href="icons-sprite.svg#icon-code"></use>
+                                </svg></span>
                             <div>
                                 <h4>Programming & Systems</h4>
                                 <p>Python fundamentals, C programming, and computer science concepts</p>
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="garden-cta">
                         <a href="garden-m3.html" class="garden-button">
                             <span>Explore Knowledge Garden</span>
                             <span class="material-symbols-outlined">arrow_forward</span>
                         </a>
-                        <p class="garden-note" id="gardenLastUpdated">Interactive visualization with 6 featured projects • Live documentation • Updated last Oct 5, 2025 11:30 PM</p>
+                        <p class="garden-note" id="gardenLastUpdated">Interactive visualization with 6 featured projects
+                            • Live documentation • Updated last Oct 5, 2025 11:30 PM</p>
                     </div>
                 </div>
-                
+
                 <div class="garden-visual">
                     <div class="garden-stats-grid">
                         <div class="garden-stat">
@@ -434,11 +482,10 @@
         </section>
 
         <section id="contact" class="content-section">
-            <h2 class="section-title">Hi there wasn't enough?</h2>
+            <h2 class="section-title">Want to Chat?</h2>
             <div class="contact-info">
                 <p>Email: <a href="mailto:amasud.tech@gmail.com">amasud.tech@gmail.com</a></p>
                 <p>Phone: <a href="tel:571-866-3024">571-866-3024</a></p>
-                <p>GitHub: <a href="https://github.com/AIMDaAlien" target="_blank" rel="noopener noreferrer" id="github-link">AIMDaAlien</a></p>
             </div>
         </section>
 
@@ -448,19 +495,21 @@
                 <span class="footer-separator">•</span>
                 <a href="https://linkedin.com/in/abdullah-masud" target="_blank" rel="noopener noreferrer">LinkedIn</a>
                 <span class="footer-separator">•</span>
-                <a href="mailto:aimasud121@outlook.com">Email</a>
+                <a href="mailto:amasud.tech@gmail.com">Email</a>
                 <span class="footer-separator">•</span>
-                <a href="https://myanimelist.net/profile/AIMDaAlien" target="_blank" rel="noopener noreferrer" class="mal-link" title="MyAnimeList">MAL</a>
+                <a href="https://myanimelist.net/profile/AIMDaAlien" target="_blank" rel="noopener noreferrer"
+                    class="mal-link" title="MyAnimeList">MAL</a>
             </div>
-            <span class="footer-music-credit">Background music by Nato Kitchen "windows xp"</span>
-            <p class="footer-copyright-text">&copy; 1984 Abdullah Masud. Few rights reserved.</p>
+            <p class="footer-copyright-text" title="Big Brother is watching. Stay vigilant about your digital privacy.">
+                &copy; 1984 Abdullah Masud. Few rights reserved.</p>
         </footer>
 
-    </div> 
+    </div>
 
     <div id="cursor-aura"></div>
-    
+
     <script src="script.js" defer></script>
     <script src="terminal.js" defer></script>
 </body>
+
 </html>

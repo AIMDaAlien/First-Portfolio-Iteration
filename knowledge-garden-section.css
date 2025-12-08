@@ -62,6 +62,12 @@
     border-radius: 12px;
 }
 
+.highlight-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--accent-color);
+}
+
 .garden-highlight-item h4 {
     margin: 0 0 calc(var(--spacing-unit) * 0.5) 0;
     font-size: 1.1rem;
@@ -93,6 +99,8 @@
     font-weight: 600;
     transition: all var(--duration-medium) var(--ease-emphasized);
     box-shadow: 0 4px 12px rgba(167, 129, 210, 0.3);
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .garden-button:hover {
@@ -187,35 +195,35 @@
         grid-template-columns: 1fr;
         gap: calc(var(--spacing-unit) * 4);
     }
-    
+
     .knowledge-garden-content h3 {
         font-size: 1.75rem;
     }
-    
+
     .garden-description {
         font-size: 1rem;
     }
-    
+
     .garden-highlights {
         gap: calc(var(--spacing-unit) * 2);
     }
-    
+
     .garden-highlight-item {
         padding: calc(var(--spacing-unit) * 1.5);
     }
-    
+
     .highlight-icon {
         font-size: 28px;
         width: 40px;
         height: 40px;
     }
-    
+
     .garden-button {
         width: 100%;
         justify-content: center;
         padding: calc(var(--spacing-unit) * 2) calc(var(--spacing-unit) * 3);
     }
-    
+
     .stat-number {
         font-size: 2.5rem;
     }
@@ -225,15 +233,15 @@
     .garden-stats-grid {
         gap: calc(var(--spacing-unit) * 2);
     }
-    
+
     .garden-stat {
         padding: calc(var(--spacing-unit) * 2);
     }
-    
+
     .stat-number {
         font-size: 2rem;
     }
-    
+
     .stat-label {
         font-size: 0.85rem;
     }

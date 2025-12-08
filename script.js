@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const startupIntro = document.getElementById('startup-intro');
     const startupQuote = document.getElementById('startup-quote');
     const startupQuoter = document.getElementById('startup-quoter');
-    const startupSound = document.getElementById('startup-sound');
     const mainContent = document.getElementById('main-content');
     const heroTitle = document.querySelector('.hero-title');
     const heroSubtitle = document.querySelector('.hero-subtitle');
@@ -22,45 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
     ));
     const cards = Array.from(document.querySelectorAll('.stat-card, .skill-category, .project-card'));
 
-    // --- Audio Management ---
-    let audioStarted = false;
-    
-    function attemptAudioPlay() {
-        if (!audioStarted && startupSound) {
-            startupSound.volume = 0.3;
-            startupSound.loop = true;
-            
-            const playPromise = startupSound.play();
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                    audioStarted = true;
-                    console.log('Audio started successfully');
-                }).catch(error => {
-                    console.warn('Audio autoplay prevented:', error);
-                    // Add click-to-play fallback
-                    if (!audioStarted) {
-                        const playAudioOnInteraction = () => {
-                            if (!audioStarted) {
-                                startupSound.play().then(() => {
-                                    audioStarted = true;
-                                    console.log('Audio started after user interaction');
-                                }).catch(e => console.error('Audio play failed:', e));
-                                // Remove listeners after successful play
-                                document.removeEventListener('click', playAudioOnInteraction);
-                                document.removeEventListener('keydown', playAudioOnInteraction);
-                                document.removeEventListener('touchstart', playAudioOnInteraction);
-                            }
-                        };
-                        
-                        // Add multiple event listeners for better coverage
-                        document.addEventListener('click', playAudioOnInteraction, { once: true });
-                        document.addEventListener('keydown', playAudioOnInteraction, { once: true });
-                        document.addEventListener('touchstart', playAudioOnInteraction, { once: true });
-                    }
-                });
-            }
-        }
-    }
 
     // --- Section Offsets for Scroll Tracking ---
     let sectionOffsets = [];
@@ -79,8 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
         loader.style.opacity = '0';
         setTimeout(() => { loader.style.display = 'none'; }, 500);
 
-        // Attempt to play audio
-        attemptAudioPlay();
 
         startupIntro.style.opacity = '1';
         setTimeout(() => {
@@ -157,8 +115,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Hamburger Menu Toggle ---
     if (hamburgerMenu && mobileNavUl) {
         hamburgerMenu.addEventListener('click', () => {
-            hamburgerMenu.classList.toggle('active');
+            const isActive = hamburgerMenu.classList.toggle('active');
             mobileNavUl.classList.toggle('active');
+            hamburgerMenu.setAttribute('aria-expanded', isActive);
         });
     }
 
@@ -277,12 +236,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Throttled Card Interactions (Ripple + Tilt) ---
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     cards.forEach(card => {
         // Ripple throttle
         let lastClick = 0;
         const clickCooldown = 300; // ms
 
-        card.addEventListener('click', function(e) {
+        card.addEventListener('click', function (e) {
             const now = Date.now();
             if (now - lastClick < clickCooldown) return;
             lastClick = now;
@@ -300,35 +261,37 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => ripple.remove(), 600);
         });
 
-        // Tilt throttle using requestAnimationFrame
-        let tiltX = 0;
-        let tiltY = 0;
-        let rafId = null;
+        // Tilt effect - only if user doesn't prefer reduced motion
+        if (!prefersReducedMotion) {
+            let tiltX = 0;
+            let tiltY = 0;
+            let rafId = null;
 
-        function updateTiltTransform() {
-            card.style.transform = `perspective(1000px) rotateX(${tiltY}deg) rotateY(${tiltX}deg) translateY(-5px) scale(1.03)`;
-            rafId = null;
-        }
-
-        card.addEventListener('mousemove', function(e) {
-            const rect = this.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-            tiltX = (centerX - x) / 20;
-            tiltY = (y - centerY) / 20;
-
-            if (!rafId) {
-                rafId = requestAnimationFrame(updateTiltTransform);
+            function updateTiltTransform() {
+                card.style.transform = `perspective(1000px) rotateX(${tiltY}deg) rotateY(${tiltX}deg) translateY(-5px) scale(1.03)`;
+                rafId = null;
             }
-        });
 
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = '';
-            cancelAnimationFrame(rafId);
-            rafId = null;
-        });
+            card.addEventListener('mousemove', function (e) {
+                const rect = this.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                tiltX = (centerX - x) / 20;
+                tiltY = (y - centerY) / 20;
+
+                if (!rafId) {
+                    rafId = requestAnimationFrame(updateTiltTransform);
+                }
+            });
+
+            card.addEventListener('mouseleave', function () {
+                this.style.transform = '';
+                cancelAnimationFrame(rafId);
+                rafId = null;
+            });
+        }
     });
 
     // --- Parallax effect for hero section ---
