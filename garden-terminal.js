@@ -39,9 +39,10 @@ class KnowledgeGarden {
         };
 
         // DOM Elements
-        this.spotlightInput = document.getElementById('spotlightInput');
-        this.spotlightOutput = document.getElementById('spotlightOutput');
-        this.spotlightPath = document.getElementById('spotlightPath');
+        this.terminalInput = document.getElementById('terminalInput');
+        this.terminalOutput = document.getElementById('terminalOutput');
+        this.terminalPath = document.getElementById('terminalPath');
+        this.floatingTerminal = document.getElementById('floatingTerminal');
         this.fileTree = document.getElementById('fileTree');
         this.contentBody = document.getElementById('contentBody');
         this.breadcrumb = document.getElementById('breadcrumb');
@@ -54,27 +55,28 @@ class KnowledgeGarden {
     }
 
     async init() {
-        // Spotlight input
-        this.spotlightInput.addEventListener('keydown', (e) => this.handleSpotlightKey(e));
-        this.spotlightInput.addEventListener('focus', () => this.spotlightOutput.style.display = 'none');
+        // Terminal input
+        this.terminalInput.addEventListener('keydown', (e) => this.handleTerminalKey(e));
+
+        // Terminal dragging
+        this.initTerminalDrag();
+
+        // Terminal controls
+        document.getElementById('terminalMinimize')?.addEventListener('click', () => this.minimizeTerminal());
+        document.getElementById('terminalMaximize')?.addEventListener('click', () => this.maximizeTerminal());
 
         // Sidebar toggle (desktop)
         document.getElementById('sidebarToggle').addEventListener('click', () => {
             this.sidebar.classList.toggle('collapsed');
+            // On mobile, this opens the sidebar
+            if (window.innerWidth <= 768) {
+                this.sidebar.classList.add('open');
+                document.getElementById('sidebarOverlay')?.classList.add('visible');
+            }
         });
 
-        // Mobile menu button
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
-
-        if (mobileMenuBtn) {
-            mobileMenuBtn.addEventListener('click', () => {
-                this.sidebar.classList.add('open');
-                sidebarOverlay?.classList.add('visible');
-            });
-        }
-
         // Close sidebar when clicking overlay
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
         if (sidebarOverlay) {
             sidebarOverlay.addEventListener('click', () => {
                 this.closeMobileSidebar();
@@ -408,15 +410,59 @@ class KnowledgeGarden {
     }
 
     // ============================================
-    // SPOTLIGHT TERMINAL
+    // FLOATING TERMINAL
     // ============================================
 
-    handleSpotlightKey(e) {
+    initTerminalDrag() {
+        const terminal = this.floatingTerminal;
+        const titlebar = document.getElementById('terminalTitlebar');
+        let isDragging = false;
+        let startX, startY, startLeft, startBottom;
+
+        titlebar.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.terminal-btn')) return;
+            isDragging = true;
+            terminal.classList.add('dragging');
+            startX = e.clientX;
+            startY = e.clientY;
+            const rect = terminal.getBoundingClientRect();
+            startLeft = rect.left;
+            startBottom = window.innerHeight - rect.bottom;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            terminal.style.left = `${startLeft + dx}px`;
+            terminal.style.bottom = `${startBottom - dy}px`;
+            terminal.style.right = 'auto';
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                terminal.classList.remove('dragging');
+            }
+        });
+    }
+
+    minimizeTerminal() {
+        this.floatingTerminal.classList.toggle('minimized');
+        this.floatingTerminal.classList.remove('maximized');
+    }
+
+    maximizeTerminal() {
+        this.floatingTerminal.classList.toggle('maximized');
+        this.floatingTerminal.classList.remove('minimized');
+    }
+
+    handleTerminalKey(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
-            const input = this.spotlightInput.value.trim();
+            const input = this.terminalInput.value.trim();
             if (input) this.executeCommand(input);
-            this.spotlightInput.value = '';
+            this.terminalInput.value = '';
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
             this.navigateHistory(-1);
@@ -424,14 +470,14 @@ class KnowledgeGarden {
             e.preventDefault();
             this.navigateHistory(1);
         } else if (e.key === 'Escape') {
-            this.spotlightOutput.style.display = 'none';
+            this.floatingTerminal.classList.add('minimized');
         }
     }
 
     navigateHistory(dir) {
         if (this.commandHistory.length === 0) return;
         this.historyIndex = Math.max(0, Math.min(this.commandHistory.length - 1, this.historyIndex + dir));
-        this.spotlightInput.value = this.commandHistory[this.historyIndex];
+        this.terminalInput.value = this.commandHistory[this.historyIndex];
     }
 
     executeCommand(input) {
@@ -447,20 +493,126 @@ class KnowledgeGarden {
                 if (args[0]) this.viewFileByPath(args.join(' '));
                 break;
             case 'help':
-                this.showOutput(`<b>open [file]</b> view note  <b>help</b> show this`);
+                this.showOutput(`<b>Commands:</b>
+open [file] - View a note
+man [cmd] - Show manual for command
+theme [dark|light] - Toggle theme
+clear - Clear output
+neofetch - System info`);
+                break;
+            case 'man':
+                this.showManPage(args[0]);
+                break;
+            case 'theme':
+                this.setTheme(args[0]);
                 break;
             case 'clear':
-                this.spotlightOutput.style.display = 'none';
-                this.spotlightOutput.innerHTML = '';
+                this.terminalOutput.innerHTML = '';
+                break;
+            // Easter eggs
+            case 'neofetch':
+                this.showNeofetch();
+                break;
+            case 'cowsay':
+                this.showCowsay(args.join(' ') || 'Moo!');
+                break;
+            case 'matrix':
+                this.showMatrix();
+                break;
+            case 'whoami':
+                this.showOutput('<span style="color:var(--terminal-green)">visitor@knowledge-garden</span>');
+                break;
+            case 'sudo':
+                this.showOutput('<span style="color:var(--terminal-red)">Nice try! 🔒</span>');
                 break;
             default:
-                this.showOutput(`Unknown: ${cmd}. Try 'help'`);
+                this.showOutput(`<span style="color:var(--terminal-red)">Unknown: ${cmd}</span>. Try 'help'`);
         }
     }
 
+    showManPage(cmd) {
+        const manPages = {
+            open: `<b>open</b> [filename]
+  Opens and displays a note from the vault.
+  Example: open Technical/Git.md`,
+            cat: `<b>cat</b> [filename]
+  Alias for 'open'. Displays file contents.`,
+            theme: `<b>theme</b> [dark|light]
+  Switches the color scheme.
+  Example: theme dark`,
+            help: `<b>help</b>
+  Shows available commands.`,
+            clear: `<b>clear</b>
+  Clears the terminal output.`,
+            man: `<b>man</b> [command]
+  Shows manual page for a command.
+  Example: man open`
+        };
+
+        if (!cmd) {
+            this.showOutput('Usage: man [command]<br>Available: ' + Object.keys(manPages).join(', '));
+        } else if (manPages[cmd.toLowerCase()]) {
+            this.showOutput(`<pre>${manPages[cmd.toLowerCase()]}</pre>`);
+        } else {
+            this.showOutput(`No manual entry for '${cmd}'`);
+        }
+    }
+
+    setTheme(theme) {
+        if (theme === 'light') {
+            document.body.classList.add('light-theme');
+            this.showOutput('Theme set to <b>light</b>');
+        } else if (theme === 'dark') {
+            document.body.classList.remove('light-theme');
+            this.showOutput('Theme set to <b>dark</b>');
+        } else {
+            this.showOutput('Usage: theme [dark|light]');
+        }
+    }
+
+    showNeofetch() {
+        this.showOutput(`<pre style="color:var(--md-sys-color-primary)">
+   /\\         visitor@knowledge-garden
+  /  \\        -------------------------
+ /    \\       OS: Knowledge Garden Web
+/______\\      Kernel: D3.js Force Graph
+              Shell: Catppuccin Zsh
+  ____        Notes: ${this.noteCache?.size || '~300'}
+ |    |       Theme: Mocha Lavender
+ |____|       Terminal: Floating v1.0
+</pre>`);
+    }
+
+    showCowsay(msg) {
+        const len = msg.length;
+        const border = '_'.repeat(len + 2);
+        this.showOutput(`<pre style="color:var(--terminal-yellow)">
+ ${border}
+< ${msg} >
+ ${'-'.repeat(len + 2)}
+        \\   ^__^
+         \\  (oo)\\_______
+            (__)\\       )\\/\\
+                ||----w |
+                ||     ||
+</pre>`);
+    }
+
+    showMatrix() {
+        const chars = 'アイウエオカキクケコサシスセソタチツテト01';
+        let html = '<pre style="color:var(--terminal-green);line-height:1.2">';
+        for (let i = 0; i < 10; i++) {
+            for (let j = 0; j < 40; j++) {
+                html += chars[Math.floor(Math.random() * chars.length)];
+            }
+            html += '\n';
+        }
+        html += '</pre><span style="color:var(--terminal-green)">Wake up, Neo...</span>';
+        this.showOutput(html);
+    }
+
     showOutput(html) {
-        this.spotlightOutput.innerHTML = html;
-        this.spotlightOutput.style.display = 'block';
+        this.terminalOutput.innerHTML = html;
     }
 
     // ============================================

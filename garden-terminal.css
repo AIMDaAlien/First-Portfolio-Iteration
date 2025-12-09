@@ -1,31 +1,31 @@
 /* Knowledge Garden - Obsidian-Style Layout */
-/* M3 Expressive + Terminal Aesthetic */
+/* M3 Expressive + Catppuccin Mocha */
 
 /* ============================================
-   1. ROOT VARIABLES
+   1. ROOT VARIABLES (Catppuccin Mocha)
    ============================================ */
 :root {
-    /* Lavender HCT Palette */
-    --md-sys-color-primary: #7C3AED;
-    --md-sys-color-on-primary: #FFFFFF;
-    --md-sys-color-primary-container: #EADDFF;
+    /* Catppuccin Mocha Palette */
+    --md-sys-color-primary: #cba6f7;
+    --md-sys-color-on-primary: #1e1e2e;
+    --md-sys-color-primary-container: #45475a;
 
-    /* Surface System (Dark) */
-    --md-sys-color-surface: #0F0E17;
-    --md-sys-color-surface-dim: #1A1825;
-    --md-sys-color-surface-container: #252336;
-    --md-sys-color-surface-container-high: #302D42;
-    --md-sys-color-on-surface: #FFFFFE;
-    --md-sys-color-on-surface-variant: #A7A9BE;
-    --md-sys-color-outline: #6B7280;
+    /* Surface System (Catppuccin Mocha) */
+    --md-sys-color-surface: #1e1e2e;
+    --md-sys-color-surface-dim: #181825;
+    --md-sys-color-surface-container: #313244;
+    --md-sys-color-surface-container-high: #45475a;
+    --md-sys-color-on-surface: #cdd6f4;
+    --md-sys-color-on-surface-variant: #a6adc8;
+    --md-sys-color-outline: #6c7086;
 
-    /* Terminal colors */
-    --terminal-green: #10B981;
-    --terminal-red: #F87171;
-    --terminal-yellow: #FBBF24;
-    --terminal-cyan: #22D3EE;
-    --terminal-blue: #60A5FA;
-    --terminal-magenta: #E879F9;
+    /* Terminal colors (Catppuccin) */
+    --terminal-green: #a6e3a1;
+    --terminal-red: #f38ba8;
+    --terminal-yellow: #f9e2af;
+    --terminal-cyan: #89dceb;
+    --terminal-blue: #89b4fa;
+    --terminal-magenta: #f5c2e7;
 
     /* Shape System */
     --radius-sm: 4px;
@@ -37,6 +37,7 @@
     --motion-spring: linear(0, 0.009, 0.035 2.1%, 0.141 4.4%, 0.723 12.9%, 0.938 16.7%, 1.074 20.8%,
             1.137 25.2%, 1.146 29.8%, 1.119 34.8%, 1.077 40.1%, 1.036 45.9%,
             1.007 52.3%, 0.991 59.8%, 0.996 76%, 1 100%);
+    --motion-jiggle: cubic-bezier(0.36, 0.07, 0.19, 0.97);
 
     /* Typography */
     --font-chrome: 'Ubuntu', sans-serif;
@@ -131,38 +132,167 @@ body {
 }
 
 /* ============================================
-   5. SPOTLIGHT TERMINAL
+   5. FLOATING TERMINAL
    ============================================ */
-.spotlight-bar {
-    background: var(--md-sys-color-surface-container);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 12px 20px;
+.floating-terminal {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 480px;
+    height: 300px;
+    min-width: 320px;
+    min-height: 180px;
+    background: rgba(30, 30, 46, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(203, 166, 247, 0.2);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+    resize: both;
 }
 
-.spotlight-wrapper {
+.floating-terminal.dragging {
+    animation: terminalJiggle 0.15s var(--motion-jiggle);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+}
+
+.floating-terminal.minimized {
+    width: 200px !important;
+    height: 40px !important;
+    resize: none;
+}
+
+.floating-terminal.maximized {
+    width: 70vw !important;
+    height: 70vh !important;
+    bottom: 15vh;
+    right: 15vw;
+}
+
+@keyframes terminalJiggle {
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    25% {
+        transform: rotate(-0.5deg) scale(1.01);
+    }
+
+    75% {
+        transform: rotate(0.5deg) scale(1.01);
+    }
+}
+
+/* Terminal Title Bar */
+.terminal-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(17, 17, 27, 0.6);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: grab;
+    user-select: none;
+}
+
+.terminal-titlebar:active {
+    cursor: grabbing;
+}
+
+.terminal-title {
+    font-family: var(--font-chrome);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--md-sys-color-on-surface-variant);
     display: flex;
     align-items: center;
     gap: 8px;
-    max-width: 800px;
-    margin: 0 auto;
+}
+
+.terminal-title::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: var(--terminal-green);
+    border-radius: 50%;
+    animation: terminalPulse 2s ease-in-out infinite;
+}
+
+@keyframes terminalPulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.terminal-controls {
+    display: flex;
+    gap: 6px;
+}
+
+.terminal-btn {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.terminal-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--md-sys-color-on-surface);
+}
+
+/* Terminal Body */
+.terminal-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    overflow: hidden;
+}
+
+.terminal-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     background: var(--md-sys-color-surface-dim);
-    border: 1px solid rgba(124, 58, 237, 0.3);
-    border-radius: var(--radius-lg);
-    padding: 10px 16px;
-    transition: all 0.2s var(--motion-spring);
+    border: 1px solid rgba(203, 166, 247, 0.2);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    transition: all 0.2s ease;
 }
 
-.spotlight-wrapper:focus-within {
+.terminal-input-wrapper:focus-within {
     border-color: var(--md-sys-color-primary);
-    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+    box-shadow: 0 0 0 3px rgba(203, 166, 247, 0.15);
 }
 
-.spotlight-prompt {
+.terminal-prompt {
     display: flex;
     gap: 0;
     font-weight: 500;
     white-space: nowrap;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .prompt-user {
@@ -187,38 +317,52 @@ body {
     margin-left: 4px;
 }
 
-.spotlight-input {
+.terminal-input {
     flex: 1;
     background: transparent;
     border: none;
     outline: none;
     color: var(--md-sys-color-on-surface);
     font-family: var(--font-terminal);
-    font-size: 14px;
+    font-size: 13px;
     caret-color: var(--md-sys-color-primary);
 }
 
-.spotlight-input::placeholder {
+.terminal-input::placeholder {
     color: var(--md-sys-color-outline);
 }
 
-.spotlight-hint {
-    font-size: 11px;
-    padding: 2px 6px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: var(--radius-sm);
-    color: var(--md-sys-color-on-surface-variant);
+.terminal-output {
+    flex: 1;
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(17, 17, 27, 0.4);
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    overflow-y: auto;
+    line-height: 1.6;
 }
 
-.spotlight-output {
-    max-width: 800px;
-    margin: 12px auto 0;
-    padding: 12px;
-    background: var(--md-sys-color-surface-dim);
-    border-radius: var(--radius-md);
-    font-size: 13px;
-    max-height: 200px;
-    overflow-y: auto;
+.terminal-output:empty {
+    display: none;
+}
+
+/* Progress Bar */
+.terminal-progress {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: rgba(203, 166, 247, 0.1);
+    overflow: hidden;
+}
+
+.terminal-progress-bar {
+    width: 100%;
+    height: 0%;
+    background: var(--md-sys-color-primary);
+    transition: height 0.3s ease;
 }
 
 /* ============================================
@@ -1017,11 +1161,67 @@ body {
    12. REDUCED MOTION
    ============================================ */
 @media (prefers-reduced-motion: reduce) {
-    .blob {
-        animation: none;
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ============================================
+   13. LIGHT THEME
+   ============================================ */
+body.light-theme {
+    --md-sys-color-primary: #7c3aed;
+    --md-sys-color-on-primary: #ffffff;
+    --md-sys-color-surface: #eff1f5;
+    --md-sys-color-surface-dim: #e6e9ef;
+    --md-sys-color-surface-container: #dce0e8;
+    --md-sys-color-surface-container-high: #ccd0da;
+    --md-sys-color-on-surface: #4c4f69;
+    --md-sys-color-on-surface-variant: #6c6f85;
+    --md-sys-color-outline: #8c8fa1;
+    --terminal-green: #40a02b;
+    --terminal-red: #d20f39;
+    --terminal-yellow: #df8e1d;
+    --terminal-cyan: #179299;
+    --terminal-blue: #1e66f5;
+    --terminal-magenta: #ea76cb;
+}
+
+body.light-theme .floating-terminal {
+    background: rgba(239, 241, 245, 0.9);
+    border-color: rgba(124, 58, 237, 0.3);
+}
+
+body.light-theme .terminal-titlebar {
+    background: rgba(220, 224, 232, 0.8);
+}
+
+body.light-theme .terminal-body {
+    background: transparent;
+}
+
+/* ============================================
+   14. FLOATING TERMINAL MOBILE
+   ============================================ */
+@media (max-width: 768px) {
+    .floating-terminal {
+        width: calc(100% - 20px);
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        height: 200px;
     }
 
-    .note-card:hover {
-        transform: none;
+    .floating-terminal.maximized {
+        width: calc(100% - 20px) !important;
+        height: 60vh !important;
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
     }
 }
