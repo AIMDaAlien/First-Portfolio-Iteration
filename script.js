@@ -348,8 +348,12 @@ function preloadImages() {
 }
 document.addEventListener('DOMContentLoaded', preloadImages);
 
-// --- Dynamic Knowledge Garden Stats ---
-function updateGardenStats() {
+// --- Dynamic Knowledge Garden Stats from GitHub API ---
+async function updateGardenStats() {
+    const VAULT_OWNER = 'AIMDaAlien';
+    const VAULT_REPO = 'Obsidian-Vault';
+    const HIDDEN = ['.obsidian', '.stfolder', '.DS_Store', '.gitignore', 'Myself', 'Business', 'images'];
+
     // Update "Last Updated" with relative date
     const lastUpdatedEl = document.getElementById('gardenLastUpdated');
     if (lastUpdatedEl && lastUpdatedEl.dataset.updated) {
@@ -376,18 +380,52 @@ function updateGardenStats() {
             const weeks = Math.floor(diffDays / 7);
             relativeText = weeks === 1 ? 'Updated 1 week ago' : `Updated ${weeks} weeks ago`;
         } else {
-            // Show the actual date for older updates
             relativeText = `Updated ${updatedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
         }
-
         lastUpdatedEl.textContent = relativeText;
     }
 
-    // Update note count with + suffix if over threshold
-    const noteCountEl = document.getElementById('technicalNotesCount');
-    if (noteCountEl && noteCountEl.dataset.count) {
-        const count = parseInt(noteCountEl.dataset.count, 10);
-        noteCountEl.textContent = count >= 10 ? `${count}+` : count.toString();
+    // Fetch stats from GitHub API
+    try {
+        const response = await fetch(`https://api.github.com/repos/${VAULT_OWNER}/${VAULT_REPO}/git/trees/main?recursive=1`);
+        if (!response.ok) throw new Error('Failed to fetch');
+
+        const data = await response.json();
+        const tree = data.tree || [];
+
+        // Count .md files (excluding hidden folders)
+        let noteCount = 0;
+        const topFolders = new Set();
+
+        tree.forEach(item => {
+            const pathParts = item.path.split('/');
+            const isHidden = pathParts.some(part => HIDDEN.includes(part) || part.startsWith('.'));
+
+            if (!isHidden) {
+                if (item.type === 'blob' && item.path.endsWith('.md')) {
+                    noteCount++;
+                }
+                // Count top-level folders
+                if (item.type === 'tree' && !item.path.includes('/')) {
+                    topFolders.add(item.path);
+                }
+            }
+        });
+
+        // Update DOM
+        const noteCountEl = document.getElementById('noteCount');
+        if (noteCountEl) noteCountEl.textContent = noteCount + '+';
+
+        const folderCountEl = document.getElementById('folderCount');
+        if (folderCountEl) folderCountEl.textContent = topFolders.size;
+
+    } catch (error) {
+        console.error('Failed to fetch garden stats:', error);
+        // Show fallback values
+        const noteCountEl = document.getElementById('noteCount');
+        if (noteCountEl) noteCountEl.textContent = '50+';
+        const folderCountEl = document.getElementById('folderCount');
+        if (folderCountEl) folderCountEl.textContent = '8';
     }
 }
 document.addEventListener('DOMContentLoaded', updateGardenStats);
