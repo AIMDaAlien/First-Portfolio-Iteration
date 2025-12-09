@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knowledge Garden Terminal</title>
+    <title>Knowledge Garden</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,170 +18,128 @@
 </head>
 
 <body>
-    <!-- Background blobs (M3 Expressive) -->
+    <!-- Background blobs -->
     <div class="blob-container" aria-hidden="true">
         <div class="blob blob-1"></div>
         <div class="blob blob-2"></div>
     </div>
 
-    <!-- Terminal Window -->
-    <div class="terminal-window" id="terminalWindow">
-        <!-- Title Bar (M3 Chrome) -->
-        <div class="terminal-titlebar">
-            <div class="titlebar-controls">
-                <button class="control-btn close" onclick="window.location.href='index.html'"
-                    title="Exit to Portfolio"></button>
-                <button class="control-btn minimize" title="Minimize"></button>
-                <button class="control-btn maximize" id="maximizeBtn" title="Maximize"></button>
-            </div>
-            <div class="titlebar-title">
-                <span class="terminal-icon">⌘</span>
-                <span id="terminalTitle">aim@garden: ~</span>
-            </div>
-            <div class="titlebar-actions">
-                <button class="tab-btn active" data-tab="main">main</button>
-            </div>
-        </div>
+    <!-- Main App Container -->
+    <div class="app-container">
 
-        <!-- Terminal Body -->
-        <div class="terminal-body" id="terminalBody">
-            <div class="terminal-output" id="terminalOutput">
-                <!-- Output will be rendered here -->
-            </div>
-
-            <!-- Input Line -->
-            <div class="terminal-input-line">
-                <span class="prompt" id="prompt">
+        <!-- Spotlight Terminal (Top Bar) -->
+        <div class="spotlight-bar" id="spotlightBar">
+            <div class="spotlight-wrapper">
+                <span class="spotlight-prompt">
                     <span class="prompt-user">aim</span><span class="prompt-at">@</span><span
                         class="prompt-host">garden</span>
-                    <span class="prompt-path">~</span>
+                    <span class="prompt-path" id="spotlightPath">~</span>
                     <span class="prompt-symbol">❯</span>
                 </span>
-                <input type="text" id="terminalInput" class="terminal-input" autocomplete="off" autocapitalize="off"
-                    spellcheck="false" autofocus>
+                <input type="text" id="spotlightInput" class="spotlight-input"
+                    placeholder="Type a command... (ls, cd, cat, help)" autocomplete="off" autocapitalize="off"
+                    spellcheck="false">
+                <div class="spotlight-hint">⌘K</div>
             </div>
+            <div class="spotlight-output" id="spotlightOutput" style="display: none;"></div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-layout">
+
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
+                        <span>☰</span>
+                    </button>
+                    <span class="sidebar-title">Files</span>
+                </div>
+                <div class="file-tree" id="fileTree">
+                    <!-- File tree rendered by JS -->
+                </div>
+                <div class="sidebar-footer">
+                    <button class="sidebar-btn" id="graphBtn" title="Graph View">
+                        <span>🕸️</span> Graph
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Content Viewer -->
+            <main class="content-viewer" id="contentViewer">
+                <!-- Breadcrumb -->
+                <div class="content-breadcrumb" id="breadcrumb">
+                    <span class="breadcrumb-item">~</span>
+                </div>
+
+                <!-- Rendered Content -->
+                <article class="content-body" id="contentBody">
+                    <div class="welcome-content">
+                        <h1>Welcome to Knowledge Garden</h1>
+                        <p class="muted">Select a file from the sidebar or use the spotlight terminal.</p>
+
+                        <div class="quick-start">
+                            <h2>Quick Start</h2>
+                            <ul>
+                                <li>Click a file in the sidebar to view it</li>
+                                <li>Use <code>cd folder</code> to navigate</li>
+                                <li>Use <code>cat file.md</code> to view files</li>
+                                <li>Use <code>ls</code> to list contents</li>
+                            </ul>
+                        </div>
+
+                        <div class="featured-notes">
+                            <h2>Featured Notes</h2>
+                            <div class="note-cards">
+                                <div class="note-card" data-file="featured/grapheneos-migration.md">
+                                    <span class="note-icon">📱</span>
+                                    <span class="note-title">GrapheneOS Migration</span>
+                                </div>
+                                <div class="note-card" data-file="featured/truenas-build.md">
+                                    <span class="note-icon">💾</span>
+                                    <span class="note-title">TrueNAS Build</span>
+                                </div>
+                                <div class="note-card" data-file="featured/pihole-setup.md">
+                                    <span class="note-icon">🛡️</span>
+                                    <span class="note-title">Pi-hole Setup</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </main>
         </div>
 
         <!-- Status Bar -->
-        <div class="terminal-statusbar">
+        <div class="status-bar">
             <div class="status-left">
-                <span class="status-branch">⎇ main</span>
-                <span class="status-path" id="statusPath">~/knowledge-garden</span>
+                <span class="status-item">⎇ main</span>
+                <span class="status-item" id="statusPath">~/knowledge-garden</span>
             </div>
             <div class="status-right">
-                <span class="status-time" id="statusTime"></span>
+                <span class="status-item" id="statusInfo">Ready</span>
+                <span class="status-item" id="statusTime"></span>
             </div>
-        </div>
-
-        <!-- Quick Actions (for non-terminal users) -->
-        <div class="quick-actions" id="quickActions">
-            <span class="quick-actions-label">Quick Actions:</span>
-            <button class="quick-action-btn" data-cmd="ls" title="List files">
-                <span class="qa-icon">📁</span> Browse
-            </button>
-            <button class="quick-action-btn" data-cmd="tree" title="Show directory tree">
-                <span class="qa-icon">🌳</span> Tree
-            </button>
-            <button class="quick-action-btn" data-cmd="neofetch" title="System info">
-                <span class="qa-icon">ℹ️</span> Info
-            </button>
-            <button class="quick-action-btn" data-cmd="help" title="Show all commands">
-                <span class="qa-icon">❓</span> Help
-            </button>
-            <button class="quick-action-btn graph-toggle-btn" id="graphToggleBtn" title="Toggle Graph View">
-                <span class="qa-icon">🕸️</span> Graph
-            </button>
         </div>
     </div>
 
-    <!-- Graph View Container -->
+    <!-- Graph View Container (hidden by default) -->
     <div class="graph-container" id="graphContainer" style="display: none;">
-        <!-- Graph Header -->
         <div class="graph-header">
             <h2 class="graph-title">Graph View</h2>
             <div class="graph-controls">
-                <button class="graph-control-btn" id="animateBtn" title="Animate">
-                    <span>⟳</span> Animate
-                </button>
-                <button class="graph-control-btn" id="closeGraphBtn" title="Back to Terminal">
-                    <span>✕</span> Close
-                </button>
+                <button class="graph-control-btn" id="animateBtn">⟳ Animate</button>
+                <button class="graph-control-btn" id="closeGraphBtn">✕ Close</button>
             </div>
         </div>
-
-        <!-- Graph Canvas Area -->
         <div class="graph-canvas" id="graphCanvas"></div>
-
-        <!-- Graph Filters Panel -->
-        <div class="graph-filters" id="graphFilters">
-            <h3 class="filters-title">Filters</h3>
-
-            <div class="filter-group">
-                <h4>Groups</h4>
-                <div class="group-list">
-                    <label class="group-item">
-                        <span class="group-color" style="background: #7C3AED"></span>
-                        <span>Featured</span>
-                    </label>
-                    <label class="group-item">
-                        <span class="group-color" style="background: #10B981"></span>
-                        <span>Homelab</span>
-                    </label>
-                    <label class="group-item">
-                        <span class="group-color" style="background: #3B82F6"></span>
-                        <span>Projects</span>
-                    </label>
-                </div>
-            </div>
-
-            <div class="filter-group">
-                <h4>Display</h4>
-                <div class="slider-control">
-                    <label>Node Size</label>
-                    <input type="range" id="nodeSizeSlider" min="0.5" max="2" step="0.1" value="1">
-                </div>
-            </div>
-        </div>
     </div>
 
-    <!-- Marked.js for markdown parsing -->
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- D3.js for graph visualization -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="garden-terminal.js"></script>
     <script src="garden-graph.js"></script>
-    <script>
-        // Initialize graph when DOM is ready
-        let graph;
-        document.addEventListener('DOMContentLoaded', () => {
-            graph = new KnowledgeGardenGraph();
-            graph.init('graphCanvas');
-
-            // Toggle button
-            document.getElementById('graphToggleBtn').addEventListener('click', () => {
-                document.getElementById('terminalWindow').style.display = 'none';
-                document.getElementById('graphContainer').style.display = 'flex';
-                graph.show();
-            });
-
-            // Close graph button
-            document.getElementById('closeGraphBtn').addEventListener('click', () => {
-                graph.hide();
-                document.getElementById('graphContainer').style.display = 'none';
-                document.getElementById('terminalWindow').style.display = 'flex';
-            });
-
-            // Animate button
-            document.getElementById('animateBtn').addEventListener('click', () => {
-                graph.animate();
-            });
-
-            // Node size slider
-            document.getElementById('nodeSizeSlider').addEventListener('input', (e) => {
-                graph.setNodeSize(parseFloat(e.target.value));
-            });
-        });
-    </script>
 </body>
 
 </html>
