@@ -88,12 +88,100 @@
             <button class="quick-action-btn" data-cmd="help" title="Show all commands">
                 <span class="qa-icon">❓</span> Help
             </button>
+            <button class="quick-action-btn graph-toggle-btn" id="graphToggleBtn" title="Toggle Graph View">
+                <span class="qa-icon">🕸️</span> Graph
+            </button>
+        </div>
+    </div>
+
+    <!-- Graph View Container -->
+    <div class="graph-container" id="graphContainer" style="display: none;">
+        <!-- Graph Header -->
+        <div class="graph-header">
+            <h2 class="graph-title">Graph View</h2>
+            <div class="graph-controls">
+                <button class="graph-control-btn" id="animateBtn" title="Animate">
+                    <span>⟳</span> Animate
+                </button>
+                <button class="graph-control-btn" id="closeGraphBtn" title="Back to Terminal">
+                    <span>✕</span> Close
+                </button>
+            </div>
+        </div>
+
+        <!-- Graph Canvas Area -->
+        <div class="graph-canvas" id="graphCanvas"></div>
+
+        <!-- Graph Filters Panel -->
+        <div class="graph-filters" id="graphFilters">
+            <h3 class="filters-title">Filters</h3>
+
+            <div class="filter-group">
+                <h4>Groups</h4>
+                <div class="group-list">
+                    <label class="group-item">
+                        <span class="group-color" style="background: #7C3AED"></span>
+                        <span>Featured</span>
+                    </label>
+                    <label class="group-item">
+                        <span class="group-color" style="background: #10B981"></span>
+                        <span>Homelab</span>
+                    </label>
+                    <label class="group-item">
+                        <span class="group-color" style="background: #3B82F6"></span>
+                        <span>Projects</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <h4>Display</h4>
+                <div class="slider-control">
+                    <label>Node Size</label>
+                    <input type="range" id="nodeSizeSlider" min="0.5" max="2" step="0.1" value="1">
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Marked.js for markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- D3.js for graph visualization -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="garden-terminal.js"></script>
+    <script src="garden-graph.js"></script>
+    <script>
+        // Initialize graph when DOM is ready
+        let graph;
+        document.addEventListener('DOMContentLoaded', () => {
+            graph = new KnowledgeGardenGraph();
+            graph.init('graphCanvas');
+
+            // Toggle button
+            document.getElementById('graphToggleBtn').addEventListener('click', () => {
+                document.getElementById('terminalWindow').style.display = 'none';
+                document.getElementById('graphContainer').style.display = 'flex';
+                graph.show();
+            });
+
+            // Close graph button
+            document.getElementById('closeGraphBtn').addEventListener('click', () => {
+                graph.hide();
+                document.getElementById('graphContainer').style.display = 'none';
+                document.getElementById('terminalWindow').style.display = 'flex';
+            });
+
+            // Animate button
+            document.getElementById('animateBtn').addEventListener('click', () => {
+                graph.animate();
+            });
+
+            // Node size slider
+            document.getElementById('nodeSizeSlider').addEventListener('input', (e) => {
+                graph.setNodeSize(parseFloat(e.target.value));
+            });
+        });
+    </script>
 </body>
 
 </html>
