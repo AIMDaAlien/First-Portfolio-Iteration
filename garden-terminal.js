@@ -17,38 +17,69 @@ class KnowledgeGarden {
         this.commandHistory = [];
         this.historyIndex = -1;
 
-        // Virtual Filesystem
+        // Virtual Filesystem (matching actual GitHub vault structure)
         this.filesystem = {
             '~': {
                 type: 'dir',
                 name: 'knowledge-garden',
                 children: {
-                    'featured': {
+                    'Systems': {
                         type: 'dir',
-                        name: 'featured',
+                        name: 'Systems',
+                        icon: 'terminal',
                         expanded: true,
                         children: {
-                            'grapheneos-migration.md': { type: 'file', path: 'GrapheneOS Migration Guide - Complete Documentation.md', name: 'GrapheneOS Migration' },
-                            'truenas-build.md': { type: 'file', path: 'TrueNAS Build Guide.md', name: 'TrueNAS Build' },
-                            'pihole-setup.md': { type: 'file', path: 'Homelab/Pi-hole Setup Guide - Complete Journey.md', name: 'Pi-hole Setup' },
-                            'wireguard-vpn.md': { type: 'file', path: 'WireGuard VPN Setup.md', name: 'WireGuard VPN' }
+                            'Development Tools.md': { type: 'file', path: 'Systems/Development Tools.md', name: 'Development Tools', icon: 'build' },
+                            'Obsidian Productivity Mastery.md': { type: 'file', path: 'Systems/Obsidian Productivity Mastery.md', name: 'Obsidian Mastery', icon: 'book' }
                         }
                     },
-                    'projects': {
+                    'Technology': {
                         type: 'dir',
-                        name: 'projects',
+                        name: 'Technology',
+                        icon: 'computer',
                         children: {
-                            'budget-nas.md': { type: 'file', path: 'Projects/Budget SAS Drive NAS Build Guide.md', name: 'Budget NAS Build' }
+                            'Homelab': {
+                                type: 'dir',
+                                name: 'Homelab',
+                                icon: 'storage',
+                                children: {
+                                    'Prometheus-Grafana-Lessons.md': { type: 'file', path: 'Technology/Homelab/Prometheus Grafana Monitoring Stack - Lessons Learned.md', name: 'Prometheus Lessons', icon: 'science' },
+                                    'Prometheus-Grafana-Guide.md': { type: 'file', path: 'Technology/Homelab/Prometheus Grafana Stack - Implementation Guide.md', name: 'Prometheus Guide', icon: 'science' }
+                                }
+                            }
                         }
                     },
-                    'homelab': {
+                    'Programming': {
                         type: 'dir',
-                        name: 'homelab',
-                        children: {
-                            'router-optimization.md': { type: 'file', path: 'Router/Optimization Guide.md', name: 'Router Optimization' }
-                        }
+                        name: 'Programming',
+                        icon: 'code',
+                        children: {}
                     },
-                    'README.md': { type: 'file', path: '🗺️ Knowledge Base - Main Index.md', name: 'README' }
+                    'Projects': {
+                        type: 'dir',
+                        name: 'Projects',
+                        icon: 'build',
+                        children: {}
+                    },
+                    'Teardown Cafe': {
+                        type: 'dir',
+                        name: 'Teardown Cafe',
+                        icon: 'groups',
+                        children: {}
+                    },
+                    'Learning': {
+                        type: 'dir',
+                        name: 'Learning',
+                        icon: 'school',
+                        children: {}
+                    },
+                    'Router Configuration': {
+                        type: 'dir',
+                        name: 'Router Configuration',
+                        icon: 'router',
+                        children: {}
+                    },
+                    'README.md': { type: 'file', path: '🗺️ Knowledge Base - Main Index.md', name: 'Main Index', icon: 'book' }
                 }
             }
         };
@@ -90,7 +121,7 @@ class KnowledgeGarden {
         document.querySelectorAll('.note-card').forEach(card => {
             card.addEventListener('click', () => {
                 const file = card.dataset.file;
-                if (file) this.viewFile(file);
+                if (file) this.viewFileByPath(file);
             });
         });
 
@@ -109,19 +140,23 @@ class KnowledgeGarden {
 
     renderFileTree() {
         this.fileTree.innerHTML = '';
-        this.renderTreeNode(this.filesystem['~'], '~', this.fileTree);
+        this.renderTreeNode(this.filesystem['~'], '~', this.fileTree, 0);
     }
 
-    renderTreeNode(node, path, container) {
+    renderTreeNode(node, path, container, depth) {
         if (node.type === 'dir' && node.children) {
             Object.entries(node.children).forEach(([name, child]) => {
                 const item = document.createElement('div');
                 item.className = `tree-item ${child.type}`;
+                item.style.paddingLeft = `${12 + depth * 16}px`;
 
-                const icon = document.createElement('span');
+                // SVG icon
+                const icon = document.createElement('svg');
                 icon.className = 'tree-icon';
+                icon.innerHTML = `<use href="icons-sprite.svg#icon-${child.icon || (child.type === 'dir' ? 'storage' : 'book')}"></use>`;
 
                 const label = document.createElement('span');
+                label.className = 'tree-label';
                 label.textContent = child.name || name;
 
                 item.appendChild(icon);
@@ -139,12 +174,15 @@ class KnowledgeGarden {
                         e.stopPropagation();
                         child.expanded = !child.expanded;
                         childContainer.classList.toggle('collapsed');
+                        item.classList.toggle('expanded');
                     });
 
-                    this.renderTreeNode(child, childPath, childContainer);
+                    if (child.expanded) item.classList.add('expanded');
+
+                    this.renderTreeNode(child, childPath, childContainer, depth + 1);
                 } else {
                     item.addEventListener('click', () => {
-                        this.viewFile(childPath);
+                        this.viewFileByPath(child.path);
                         document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
                         item.classList.add('active');
                     });
@@ -157,30 +195,35 @@ class KnowledgeGarden {
     // CONTENT VIEWER
     // ============================================
 
-    async viewFile(filePath) {
-        const file = this.resolveFile(filePath);
-        if (!file || file.type === 'dir') {
-            this.showNotification('File not found');
-            return;
-        }
-
-        this.currentFile = filePath;
-        this.updateBreadcrumb(filePath);
+    async viewFileByPath(githubPath) {
+        this.currentFile = githubPath;
+        this.updateBreadcrumb(githubPath);
         this.statusInfo.textContent = 'Loading...';
 
         try {
-            const content = await this.fetchNote(file.path);
+            const content = await this.fetchNote(githubPath);
             const html = this.renderMarkdown(content);
 
             this.contentBody.innerHTML = `<div class="markdown-content">${html}</div>`;
             this.statusInfo.textContent = `${content.split('\n').length} lines`;
         } catch (error) {
+            console.error('Fetch error:', error);
             this.contentBody.innerHTML = `<div class="error-content">
                 <h2>Error loading file</h2>
-                <p>${error.message}</p>
+                <p>Path: ${githubPath}</p>
+                <p>Error: ${error.message}</p>
             </div>`;
             this.statusInfo.textContent = 'Error';
         }
+    }
+
+    async viewFile(localPath) {
+        const file = this.resolveFile(localPath);
+        if (!file || file.type === 'dir') {
+            this.showNotification('File not found');
+            return;
+        }
+        await this.viewFileByPath(file.path);
     }
 
     resolveFile(path) {
@@ -199,10 +242,9 @@ class KnowledgeGarden {
 
     updateBreadcrumb(path) {
         const parts = path.split('/').filter(p => p);
-        this.breadcrumb.innerHTML = parts.map(p =>
-            `<span class="breadcrumb-item">${p}</span>`
-        ).join('');
-        this.statusPath.textContent = path.replace('~', '~/knowledge-garden');
+        this.breadcrumb.innerHTML = '<span class="breadcrumb-item">~</span>' +
+            parts.map(p => `<span class="breadcrumb-item">${p.replace('.md', '')}</span>`).join('');
+        this.statusPath.textContent = `~/${path}`;
     }
 
     async fetchNote(path) {
@@ -210,11 +252,14 @@ class KnowledgeGarden {
             return this.noteCache.get(path);
         }
 
-        const encodedPath = encodeURIComponent(path).replace(/%2F/g, '/');
+        // Properly encode the path for URLs with spaces
+        const encodedPath = path.split('/').map(part => encodeURIComponent(part)).join('/');
         const url = `https://raw.githubusercontent.com/${this.vaultOwner}/${this.vaultRepo}/${this.branch}/${encodedPath}`;
 
+        console.log('Fetching:', url);
+
         const response = await fetch(url);
-        if (!response.ok) throw new Error(`Failed to fetch: ${response.status}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const content = await response.text();
         this.noteCache.set(path, content);
@@ -280,7 +325,7 @@ class KnowledgeGarden {
                 this.spotlightOutput.innerHTML = '';
                 break;
             default:
-                this.showOutput(`Command not found: ${cmd}. Try 'help'`);
+                this.showOutput(`Command not found: ${cmd}`);
         }
     }
 
@@ -314,21 +359,14 @@ class KnowledgeGarden {
 
         const items = Object.entries(node.children || {}).map(([name, item]) => {
             const isDir = item.type === 'dir';
-            return `<span style="color: ${isDir ? 'var(--terminal-blue)' : 'inherit'}">${name}</span>`;
+            return `<span style="color: ${isDir ? 'var(--terminal-blue)' : 'inherit'}">${item.name || name}</span>`;
         });
 
-        this.showOutput(items.join('  '));
+        this.showOutput(items.join('  ') || '(empty)');
     }
 
     cmdHelp() {
-        this.showOutput(`
-<strong>Commands:</strong>
-  ls       List files
-  cd       Change directory
-  cat      View file
-  clear    Clear output
-  help     Show this help
-        `.trim());
+        this.showOutput(`<b>ls</b> list  <b>cd</b> navigate  <b>cat</b> view  <b>clear</b> reset`);
     }
 
     resolvePath(target) {
