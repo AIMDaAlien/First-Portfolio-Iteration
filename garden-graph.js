@@ -186,9 +186,20 @@ class KnowledgeGardenGraph {
             .attr('height', '100%')
             .attr('viewBox', `0 0 ${rect.width} ${rect.height}`);
 
+        this.currentZoom = 1;
         this.zoom = d3.zoom()
             .scaleExtent([0.1, 4])
-            .on('zoom', (e) => this.svgGroup.attr('transform', e.transform));
+            .on('zoom', (e) => {
+                this.svgGroup.attr('transform', e.transform);
+                this.currentZoom = e.transform.k;
+                // Scale labels inversely with zoom
+                if (this.labelElements) {
+                    const labelScale = Math.min(1.5, 1 / e.transform.k);
+                    this.labelElements
+                        .style('font-size', d => d.isSun ? `${11 * labelScale}px` : `${9 * labelScale}px`)
+                        .style('opacity', e.transform.k > 0.5 ? 0.85 : 0);
+                }
+            });
 
         this.svg.call(this.zoom);
         this.svgGroup = this.svg.append('g');
@@ -232,6 +243,10 @@ class KnowledgeGardenGraph {
             sunNode.fy = centerY;
         }
 
+        // Web notes cluster position (bottom-right quadrant)
+        const webX = centerX + rect.width * 0.25;
+        const webY = centerY + rect.height * 0.25;
+
         this.simulation = d3.forceSimulation(this.nodes)
             .force('link', d3.forceLink(this.links)
                 .id(d => d.id)
@@ -240,14 +255,22 @@ class KnowledgeGardenGraph {
             // Mass-based charge: more connections = stronger pull
             .force('charge', d3.forceManyBody()
                 .strength(d => d.isSun ? -20 : (-30 + (d.connections * 3))))
-            // Pull toward sun
-            .force('x', d3.forceX(centerX).strength(d => d.isSun ? 0 : 0.05))
-            .force('y', d3.forceY(centerY).strength(d => d.isSun ? 0 : 0.05))
-            // Radial force: connected nodes closer, orphans further
+            // Pull toward sun or Web cluster
+            .force('x', d3.forceX(d => {
+                if (d.isSun) return centerX;
+                if (d.folder === 'Web') return webX;
+                return centerX;
+            }).strength(d => d.folder === 'Web' ? 0.3 : 0.05))
+            .force('y', d3.forceY(d => {
+                if (d.isSun) return centerY;
+                if (d.folder === 'Web') return webY;
+                return centerY;
+            }).strength(d => d.folder === 'Web' ? 0.3 : 0.05))
+            // Radial force: connected nodes closer, orphans further (skip Web and sun)
             .force('radial', d3.forceRadial(
-                d => d.isSun ? 0 : Math.max(80, 350 - d.connections * 25),
+                d => (d.isSun || d.folder === 'Web') ? null : Math.max(80, 350 - d.connections * 25),
                 centerX, centerY
-            ).strength(d => d.isSun ? 0 : 0.2))
+            ).strength(d => (d.isSun || d.folder === 'Web') ? 0 : 0.2))
             .force('collision', d3.forceCollide().radius(d =>
                 d.isSun ? 25 : Math.max(4, 4 + Math.sqrt(d.connections) * 2) + 2))
             .on('tick', () => this.tick());
@@ -354,9 +377,13 @@ class KnowledgeGardenGraph {
     }
 
     handleClick(event, node) {
+        event.stopPropagation();
+        if (node.isSun) return; // Don't navigate for sun
+
         if (node.path && window.garden) {
-            window.garden.viewFileByPath(node.path);
+            // Hide graph and navigate to note
             document.getElementById('graphContainer').style.display = 'none';
+            window.garden.viewFileByPath(node.path);
         }
     }
 
