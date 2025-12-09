@@ -208,12 +208,22 @@ class KnowledgeGardenGraph {
         this.simulation = d3.forceSimulation(this.nodes)
             .force('link', d3.forceLink(this.links)
                 .id(d => d.id)
-                .distance(this.config.linkDistance)
-                .strength(0.5))
+                .distance(30)  // Shorter links
+                .strength(1))  // Stronger link attraction
             .force('charge', d3.forceManyBody()
-                .strength(this.config.chargeStrength))
-            .force('center', d3.forceCenter(rect.width / 2, rect.height / 2))
-            .force('collision', d3.forceCollide().radius(8))
+                .strength(-50))  // Less repulsion
+            .force('center', d3.forceCenter(rect.width / 2, rect.height / 2)
+                .strength(0.1))  // Stronger center pull
+            .force('collision', d3.forceCollide().radius(6))
+            // Group by folder - nodes with same folder attract
+            .force('x', d3.forceX().x(d => {
+                const folderIndex = [...new Set(this.nodes.map(n => n.folder))].indexOf(d.folder);
+                return rect.width * 0.2 + (folderIndex % 4) * (rect.width * 0.2);
+            }).strength(0.15))
+            .force('y', d3.forceY().y(d => {
+                const folderIndex = [...new Set(this.nodes.map(n => n.folder))].indexOf(d.folder);
+                return rect.height * 0.2 + Math.floor(folderIndex / 4) * (rect.height * 0.3);
+            }).strength(0.15))
             .on('tick', () => this.tick());
     }
 
