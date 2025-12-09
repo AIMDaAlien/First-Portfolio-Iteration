@@ -252,12 +252,12 @@ class KnowledgeGarden {
             this.statusInfo.textContent = `${lineCount} lines`;
         } catch (error) {
             console.error('Fetch error:', error);
+            const friendlyMessage = this.getFriendlyError(error, 'file');
             this.contentBody.innerHTML = `<div class="error-content">
-                <h2>Error loading file</h2>
-                <p>Path: ${githubPath}</p>
-                <p>Error: ${error.message}</p>
+                <h2>Couldn't load this note</h2>
+                <p class="muted">${friendlyMessage}</p>
             </div>`;
-            this.statusInfo.textContent = 'Error';
+            this.statusInfo.textContent = 'Not found';
         }
     }
 
@@ -359,8 +359,12 @@ class KnowledgeGarden {
 
         } catch (error) {
             console.error('Folder error:', error);
-            this.contentBody.innerHTML = `<div class="error-content"><h2>Error loading folder</h2><p>${error.message}</p></div>`;
-            this.statusInfo.textContent = 'Error';
+            const friendlyMessage = this.getFriendlyError(error, 'folder');
+            this.contentBody.innerHTML = `<div class="error-content">
+                <h2>Couldn't load folder</h2>
+                <p class="muted">${friendlyMessage}</p>
+            </div>`;
+            this.statusInfo.textContent = 'Not found';
         }
     }
 
@@ -486,6 +490,23 @@ class KnowledgeGarden {
             hour: '2-digit',
             minute: '2-digit'
         });
+    }
+
+    getFriendlyError(error, type = 'file') {
+        const msg = error.message.toLowerCase();
+
+        if (msg.includes('404')) {
+            return type === 'folder'
+                ? 'This folder may have been moved or renamed.'
+                : 'This note may have been moved or renamed.';
+        }
+        if (msg.includes('403') || msg.includes('rate')) {
+            return 'Too many requests. Please wait a moment and try again.';
+        }
+        if (msg.includes('network') || msg.includes('fetch')) {
+            return 'Network issue. Check your connection and try again.';
+        }
+        return 'Something went wrong. Try refreshing the page.';
     }
 
     escapeHtml(text) {

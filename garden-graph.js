@@ -267,36 +267,21 @@ class KnowledgeGardenGraph {
             sunNode.fy = centerY;
         }
 
-        // Web notes cluster position (bottom-right quadrant)
-        const webX = centerX + rect.width * 0.25;
-        const webY = centerY + rect.height * 0.25;
-
+        // Obsidian-style simplified forces
         this.simulation = d3.forceSimulation(this.nodes)
+            // Core force 1: Links attract connected nodes
             .force('link', d3.forceLink(this.links)
                 .id(d => d.id)
-                .distance(40)
-                .strength(0.8))
-            // Mass-based charge: more connections = stronger pull
+                .distance(60)
+                .strength(0.5))
+            // Core force 2: Nodes repel each other
             .force('charge', d3.forceManyBody()
-                .strength(d => d.isSun ? -20 : (-30 + (d.connections * 3))))
-            // Pull toward sun or Web cluster
-            .force('x', d3.forceX(d => {
-                if (d.isSun) return centerX;
-                if (d.folder === 'Web') return webX;
-                return centerX;
-            }).strength(d => d.folder === 'Web' ? 0.3 : 0.05))
-            .force('y', d3.forceY(d => {
-                if (d.isSun) return centerY;
-                if (d.folder === 'Web') return webY;
-                return centerY;
-            }).strength(d => d.folder === 'Web' ? 0.3 : 0.05))
-            // Radial force: connected nodes closer, orphans further (skip Web and sun)
-            .force('radial', d3.forceRadial(
-                d => (d.isSun || d.folder === 'Web') ? null : Math.max(80, 350 - d.connections * 25),
-                centerX, centerY
-            ).strength(d => (d.isSun || d.folder === 'Web') ? 0 : 0.2))
-            .force('collision', d3.forceCollide().radius(d =>
-                d.isSun ? 25 : Math.max(4, 4 + Math.sqrt(d.connections) * 2) + 2))
+                .strength(d => d.isSun ? 0 : -40))
+            // Core force 3: Center gravity
+            .force('center', d3.forceCenter(centerX, centerY))
+            // Core force 4: Collision prevention
+            .force('collision', d3.forceCollide()
+                .radius(d => d.isSun ? 25 : Math.max(5, 5 + Math.sqrt(d.connections) * 1.5)))
             .on('tick', () => this.tick());
     }
 

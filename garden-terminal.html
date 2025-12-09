@@ -31,10 +31,10 @@
         <div class="spotlight-bar" id="spotlightBar">
             <div class="spotlight-wrapper">
                 <!-- Mobile menu button -->
-                <button class="mobile-menu-btn" id="mobileMenuBtn" title="Open menu">
-                    <span>☰</span>
+                <button class="mobile-menu-btn" id="mobileMenuBtn" title="Open menu" aria-label="Open navigation menu">
+                    <span aria-hidden="true">☰</span>
                 </button>
-                <span class="spotlight-prompt">
+                <span class="spotlight-prompt" aria-hidden="true">
                     <span class="prompt-user">aim</span><span class="prompt-at">@</span><span
                         class="prompt-host">garden</span>
                     <span class="prompt-path" id="spotlightPath">~</span>
@@ -42,32 +42,34 @@
                 </span>
                 <input type="text" id="spotlightInput" class="spotlight-input"
                     placeholder="Type a command... (ls, cd, cat, help)" autocomplete="off" autocapitalize="off"
-                    spellcheck="false">
-                <div class="spotlight-hint">⌘K</div>
+                    spellcheck="false" aria-label="Command input">
+                <div class="spotlight-hint" aria-hidden="true">⌘K</div>
             </div>
-            <div class="spotlight-output" id="spotlightOutput" style="display: none;"></div>
+            <div class="spotlight-output" id="spotlightOutput" style="display: none;" role="status" aria-live="polite">
+            </div>
         </div>
 
         <!-- Mobile overlay backdrop -->
-        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
 
         <!-- Main Content Area -->
         <div class="main-layout">
 
             <!-- Sidebar -->
-            <aside class="sidebar" id="sidebar">
+            <aside class="sidebar" id="sidebar" aria-label="File navigation">
                 <div class="sidebar-header">
-                    <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
-                        <span>☰</span>
+                    <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar"
+                        aria-label="Toggle sidebar">
+                        <span aria-hidden="true">☰</span>
                     </button>
                     <span class="sidebar-title">Files</span>
                 </div>
-                <div class="file-tree" id="fileTree">
+                <div class="file-tree" id="fileTree" role="tree" aria-label="File tree">
                     <!-- File tree rendered by JS -->
                 </div>
                 <div class="sidebar-footer">
-                    <button class="sidebar-btn" id="graphBtn" title="Graph View">
-                        <span>🕸️</span> Graph
+                    <button class="sidebar-btn" id="graphBtn" title="Graph View" aria-label="Open graph view">
+                        <span aria-hidden="true">🕸️</span> Graph
                     </button>
                 </div>
             </aside>
