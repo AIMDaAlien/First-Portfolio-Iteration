@@ -30,6 +30,27 @@ class KnowledgeGardenGraph {
             'root': '#7C3AED'
         };
 
+        // Curated important notes (content value, not link count)
+        this.importantNotes = new Set([
+            'development tools',
+            'obsidian productivity mastery',
+            'building a privacy-first obsidian publishing system',
+            'github pages setup',
+            'git push conflict troubleshooting',
+            'privacy filter - matrix decode',
+            'knowledge base - main index',
+            'truenas build guide',
+            'truenas build entry',
+            'pi-hole setup',
+            '00 - router optimization',
+            'pihole truenas ne...',
+            'readme',
+            'session index',
+            'workflow dashboard',
+            'man pages',
+            'about me draft'
+        ]);
+
         this.nodes = [];
         this.links = [];
         this.nameToNode = new Map(); // Map note name -> node for linking
@@ -54,6 +75,9 @@ class KnowledgeGardenGraph {
         this.createLegend();
         this.setupSimulation();
         this.render();
+
+        // Set background
+        this.container.style.background = '#1e1e2e';
 
         window.addEventListener('resize', () => this.handleResize());
     }
@@ -277,14 +301,14 @@ class KnowledgeGardenGraph {
     }
 
     render() {
-        // Links
+        // Links - softer style
         this.linkElements = this.linksGroup
             .selectAll('line')
             .data(this.links)
             .enter()
             .append('line')
-            .style('stroke', 'rgba(167, 139, 250, 0.3)')
-            .style('stroke-width', 1);
+            .style('stroke', 'rgba(139, 92, 246, 0.15)')
+            .style('stroke-width', 0.5);
 
         // Nodes
         this.nodeElements = this.nodesGroup
@@ -301,21 +325,21 @@ class KnowledgeGardenGraph {
             .on('mouseout', () => this.hideTooltip())
             .on('click', (e, d) => this.handleClick(e, d));
 
-        // Labels only for important nodes (5+ connections) and sun
+        // Labels for curated important notes (not link count)
         this.labelElements = this.nodesGroup
             .selectAll('text')
-            .data(this.nodes.filter(n => n.connections >= 5 || n.isSun))
+            .data(this.nodes.filter(n => n.isSun || this.importantNotes.has(n.name.toLowerCase())))
             .enter()
             .append('text')
             .attr('class', 'node-label')
             .attr('data-id', d => d.id)
-            .attr('dy', d => d.isSun ? 25 : Math.max(3, 3 + Math.sqrt(d.connections) * 2) + 10)
+            .attr('dy', d => d.isSun ? 25 : Math.max(3, 3 + Math.sqrt(d.connections) * 2) + 12)
             .attr('text-anchor', 'middle')
-            .text(d => d.name.length > 20 ? d.name.slice(0, 18) + '...' : d.name)
-            .style('font-size', d => d.isSun ? '11px' : '9px')
-            .style('font-weight', d => d.isSun ? '600' : '400')
-            .style('fill', d => d.isSun ? '#FFD93D' : 'rgba(255,255,255,0.85)')
-            .style('text-shadow', '0 1px 3px rgba(0,0,0,0.8)')
+            .text(d => d.name.length > 22 ? d.name.slice(0, 20) + '...' : d.name)
+            .style('font-size', d => d.isSun ? '12px' : '10px')
+            .style('font-weight', d => d.isSun ? '600' : '500')
+            .style('fill', d => d.isSun ? '#FFD93D' : '#E2E8F0')
+            .style('text-shadow', '0 1px 4px rgba(0,0,0,0.9)')
             .style('pointer-events', 'none');
     }
 
