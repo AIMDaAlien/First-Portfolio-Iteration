@@ -502,6 +502,62 @@ body {
     color: var(--terminal-cyan);
 }
 
+/* Folder View (for breadcrumb navigation) */
+.folder-view h2 {
+    font-family: var(--font-chrome);
+    font-size: 1.5rem;
+    color: var(--terminal-cyan);
+    margin-bottom: 16px;
+}
+
+.folder-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.folder-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--md-sys-color-surface-container);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.folder-item:hover {
+    background: var(--md-sys-color-surface-container-high);
+    border-color: var(--md-sys-color-primary);
+    transform: translateY(-2px);
+}
+
+.folder-item.folder {
+    border-left: 3px solid var(--terminal-blue);
+}
+
+.folder-item.file {
+    border-left: 3px solid var(--terminal-cyan);
+}
+
+.folder-item-icon {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+    opacity: 0.7;
+}
+
+.folder-item.folder .folder-item-icon {
+    fill: var(--terminal-blue);
+}
+
+.folder-item-name {
+    font-size: 13px;
+    color: var(--md-sys-color-on-surface);
+}
+
 /* Featured Note Cards */
 .note-cards {
     display: grid;

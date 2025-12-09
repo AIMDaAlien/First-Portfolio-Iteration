@@ -266,21 +266,93 @@ class KnowledgeGarden {
         this.breadcrumb.querySelectorAll('.breadcrumb-item.clickable').forEach(item => {
             item.addEventListener('click', () => {
                 const targetPath = item.dataset.path;
-                // Show welcome content for root, otherwise could expand folder
                 if (!targetPath) {
                     this.showWelcome();
+                } else {
+                    this.showFolderContents(targetPath);
                 }
             });
         });
     }
 
+    async showFolderContents(folderPath) {
+        this.statusInfo.textContent = 'Loading folder...';
+
+        try {
+            const items = await this.fetchDirectory(folderPath);
+
+            // Build folder view HTML
+            let html = `<div class="folder-view">
+                <h2>${folderPath.split('/').pop()}</h2>
+                <div class="folder-items">`;
+
+            items.forEach(item => {
+                const isFolder = item.type === 'dir';
+                const displayName = item.name.replace('.md', '');
+                const icon = isFolder ? 'storage' : 'book';
+
+                html += `<div class="folder-item ${isFolder ? 'folder' : 'file'}" data-path="${item.path}" data-type="${item.type}">
+                    <svg class="folder-item-icon"><use href="icons-sprite.svg#icon-${icon}"></use></svg>
+                    <span class="folder-item-name">${displayName}</span>
+                </div>`;
+            });
+
+            html += `</div></div>`;
+            this.contentBody.innerHTML = html;
+
+            // Update breadcrumb for folder view
+            const parts = folderPath.split('/');
+            let cumPath = '';
+            let breadcrumbHtml = '<span class="breadcrumb-item clickable" data-path="">~</span>';
+            parts.forEach(part => {
+                cumPath += (cumPath ? '/' : '') + part;
+                breadcrumbHtml += `<span class="breadcrumb-item clickable" data-path="${cumPath}">${part}</span>`;
+            });
+            this.breadcrumb.innerHTML = breadcrumbHtml;
+
+            // Re-attach breadcrumb handlers
+            this.breadcrumb.querySelectorAll('.breadcrumb-item.clickable').forEach(item => {
+                item.addEventListener('click', () => {
+                    const targetPath = item.dataset.path;
+                    if (!targetPath) {
+                        this.showWelcome();
+                    } else {
+                        this.showFolderContents(targetPath);
+                    }
+                });
+            });
+
+            // Add click handlers to folder items
+            this.contentBody.querySelectorAll('.folder-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const path = item.dataset.path;
+                    const type = item.dataset.type;
+                    if (type === 'dir') {
+                        this.showFolderContents(path);
+                    } else {
+                        this.viewFileByPath(path);
+                    }
+                });
+            });
+
+            this.statusInfo.textContent = `${items.length} items`;
+
+        } catch (error) {
+            console.error('Folder error:', error);
+            this.contentBody.innerHTML = `<div class="error-content"><h2>Error loading folder</h2><p>${error.message}</p></div>`;
+            this.statusInfo.textContent = 'Error';
+        }
+    }
+
     showWelcome() {
+        this.currentFile = null;
         this.contentBody.innerHTML = `
             <div class="welcome-content">
                 <h1>Knowledge Garden</h1>
                 <p class="muted">Select a file from the sidebar or use the spotlight.</p>
             </div>`;
         this.breadcrumb.innerHTML = '<span class="breadcrumb-item">~</span>';
+        this.statusInfo.textContent = 'Ready';
     }
 
     async fetchNote(path) {

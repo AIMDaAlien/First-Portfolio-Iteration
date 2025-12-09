@@ -6,37 +6,35 @@
 class KnowledgeGardenGraph {
     constructor() {
         this.config = {
-            nodeRadius: 6,
-            linkDistance: 60,
-            chargeStrength: -150
+            nodeRadius: 5,
+            linkDistance: 50,
+            chargeStrength: -80
         };
 
         this.vaultOwner = 'AIMDaAlien';
         this.vaultRepo = 'Obsidian-Vault';
         this.hiddenItems = ['.obsidian', '.stfolder', '.DS_Store', '.gitignore', 'Myself', 'Business', 'images'];
 
-        // Colors by tag/folder
-        this.tagColors = {
-            'homelab': '#10B981',
-            'privacy': '#EC4899',
-            'networking': '#3B82F6',
-            'linux': '#F59E0B',
-            'docker': '#22D3EE',
-            'security': '#EF4444',
-            'programming': '#8B5CF6',
-            'projects': '#06B6D4',
-            'learning': '#F97316',
-            'default': '#A78BFA'
+        // Colors by folder
+        this.folderColors = {
+            'IT Projects': '#22D3EE',
+            'Learning': '#F59E0B',
+            'Meta': '#A78BFA',
+            'Projects': '#3B82F6',
+            'Router Configuration': '#10B981',
+            'Sessions': '#F97316',
+            'Technical': '#8B5CF6',
+            'Computer Related Stuff': '#EC4899',
+            'root': '#7C3AED'
         };
 
         this.nodes = [];
         this.links = [];
-        this.nodeMap = new Map();
+        this.nameToNode = new Map(); // Map note name -> node for linking
 
         this.svg = null;
         this.simulation = null;
         this.container = null;
-        this.tooltip = null;
         this.isVisible = false;
     }
 
@@ -44,7 +42,7 @@ class KnowledgeGardenGraph {
         this.container = document.getElementById(containerId);
         if (!this.container) return;
 
-        this.container.innerHTML = '<div style="color:#A78BFA;text-align:center;padding:50px;">Building graph from vault...</div>';
+        this.container.innerHTML = '<div style="color:#A78BFA;text-align:center;padding:50px;font-family:monospace;">Parsing vault for [[wikilinks]]...</div>';
 
         await this.fetchGraphData();
 
@@ -60,7 +58,7 @@ class KnowledgeGardenGraph {
 
     async fetchGraphData() {
         try {
-            // Get file tree
+            // Get full tree
             const treeRes = await fetch(
                 `https://api.github.com/repos/${this.vaultOwner}/${this.vaultRepo}/git/trees/main?recursive=1`
             );
@@ -76,64 +74,35 @@ class KnowledgeGardenGraph {
 
             // Build nodes
             this.nodes = [];
-            this.nodeMap = new Map();
+            this.nameToNode = new Map();
 
             mdFiles.forEach(file => {
-                const name = file.path.split('/').pop().replace('.md', '');
+                const fileName = file.path.split('/').pop().replace('.md', '');
                 const folder = file.path.includes('/') ? file.path.split('/')[0] : 'root';
+
                 const node = {
                     id: file.path,
-                    name: name,
+                    name: fileName,
                     folder: folder,
-                    tags: [],
-                    connections: 0,
-                    path: file.path
+                    path: file.path,
+                    connections: 0
                 };
+
                 this.nodes.push(node);
-                this.nodeMap.set(name.toLowerCase(), node);
-                this.nodeMap.set(file.path.toLowerCase(), node);
+                // Map by lowercase name for matching
+                this.nameToNode.set(fileName.toLowerCase(), node);
             });
 
-            // Fetch content and parse [[links]] (sample for performance)
+            // Fetch ALL note content and parse [[links]]
             this.links = [];
-            const filesToParse = mdFiles.slice(0, 40); // Limit for performance
+            const linkSet = new Set(); // Avoid duplicates
 
-            await Promise.all(filesToParse.map(async file => {
-                try {
-                    const url = `https://raw.githubusercontent.com/${this.vaultOwner}/${this.vaultRepo}/main/${encodeURIComponent(file.path).replace(/%2F/g, '/')}`;
-                    const res = await fetch(url);
-                    if (!res.ok) return;
-                    const content = await res.text();
-
-                    // Parse [[wikilinks]]
-                    const linkRegex = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;
-                    let match;
-                    while ((match = linkRegex.exec(content)) !== null) {
-                        const linkName = match[1].toLowerCase().trim();
-                        const targetNode = this.nodeMap.get(linkName);
-                        if (targetNode && targetNode.id !== file.path) {
-                            this.links.push({
-                                source: file.path,
-                                target: targetNode.id
-                            });
-                        }
-                    }
-
-                    // Parse tags from frontmatter
-                    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
-                    if (frontmatterMatch) {
-                        const tagsMatch = frontmatterMatch[1].match(/tags:\s*\[([^\]]+)\]/);
-                        if (tagsMatch) {
-                            const node = this.nodeMap.get(file.path.toLowerCase());
-                            if (node) {
-                                node.tags = tagsMatch[1].split(',').map(t => t.trim().toLowerCase().replace(/['"]/g, ''));
-                            }
-                        }
-                    }
-                } catch (e) {
-                    // Skip errors
-                }
-            }));
+            // Fetch notes in batches
+            const batchSize = 20;
+            for (let i = 0; i < mdFiles.length; i += batchSize) {
+                const batch = mdFiles.slice(i, i + batchSize);
+                await Promise.all(batch.map(file => this.parseFileLinks(file.path, linkSet)));
+            }
 
             // Update connection counts
             this.nodes.forEach(node => {
@@ -142,31 +111,52 @@ class KnowledgeGardenGraph {
                 ).length;
             });
 
+            console.log(`Graph: ${this.nodes.length} nodes, ${this.links.length} links`);
+
         } catch (error) {
             console.error('Graph error:', error);
-            this.nodes = [{ id: 'error', name: 'Failed to load', folder: 'default', tags: [] }];
+            this.nodes = [{ id: 'error', name: 'Failed to load', folder: 'root' }];
             this.links = [];
         }
     }
 
-    getNodeColor(node) {
-        // Use first tag color, mix if multiple
-        if (node.tags && node.tags.length > 0) {
-            const color = this.tagColors[node.tags[0]] || this.tagColors.default;
-            return color;
+    async parseFileLinks(filePath, linkSet) {
+        try {
+            // Properly encode path - each segment separately
+            const encodedPath = filePath.split('/').map(s => encodeURIComponent(s)).join('/');
+            const url = `https://raw.githubusercontent.com/${this.vaultOwner}/${this.vaultRepo}/main/${encodedPath}`;
+
+            const res = await fetch(url);
+            if (!res.ok) return;
+
+            const content = await res.text();
+
+            // Parse [[wikilinks]] - matches [[Note Name]] or [[Note Name|Display Text]]
+            const linkRegex = /\[\[([^\]|#]+)(?:[#|][^\]]+)?\]\]/g;
+            let match;
+
+            while ((match = linkRegex.exec(content)) !== null) {
+                const linkName = match[1].trim().toLowerCase();
+                const targetNode = this.nameToNode.get(linkName);
+
+                if (targetNode && targetNode.id !== filePath) {
+                    const linkKey = [filePath, targetNode.id].sort().join('::');
+                    if (!linkSet.has(linkKey)) {
+                        linkSet.add(linkKey);
+                        this.links.push({
+                            source: filePath,
+                            target: targetNode.id
+                        });
+                    }
+                }
+            }
+        } catch (e) {
+            // Skip errors silently
         }
-        // Fallback to folder-based color
-        const folderColors = {
-            'Technical': '#8B5CF6',
-            'Projects': '#3B82F6',
-            'Learning': '#F59E0B',
-            'IT Projects': '#22D3EE',
-            'Router Configuration': '#10B981',
-            'Computer Related Stuff': '#EC4899',
-            'Sessions': '#F97316',
-            'Meta': '#A78BFA'
-        };
-        return folderColors[node.folder] || this.tagColors.default;
+    }
+
+    getNodeColor(node) {
+        return this.folderColors[node.folder] || '#A78BFA';
     }
 
     createSVG() {
@@ -201,13 +191,13 @@ class KnowledgeGardenGraph {
         legend.className = 'graph-legend';
         legend.innerHTML = `
             <div class="legend-title">Folders</div>
-            ${folders.slice(0, 8).map(folder => {
-            const color = this.getNodeColor({ folder, tags: [] });
-            return `<div class="legend-item">
-                    <span class="legend-color" style="background:${color}"></span>
+            ${folders.map(folder => `
+                <div class="legend-item">
+                    <span class="legend-color" style="background:${this.folderColors[folder] || '#A78BFA'}"></span>
                     <span class="legend-label">${folder}</span>
-                </div>`;
-        }).join('')}
+                </div>
+            `).join('')}
+            <div class="legend-stats">${this.nodes.length} notes • ${this.links.length} links</div>
         `;
         this.container.appendChild(legend);
     }
@@ -218,11 +208,12 @@ class KnowledgeGardenGraph {
         this.simulation = d3.forceSimulation(this.nodes)
             .force('link', d3.forceLink(this.links)
                 .id(d => d.id)
-                .distance(this.config.linkDistance))
+                .distance(this.config.linkDistance)
+                .strength(0.5))
             .force('charge', d3.forceManyBody()
                 .strength(this.config.chargeStrength))
             .force('center', d3.forceCenter(rect.width / 2, rect.height / 2))
-            .force('collision', d3.forceCollide().radius(12))
+            .force('collision', d3.forceCollide().radius(8))
             .on('tick', () => this.tick());
     }
 
@@ -233,7 +224,7 @@ class KnowledgeGardenGraph {
             .data(this.links)
             .enter()
             .append('line')
-            .style('stroke', 'rgba(124, 58, 237, 0.25)')
+            .style('stroke', 'rgba(167, 139, 250, 0.3)')
             .style('stroke-width', 1);
 
         // Nodes
@@ -242,7 +233,7 @@ class KnowledgeGardenGraph {
             .data(this.nodes)
             .enter()
             .append('circle')
-            .attr('r', d => Math.max(4, 4 + d.connections * 1.5))
+            .attr('r', d => Math.max(3, 3 + Math.sqrt(d.connections) * 2))
             .attr('fill', d => this.getNodeColor(d))
             .style('cursor', 'pointer')
             .call(this.drag())
@@ -250,17 +241,17 @@ class KnowledgeGardenGraph {
             .on('mouseout', () => this.hideTooltip())
             .on('click', (e, d) => this.handleClick(e, d));
 
-        // Labels for connected nodes only
+        // Labels only for well-connected nodes
         this.labelElements = this.nodesGroup
             .selectAll('text')
-            .data(this.nodes.filter(n => n.connections >= 2))
+            .data(this.nodes.filter(n => n.connections >= 3))
             .enter()
             .append('text')
-            .attr('dy', d => Math.max(4, 4 + d.connections * 1.5) + 12)
+            .attr('dy', d => Math.max(3, 3 + Math.sqrt(d.connections) * 2) + 10)
             .attr('text-anchor', 'middle')
-            .text(d => d.name.length > 15 ? d.name.slice(0, 13) + '...' : d.name)
-            .style('font-size', '9px')
-            .style('fill', 'rgba(255,255,255,0.6)')
+            .text(d => d.name.length > 18 ? d.name.slice(0, 16) + '...' : d.name)
+            .style('font-size', '8px')
+            .style('fill', 'rgba(255,255,255,0.5)')
             .style('pointer-events', 'none');
     }
 
@@ -276,7 +267,7 @@ class KnowledgeGardenGraph {
             .attr('cy', d => d.y);
 
         this.labelElements
-            .attr('x', d => d.x)
+            ?.attr('x', d => d.x)
             .attr('y', d => d.y);
     }
 
@@ -294,9 +285,8 @@ class KnowledgeGardenGraph {
     }
 
     showTooltip(event, node) {
-        const tags = node.tags?.length ? `<br>Tags: ${node.tags.join(', ')}` : '';
         this.tooltip
-            .html(`<strong>${node.name}</strong><br>${node.connections} links${tags}`)
+            .html(`<strong>${node.name}</strong><br>${node.folder}<br>${node.connections} links`)
             .style('left', (event.pageX + 10) + 'px')
             .style('top', (event.pageY - 10) + 'px')
             .style('opacity', 1);
@@ -310,11 +300,11 @@ class KnowledgeGardenGraph {
             if (tgt === node.id) connected.add(src);
         });
 
-        this.nodeElements.style('opacity', d => connected.has(d.id) ? 1 : 0.15);
+        this.nodeElements.style('opacity', d => connected.has(d.id) ? 1 : 0.1);
         this.linkElements.style('opacity', l => {
             const src = typeof l.source === 'object' ? l.source.id : l.source;
             const tgt = typeof l.target === 'object' ? l.target.id : l.target;
-            return (src === node.id || tgt === node.id) ? 1 : 0.05;
+            return (src === node.id || tgt === node.id) ? 1 : 0.03;
         });
     }
 
