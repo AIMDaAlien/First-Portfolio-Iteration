@@ -1,146 +1,161 @@
 /**
  * Knowledge Garden Graph View
- * Obsidian-like force-directed graph using D3.js
- * Following M3 Expressive aesthetics
+ * Dynamic graph from GitHub API with D3.js
  */
 
 class KnowledgeGardenGraph {
     constructor() {
-        // Configuration
+        // Config
         this.config = {
             nodeRadius: 8,
-            linkDistance: 80,
-            chargeStrength: -200,
-            centerStrength: 0.05,
-            collisionRadius: 15
+            linkDistance: 100,
+            chargeStrength: -300,
+            centerStrength: 0.05
         };
 
-        // Color palette by group
+        // GitHub config
+        this.vaultOwner = 'AIMDaAlien';
+        this.vaultRepo = 'Obsidian-Vault';
+        this.hiddenItems = ['.obsidian', '.stfolder', '.DS_Store', '.gitignore', 'Myself', 'Business', 'images'];
+
+        // Color palette by folder
         this.groupColors = {
-            'featured': '#7C3AED',    // Primary lavender
-            'homelab': '#10B981',     // Green
-            'projects': '#3B82F6',    // Blue
-            'career': '#F59E0B',      // Orange
-            'privacy': '#EC4899',     // Pink
-            'programming': '#22D3EE', // Cyan
-            'default': '#A78BFA'      // Light lavender
+            'Computer Related Stuff': '#10B981',
+            'IT Projects': '#3B82F6',
+            'Learning': '#F59E0B',
+            'Meta': '#EC4899',
+            'Projects': '#22D3EE',
+            'Router Configuration': '#10B981',
+            'Sessions': '#F97316',
+            'Technical': '#8B5CF6',
+            'root': '#7C3AED',
+            'default': '#A78BFA'
         };
 
         // Data
         this.nodes = [];
         this.links = [];
 
-        // D3 objects
+        // D3
         this.svg = null;
         this.simulation = null;
-        this.zoom = null;
-
-        // DOM
         this.container = null;
         this.tooltip = null;
-
-        // State
         this.isVisible = false;
-        this.selectedNode = null;
     }
 
-    // ============================================
-    // INITIALIZATION
-    // ============================================
-
-    init(containerId) {
+    async init(containerId) {
         this.container = document.getElementById(containerId);
         if (!this.container) return;
 
-        // Build data from filesystem
-        this.buildGraphData();
+        // Show loading
+        this.container.innerHTML = '<div style="color:#A78BFA;text-align:center;padding:50px;">Loading graph...</div>';
+
+        // Fetch data from GitHub
+        await this.fetchGraphData();
+
+        // Clear loading
+        this.container.innerHTML = '';
 
         // Create SVG
         this.createSVG();
-
-        // Create tooltip
         this.createTooltip();
-
-        // Setup simulation
+        this.createLegend();
         this.setupSimulation();
-
-        // Render
         this.render();
 
-        // Handle resize
         window.addEventListener('resize', () => this.handleResize());
     }
 
-    buildGraphData() {
-        // Nodes from filesystem
-        const filesystem = {
-            'featured': {
-                files: [
-                    { id: 'grapheneos', name: 'GrapheneOS Migration', group: 'featured' },
-                    { id: 'truenas', name: 'TrueNAS Build', group: 'featured' },
-                    { id: 'pihole', name: 'Pi-hole Setup', group: 'featured' },
-                    { id: 'wireguard', name: 'WireGuard VPN', group: 'featured' }
-                ]
-            },
-            'projects': {
-                files: [
-                    { id: 'budget-nas', name: 'Budget NAS Build', group: 'projects' }
-                ]
-            },
-            'homelab': {
-                files: [
-                    { id: 'router-opt', name: 'Router Optimization', group: 'homelab' }
-                ]
-            }
-        };
+    async fetchGraphData() {
+        try {
+            const response = await fetch(
+                `https://api.github.com/repos/${this.vaultOwner}/${this.vaultRepo}/git/trees/main?recursive=1`
+            );
+            if (!response.ok) throw new Error('API failed');
 
-        // Add hub nodes for folders
-        this.nodes = [
-            { id: 'home', name: 'Knowledge Garden', group: 'default', isHub: true, connections: 3 }
-        ];
+            const data = await response.json();
+            const tree = data.tree || [];
 
-        // Add folder nodes and file nodes
-        Object.entries(filesystem).forEach(([folder, data]) => {
-            // Folder node
-            this.nodes.push({
-                id: folder,
-                name: folder.charAt(0).toUpperCase() + folder.slice(1),
-                group: folder,
-                isHub: true,
-                connections: data.files.length + 1
+            // Build nodes and links
+            this.nodes = [{ id: 'root', name: 'Knowledge Garden', group: 'root', isHub: true, connections: 0 }];
+            this.links = [];
+
+            const folders = new Set();
+            const filesByFolder = {};
+
+            // Process tree
+            tree.forEach(item => {
+                const parts = item.path.split('/');
+                const isHidden = parts.some(p => this.hiddenItems.includes(p) || p.startsWith('.'));
+                if (isHidden) return;
+
+                if (item.type === 'tree' && parts.length === 1) {
+                    // Top-level folder
+                    folders.add(item.path);
+                    filesByFolder[item.path] = [];
+                } else if (item.type === 'blob' && item.path.endsWith('.md')) {
+                    const folder = parts.length > 1 ? parts[0] : 'root';
+                    if (!filesByFolder[folder]) filesByFolder[folder] = [];
+                    filesByFolder[folder].push({
+                        path: item.path,
+                        name: parts[parts.length - 1].replace('.md', '')
+                    });
+                }
             });
 
-            // Link folder to home
-            this.links.push({ source: 'home', target: folder });
+            // Add folder nodes
+            folders.forEach(folder => {
+                if (!this.hiddenItems.includes(folder)) {
+                    this.nodes.push({
+                        id: folder,
+                        name: folder,
+                        group: folder,
+                        isHub: true,
+                        connections: (filesByFolder[folder] || []).length + 1
+                    });
+                    this.links.push({ source: 'root', target: folder });
+                }
+            });
 
-            // File nodes
-            data.files.forEach(file => {
-                this.nodes.push({
-                    ...file,
-                    connections: 1
+            // Add file nodes (limit to prevent overload)
+            let fileCount = 0;
+            const maxFiles = 50;
+
+            Object.entries(filesByFolder).forEach(([folder, files]) => {
+                if (this.hiddenItems.includes(folder)) return;
+
+                files.slice(0, 10).forEach(file => {
+                    if (fileCount >= maxFiles) return;
+                    fileCount++;
+
+                    const nodeId = file.path.replace(/[\/\s\.]/g, '_');
+                    this.nodes.push({
+                        id: nodeId,
+                        name: file.name,
+                        group: folder,
+                        path: file.path,
+                        connections: 1
+                    });
+
+                    const target = folders.has(folder) ? folder : 'root';
+                    this.links.push({ source: target, target: nodeId });
                 });
-
-                // Link file to folder
-                this.links.push({ source: folder, target: file.id });
             });
-        });
 
-        // Add some cross-links for realism
-        this.links.push(
-            { source: 'grapheneos', target: 'wireguard' },
-            { source: 'pihole', target: 'router-opt' },
-            { source: 'truenas', target: 'budget-nas' }
-        );
+            // Update connection counts
+            this.nodes.forEach(node => {
+                node.connections = this.links.filter(l =>
+                    l.source === node.id || l.target === node.id
+                ).length;
+            });
 
-        // Update connection counts
-        this.nodes.forEach(node => {
-            const linkCount = this.links.filter(l =>
-                l.source === node.id || l.target === node.id ||
-                (l.source.id && l.source.id === node.id) ||
-                (l.target.id && l.target.id === node.id)
-            ).length;
-            node.connections = linkCount;
-        });
+        } catch (error) {
+            console.error('Graph fetch error:', error);
+            // Fallback data
+            this.nodes = [{ id: 'root', name: 'Failed to load', group: 'default', isHub: true }];
+            this.links = [];
+        }
     }
 
     createSVG() {
@@ -150,22 +165,14 @@ class KnowledgeGardenGraph {
             .append('svg')
             .attr('width', '100%')
             .attr('height', '100%')
-            .attr('viewBox', `0 0 ${rect.width} ${rect.height}`)
-            .style('background', 'transparent');
+            .attr('viewBox', `0 0 ${rect.width} ${rect.height}`);
 
-        // Add zoom behavior
         this.zoom = d3.zoom()
             .scaleExtent([0.2, 4])
-            .on('zoom', (event) => {
-                this.svgGroup.attr('transform', event.transform);
-            });
+            .on('zoom', (event) => this.svgGroup.attr('transform', event.transform));
 
         this.svg.call(this.zoom);
-
-        // Create main group for zoom/pan
         this.svgGroup = this.svg.append('g');
-
-        // Create groups for links and nodes
         this.linksGroup = this.svgGroup.append('g').attr('class', 'links');
         this.nodesGroup = this.svgGroup.append('g').attr('class', 'nodes');
     }
@@ -177,68 +184,73 @@ class KnowledgeGardenGraph {
             .style('opacity', 0);
     }
 
+    createLegend() {
+        const legend = document.createElement('div');
+        legend.className = 'graph-legend';
+        legend.innerHTML = `
+            <div class="legend-title">Categories</div>
+            ${Object.entries(this.groupColors)
+                .filter(([k]) => k !== 'default' && k !== 'root')
+                .map(([name, color]) => `
+                    <div class="legend-item">
+                        <span class="legend-color" style="background:${color}"></span>
+                        <span class="legend-label">${name}</span>
+                    </div>
+                `).join('')}
+        `;
+        this.container.appendChild(legend);
+    }
+
     setupSimulation() {
         const rect = this.container.getBoundingClientRect();
 
         this.simulation = d3.forceSimulation(this.nodes)
             .force('link', d3.forceLink(this.links)
                 .id(d => d.id)
-                .distance(this.config.linkDistance)
-                .strength(0.5))
+                .distance(this.config.linkDistance))
             .force('charge', d3.forceManyBody()
                 .strength(this.config.chargeStrength))
-            .force('center', d3.forceCenter(rect.width / 2, rect.height / 2)
-                .strength(this.config.centerStrength))
-            .force('collision', d3.forceCollide()
-                .radius(this.config.collisionRadius))
+            .force('center', d3.forceCenter(rect.width / 2, rect.height / 2))
+            .force('collision', d3.forceCollide().radius(20))
             .on('tick', () => this.tick());
     }
 
-    // ============================================
-    // RENDERING
-    // ============================================
-
     render() {
-        // Render links
+        // Links
         this.linkElements = this.linksGroup
             .selectAll('line')
             .data(this.links)
             .enter()
             .append('line')
-            .attr('class', 'graph-link')
             .style('stroke', 'rgba(124, 58, 237, 0.3)')
             .style('stroke-width', 1);
 
-        // Render nodes
+        // Nodes
         this.nodeElements = this.nodesGroup
             .selectAll('g')
             .data(this.nodes)
             .enter()
             .append('g')
-            .attr('class', 'graph-node')
             .call(this.drag())
-            .on('mouseover', (event, d) => this.showTooltip(event, d))
+            .on('mouseover', (e, d) => this.showTooltip(e, d))
             .on('mouseout', () => this.hideTooltip())
-            .on('click', (event, d) => this.handleNodeClick(event, d));
+            .on('click', (e, d) => this.handleClick(e, d));
 
-        // Node circles
+        // Circles
         this.nodeElements
             .append('circle')
-            .attr('r', d => this.getNodeRadius(d))
+            .attr('r', d => d.isHub ? 16 : 8 + Math.min(d.connections * 2, 6))
             .attr('fill', d => this.groupColors[d.group] || this.groupColors.default)
-            .style('cursor', 'pointer')
-            .style('transition', 'r 0.2s ease, filter 0.2s ease');
+            .style('cursor', 'pointer');
 
-        // Node labels
+        // Labels
         this.nodeElements
             .append('text')
-            .attr('class', 'node-label')
-            .attr('dy', d => this.getNodeRadius(d) + 14)
+            .attr('dy', d => (d.isHub ? 16 : 8) + 14)
             .attr('text-anchor', 'middle')
-            .text(d => d.name)
-            .style('font-size', '11px')
-            .style('fill', 'rgba(255, 255, 255, 0.7)')
-            .style('font-family', "'Ubuntu', sans-serif")
+            .text(d => d.name.length > 20 ? d.name.slice(0, 18) + '...' : d.name)
+            .style('font-size', '10px')
+            .style('fill', 'rgba(255,255,255,0.7)')
             .style('pointer-events', 'none');
     }
 
@@ -250,32 +262,22 @@ class KnowledgeGardenGraph {
             .attr('y2', d => d.target.y);
 
         this.nodeElements
-            .attr('transform', d => `translate(${d.x}, ${d.y})`);
+            .attr('transform', d => `translate(${d.x},${d.y})`);
     }
-
-    getNodeRadius(node) {
-        const base = this.config.nodeRadius;
-        if (node.isHub) return base * 2;
-        return base + Math.min(node.connections * 2, 8);
-    }
-
-    // ============================================
-    // INTERACTIONS
-    // ============================================
 
     drag() {
         return d3.drag()
-            .on('start', (event, d) => {
-                if (!event.active) this.simulation.alphaTarget(0.3).restart();
+            .on('start', (e, d) => {
+                if (!e.active) this.simulation.alphaTarget(0.3).restart();
                 d.fx = d.x;
                 d.fy = d.y;
             })
-            .on('drag', (event, d) => {
-                d.fx = event.x;
-                d.fy = event.y;
+            .on('drag', (e, d) => {
+                d.fx = e.x;
+                d.fy = e.y;
             })
-            .on('end', (event, d) => {
-                if (!event.active) this.simulation.alphaTarget(0);
+            .on('end', (e, d) => {
+                if (!e.active) this.simulation.alphaTarget(0);
                 d.fx = null;
                 d.fy = null;
             });
@@ -283,135 +285,41 @@ class KnowledgeGardenGraph {
 
     showTooltip(event, node) {
         this.tooltip
-            .html(`
-                <div class="tooltip-title">${node.name}</div>
-                <div class="tooltip-info">${node.connections} connection${node.connections !== 1 ? 's' : ''}</div>
-            `)
-            .style('left', (event.pageX + 15) + 'px')
+            .html(`<strong>${node.name}</strong><br>${node.connections} connections`)
+            .style('left', (event.pageX + 10) + 'px')
             .style('top', (event.pageY - 10) + 'px')
-            .transition()
-            .duration(200)
             .style('opacity', 1);
-
-        // Highlight connected nodes
-        this.highlightConnected(node);
     }
 
     hideTooltip() {
-        this.tooltip
-            .transition()
-            .duration(200)
-            .style('opacity', 0);
-
-        // Reset highlighting
-        this.resetHighlight();
+        this.tooltip.style('opacity', 0);
     }
 
-    highlightConnected(node) {
-        const connectedIds = new Set([node.id]);
-        this.links.forEach(link => {
-            const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
-            const targetId = typeof link.target === 'object' ? link.target.id : link.target;
-
-            if (sourceId === node.id) connectedIds.add(targetId);
-            if (targetId === node.id) connectedIds.add(sourceId);
-        });
-
-        this.nodeElements
-            .style('opacity', d => connectedIds.has(d.id) ? 1 : 0.2);
-
-        this.linkElements
-            .style('opacity', link => {
-                const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
-                const targetId = typeof link.target === 'object' ? link.target.id : link.target;
-                return (sourceId === node.id || targetId === node.id) ? 1 : 0.1;
-            })
-            .style('stroke-width', link => {
-                const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
-                const targetId = typeof link.target === 'object' ? link.target.id : link.target;
-                return (sourceId === node.id || targetId === node.id) ? 2 : 1;
-            });
-    }
-
-    resetHighlight() {
-        this.nodeElements.style('opacity', 1);
-        this.linkElements
-            .style('opacity', 1)
-            .style('stroke-width', 1);
-    }
-
-    handleNodeClick(event, node) {
-        event.stopPropagation();
-
-        // If terminal exists, execute cat command
-        if (window.terminal && !node.isHub) {
-            const cmdMap = {
-                'grapheneos': 'cat featured/grapheneos-migration.md',
-                'truenas': 'cat featured/truenas-build.md',
-                'pihole': 'cat featured/pihole-setup.md',
-                'wireguard': 'cat featured/wireguard-vpn.md',
-                'budget-nas': 'cat projects/budget-nas.md',
-                'router-opt': 'cat homelab/router-optimization.md'
-            };
-
-            if (cmdMap[node.id]) {
-                // Hide graph, show terminal, execute command
-                this.hide();
-                document.getElementById('terminalWindow').style.display = 'flex';
-                terminal.executeCommand(cmdMap[node.id]);
-            }
+    handleClick(event, node) {
+        if (!node.isHub && node.path && window.garden) {
+            window.garden.viewFileByPath(node.path);
+            document.getElementById('graphContainer').style.display = 'none';
         }
     }
 
-    // ============================================
-    // UTILITIES
-    // ============================================
-
     show() {
-        this.container.style.display = 'block';
         this.isVisible = true;
-        this.simulation.alpha(0.5).restart();
+        this.simulation?.alpha(0.5).restart();
     }
 
     hide() {
-        this.container.style.display = 'none';
         this.isVisible = false;
     }
 
-    toggle() {
-        if (this.isVisible) {
-            this.hide();
-        } else {
-            this.show();
-        }
-    }
-
     handleResize() {
-        if (!this.isVisible) return;
-
+        if (!this.isVisible || !this.svg) return;
         const rect = this.container.getBoundingClientRect();
         this.svg.attr('viewBox', `0 0 ${rect.width} ${rect.height}`);
-
-        this.simulation
-            .force('center', d3.forceCenter(rect.width / 2, rect.height / 2))
-            .alpha(0.3)
-            .restart();
     }
 
     animate() {
-        this.simulation.alpha(1).restart();
-    }
-
-    setNodeSize(multiplier) {
-        this.config.nodeRadius = 8 * multiplier;
-        this.nodeElements.select('circle')
-            .attr('r', d => this.getNodeRadius(d));
-    }
-
-    setLinkStrength(strength) {
-        this.linkElements.style('stroke-width', strength);
+        this.simulation?.alpha(1).restart();
     }
 }
 
-// Export for use
 window.KnowledgeGardenGraph = KnowledgeGardenGraph;
