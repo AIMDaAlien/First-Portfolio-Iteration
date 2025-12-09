@@ -25,6 +25,8 @@ class KnowledgeGardenGraph {
             'Sessions': '#F97316',
             'Technical': '#8B5CF6',
             'Computer Related Stuff': '#EC4899',
+            'Web': '#FF6B6B',
+            'sun': '#FFD93D',
             'root': '#7C3AED'
         };
 
@@ -76,9 +78,25 @@ class KnowledgeGardenGraph {
             this.nodes = [];
             this.nameToNode = new Map();
 
+            // Add central "sun" node
+            const sunNode = {
+                id: '_sun_',
+                name: 'Knowledge Garden',
+                folder: 'sun',
+                path: null,
+                connections: 100,
+                isSun: true
+            };
+            this.nodes.push(sunNode);
+
             mdFiles.forEach(file => {
                 const fileName = file.path.split('/').pop().replace('.md', '');
-                const folder = file.path.includes('/') ? file.path.split('/')[0] : 'root';
+                let folder = file.path.includes('/') ? file.path.split('/')[0] : 'root';
+
+                // Categorize Step notes as Web
+                if (/^Step\s*\d/i.test(fileName)) {
+                    folder = 'Web';
+                }
 
                 const node = {
                     id: file.path,
@@ -243,25 +261,28 @@ class KnowledgeGardenGraph {
             .data(this.nodes)
             .enter()
             .append('circle')
-            .attr('r', d => Math.max(3, 3 + Math.sqrt(d.connections) * 2))
+            .attr('r', d => d.isSun ? 18 : Math.max(3, 3 + Math.sqrt(d.connections) * 2))
             .attr('fill', d => this.getNodeColor(d))
             .style('cursor', 'pointer')
+            .style('filter', d => d.isSun ? 'drop-shadow(0 0 8px #FFD93D)' : 'none')
             .call(this.drag())
             .on('mouseover', (e, d) => this.showTooltip(e, d))
             .on('mouseout', () => this.hideTooltip())
             .on('click', (e, d) => this.handleClick(e, d));
 
-        // Labels only for well-connected nodes
+        // Labels for well-connected nodes and sun
         this.labelElements = this.nodesGroup
             .selectAll('text')
-            .data(this.nodes.filter(n => n.connections >= 3))
+            .data(this.nodes.filter(n => n.connections >= 2 || n.isSun))
             .enter()
             .append('text')
-            .attr('dy', d => Math.max(3, 3 + Math.sqrt(d.connections) * 2) + 10)
+            .attr('dy', d => d.isSun ? 25 : Math.max(3, 3 + Math.sqrt(d.connections) * 2) + 10)
             .attr('text-anchor', 'middle')
-            .text(d => d.name.length > 18 ? d.name.slice(0, 16) + '...' : d.name)
-            .style('font-size', '8px')
-            .style('fill', 'rgba(255,255,255,0.5)')
+            .text(d => d.name.length > 20 ? d.name.slice(0, 18) + '...' : d.name)
+            .style('font-size', d => d.isSun ? '11px' : '9px')
+            .style('font-weight', d => d.isSun ? '600' : '400')
+            .style('fill', d => d.isSun ? '#FFD93D' : 'rgba(255,255,255,0.85)')
+            .style('text-shadow', '0 1px 3px rgba(0,0,0,0.8)')
             .style('pointer-events', 'none');
     }
 
