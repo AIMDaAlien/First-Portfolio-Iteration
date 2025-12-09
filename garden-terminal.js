@@ -58,6 +58,12 @@ class KnowledgeGardenTerminal {
         this.titleEl = document.getElementById('terminalTitle');
         this.maximizeBtn = document.getElementById('maximizeBtn');
         this.terminalWindow = document.getElementById('terminalWindow');
+        this.titlebar = document.querySelector('.terminal-titlebar');
+
+        // Drag State
+        this.isDragging = false;
+        this.dragOffset = { x: 0, y: 0 };
+        this.windowPosition = { x: 0, y: 0 };
 
         // Initialize
         this.init();
@@ -68,12 +74,22 @@ class KnowledgeGardenTerminal {
         this.inputEl.addEventListener('keydown', (e) => this.handleKeydown(e));
         this.maximizeBtn.addEventListener('click', () => this.toggleMaximize());
 
+        // Drag functionality
+        this.initDraggable();
+
+        // Restore saved position
+        this.restorePosition();
+
         // Update time
         this.updateTime();
         setInterval(() => this.updateTime(), 1000);
 
-        // Focus input
-        document.addEventListener('click', () => this.inputEl.focus());
+        // Focus input (but not on titlebar)
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.terminal-titlebar') && !e.target.closest('.quick-actions')) {
+                this.inputEl.focus();
+            }
+        });
 
         // Show welcome message
         this.showWelcome();
@@ -83,6 +99,120 @@ class KnowledgeGardenTerminal {
         if (savedHistory) {
             this.commandHistory = JSON.parse(savedHistory);
         }
+
+        // Setup quick action buttons
+        this.setupQuickActions();
+    }
+
+    // ============================================
+    // DRAGGABLE WINDOW
+    // ============================================
+
+    initDraggable() {
+        this.titlebar.addEventListener('mousedown', (e) => this.startDrag(e));
+        document.addEventListener('mousemove', (e) => this.drag(e));
+        document.addEventListener('mouseup', () => this.endDrag());
+
+        // Touch support
+        this.titlebar.addEventListener('touchstart', (e) => this.startDrag(e.touches[0]), { passive: false });
+        document.addEventListener('touchmove', (e) => {
+            if (this.isDragging) {
+                e.preventDefault();
+                this.drag(e.touches[0]);
+            }
+        }, { passive: false });
+        document.addEventListener('touchend', () => this.endDrag());
+    }
+
+    startDrag(e) {
+        // Don't drag if clicking controls
+        if (e.target.closest('.control-btn') || e.target.closest('.tab-btn')) return;
+
+        this.isDragging = true;
+        this.titlebar.style.cursor = 'grabbing';
+
+        const rect = this.terminalWindow.getBoundingClientRect();
+        this.dragOffset = {
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top
+        };
+
+        // Remove centering
+        this.terminalWindow.style.position = 'fixed';
+        this.terminalWindow.style.margin = '0';
+        this.terminalWindow.style.left = rect.left + 'px';
+        this.terminalWindow.style.top = rect.top + 'px';
+        this.terminalWindow.style.transform = 'none';
+    }
+
+    drag(e) {
+        if (!this.isDragging) return;
+
+        const x = e.clientX - this.dragOffset.x;
+        const y = e.clientY - this.dragOffset.y;
+
+        // Keep within viewport bounds
+        const maxX = window.innerWidth - this.terminalWindow.offsetWidth;
+        const maxY = window.innerHeight - this.terminalWindow.offsetHeight;
+
+        this.windowPosition = {
+            x: Math.max(0, Math.min(x, maxX)),
+            y: Math.max(0, Math.min(y, maxY))
+        };
+
+        this.terminalWindow.style.left = this.windowPosition.x + 'px';
+        this.terminalWindow.style.top = this.windowPosition.y + 'px';
+    }
+
+    endDrag() {
+        if (!this.isDragging) return;
+
+        this.isDragging = false;
+        this.titlebar.style.cursor = 'grab';
+
+        // Save position
+        localStorage.setItem('terminal-position', JSON.stringify(this.windowPosition));
+
+        // Spring settle animation
+        this.terminalWindow.style.transition = 'transform 0.3s var(--motion-spring-bouncy)';
+        this.terminalWindow.style.transform = 'scale(1)';
+        setTimeout(() => {
+            this.terminalWindow.style.transition = '';
+        }, 300);
+    }
+
+    restorePosition() {
+        const saved = localStorage.getItem('terminal-position');
+        if (saved) {
+            const pos = JSON.parse(saved);
+            this.windowPosition = pos;
+            this.terminalWindow.style.position = 'fixed';
+            this.terminalWindow.style.margin = '0';
+            this.terminalWindow.style.left = pos.x + 'px';
+            this.terminalWindow.style.top = pos.y + 'px';
+            this.terminalWindow.style.transform = 'none';
+        }
+    }
+
+    // ============================================
+    // QUICK ACTIONS (for non-terminal users)
+    // ============================================
+
+    setupQuickActions() {
+        const actionsContainer = document.getElementById('quickActions');
+        if (!actionsContainer) return;
+
+        actionsContainer.addEventListener('click', (e) => {
+            const btn = e.target.closest('.quick-action-btn');
+            if (!btn) return;
+
+            const cmd = btn.dataset.cmd;
+            if (cmd) {
+                this.inputEl.value = cmd;
+                this.executeCommand(cmd);
+                this.inputEl.value = '';
+            }
+        });
     }
 
     // ============================================
