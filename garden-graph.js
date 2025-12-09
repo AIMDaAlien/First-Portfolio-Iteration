@@ -408,24 +408,21 @@ class KnowledgeGardenGraph {
     }
 
     handleClick(event, node) {
-        event.stopPropagation();
-        event.preventDefault();
-
+        // Don't navigate for sun node
         if (node.isSun) return;
 
-        console.log('Graph node clicked:', node.name, node.path);
+        console.log('Graph click:', node.name, node.path);
 
-        if (node.path) {
-            // Close graph overlay
-            const graphContainer = document.getElementById('graphContainer');
-            if (graphContainer) graphContainer.style.display = 'none';
+        // Close graph first
+        const graphContainer = document.getElementById('graphContainer');
+        if (graphContainer) graphContainer.style.display = 'none';
 
-            // Navigate to note
-            if (window.garden && typeof window.garden.viewFileByPath === 'function') {
-                window.garden.viewFileByPath(node.path);
-            } else {
-                console.error('garden.viewFileByPath not available');
-            }
+        // Try to navigate
+        if (node.path && window.garden) {
+            window.garden.viewFileByPath(node.path);
+        } else if (node.path) {
+            // Fallback: direct navigation attempt
+            console.warn('Garden not found, node path:', node.path);
         }
     }
 
