@@ -470,5 +470,6 @@ class KnowledgeGarden {
     }
 }
 
-// Initialize
+// Initialize and expose on window for graph access
 const garden = new KnowledgeGarden();
+window.garden = garden;
