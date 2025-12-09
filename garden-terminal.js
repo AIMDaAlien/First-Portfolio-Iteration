@@ -21,7 +21,7 @@ class KnowledgeGarden {
         this.historyIndex = -1;
 
         // Hidden files/folders
-        this.hiddenItems = ['.obsidian', '.stfolder', '.DS_Store', '.gitignore', 'Myself', 'images'];
+        this.hiddenItems = ['.obsidian', '.stfolder', '.DS_Store', '.gitignore', 'Myself', 'Business', 'images'];
 
         // Icon mapping by folder name
         this.iconMap = {
