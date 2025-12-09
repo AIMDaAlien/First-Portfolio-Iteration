@@ -225,23 +225,31 @@ class KnowledgeGardenGraph {
         const centerX = rect.width / 2;
         const centerY = rect.height / 2;
 
+        // Pin the sun to the center
+        const sunNode = this.nodes.find(n => n.isSun);
+        if (sunNode) {
+            sunNode.fx = centerX;
+            sunNode.fy = centerY;
+        }
+
         this.simulation = d3.forceSimulation(this.nodes)
             .force('link', d3.forceLink(this.links)
                 .id(d => d.id)
                 .distance(40)
                 .strength(0.8))
-            // Mass-based charge: more connections = stronger pull (less repulsion)
+            // Mass-based charge: more connections = stronger pull
             .force('charge', d3.forceManyBody()
-                .strength(d => -30 + (d.connections * 5)))  // Well-connected nodes attract more
-            // Single "sun" center of gravity
-            .force('center', d3.forceCenter(centerX, centerY))
-            // Radial force: pull everything toward center based on connections
+                .strength(d => d.isSun ? -20 : (-30 + (d.connections * 3))))
+            // Pull toward sun
+            .force('x', d3.forceX(centerX).strength(d => d.isSun ? 0 : 0.05))
+            .force('y', d3.forceY(centerY).strength(d => d.isSun ? 0 : 0.05))
+            // Radial force: connected nodes closer, orphans further
             .force('radial', d3.forceRadial(
-                d => Math.max(50, 300 - d.connections * 20),  // More connections = closer to center
+                d => d.isSun ? 0 : Math.max(80, 350 - d.connections * 25),
                 centerX, centerY
-            ).strength(0.3))
+            ).strength(d => d.isSun ? 0 : 0.2))
             .force('collision', d3.forceCollide().radius(d =>
-                Math.max(4, 4 + Math.sqrt(d.connections) * 2) + 2))
+                d.isSun ? 25 : Math.max(4, 4 + Math.sqrt(d.connections) * 2) + 2))
             .on('tick', () => this.tick());
     }
 
