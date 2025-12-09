@@ -822,27 +822,194 @@ body {
 /* ============================================
    11. RESPONSIVE
    ============================================ */
+
+/* Mobile menu button - hidden on desktop */
+.mobile-menu-btn {
+    display: none;
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--md-sys-color-on-surface);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+/* Sidebar overlay backdrop */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 40;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.sidebar-overlay.visible {
+    display: block;
+    opacity: 1;
+}
+
+/* Tablet - 1024px */
+@media (max-width: 1024px) {
+    :root {
+        --sidebar-width: 220px;
+    }
+
+    .content-body {
+        padding: 24px;
+    }
+
+    .note-cards {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+}
+
+/* Mobile - 768px */
 @media (max-width: 768px) {
+
+    /* Show mobile menu button */
+    .mobile-menu-btn {
+        display: flex;
+    }
+
+    /* Hide desktop sidebar toggle */
+    .sidebar-toggle {
+        display: none;
+    }
+
+    /* Sidebar as slide-out drawer */
     .sidebar {
         position: fixed;
         left: 0;
         top: 0;
         bottom: 0;
+        width: 280px;
         z-index: 50;
         transform: translateX(-100%);
-        transition: transform 0.25s var(--motion-spring);
+        transition: transform 0.3s var(--motion-spring);
     }
 
     .sidebar.open {
         transform: translateX(0);
     }
 
-    .content-body {
-        padding: 20px;
+    /* Collapse state doesn't apply on mobile */
+    .sidebar.collapsed {
+        width: 280px;
+        transform: translateX(-100%);
     }
 
+    .sidebar.collapsed.open {
+        transform: translateX(0);
+    }
+
+    /* Content viewer full width */
+    .content-viewer {
+        width: 100%;
+    }
+
+    .content-body {
+        padding: 16px;
+    }
+
+    /* Spotlight adjustments */
     .spotlight-wrapper {
         padding: 8px 12px;
+        gap: 8px;
+    }
+
+    .spotlight-prompt {
+        display: none;
+    }
+
+    .spotlight-input {
+        font-size: 14px;
+    }
+
+    .spotlight-hint {
+        display: none;
+    }
+
+    /* Note cards single column */
+    .note-cards {
+        grid-template-columns: 1fr;
+    }
+
+    /* Folder view adjustments */
+    .folder-items {
+        grid-template-columns: 1fr;
+    }
+
+    /* Breadcrumb horizontal scroll */
+    .content-breadcrumb {
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 8px;
+    }
+
+    /* Graph container */
+    #graphContainer {
+        padding: 0;
+    }
+
+    /* Graph header */
+    .graph-header {
+        padding: 12px 16px;
+    }
+
+    /* Graph legend */
+    .graph-legend {
+        bottom: 10px;
+        left: 10px;
+        padding: 8px 12px;
+        font-size: 11px;
+        max-height: 200px;
+    }
+
+    /* Graph controls */
+    .graph-controls {
+        top: auto;
+        bottom: 10px;
+        right: 10px;
+    }
+}
+
+/* Small mobile - 480px */
+@media (max-width: 480px) {
+    .sidebar {
+        width: 100%;
+    }
+
+    .content-body {
+        padding: 12px;
+    }
+
+    .welcome-content h1 {
+        font-size: 1.5rem;
+    }
+
+    .note-title h1,
+    .note-title h2 {
+        font-size: 1.25rem;
+    }
+
+    /* Touch-friendly tree items */
+    .tree-item {
+        padding: 12px 16px;
+        min-height: 44px;
+    }
+
+    /* Status bar compact */
+    .status-bar {
+        padding: 6px 12px;
+        font-size: 10px;
     }
 }
 

@@ -58,10 +58,28 @@ class KnowledgeGarden {
         this.spotlightInput.addEventListener('keydown', (e) => this.handleSpotlightKey(e));
         this.spotlightInput.addEventListener('focus', () => this.spotlightOutput.style.display = 'none');
 
-        // Sidebar toggle
+        // Sidebar toggle (desktop)
         document.getElementById('sidebarToggle').addEventListener('click', () => {
             this.sidebar.classList.toggle('collapsed');
         });
+
+        // Mobile menu button
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => {
+                this.sidebar.classList.add('open');
+                sidebarOverlay?.classList.add('visible');
+            });
+        }
+
+        // Close sidebar when clicking overlay
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', () => {
+                this.closeMobileSidebar();
+            });
+        }
 
         // Graph button
         document.getElementById('graphBtn').addEventListener('click', () => this.showGraph());
@@ -209,6 +227,8 @@ class KnowledgeGarden {
                     this.viewFileByPath(item.path);
                     document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
                     itemEl.classList.add('active');
+                    // Auto-close sidebar on mobile
+                    this.closeMobileSidebar();
                 });
             }
         });
@@ -353,6 +373,11 @@ class KnowledgeGarden {
             </div>`;
         this.breadcrumb.innerHTML = '<span class="breadcrumb-item">~</span>';
         this.statusInfo.textContent = 'Ready';
+    }
+
+    closeMobileSidebar() {
+        this.sidebar.classList.remove('open');
+        document.getElementById('sidebarOverlay')?.classList.remove('visible');
     }
 
     async fetchNote(path) {
