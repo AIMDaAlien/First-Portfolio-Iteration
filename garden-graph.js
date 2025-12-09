@@ -301,12 +301,14 @@ class KnowledgeGardenGraph {
             .on('mouseout', () => this.hideTooltip())
             .on('click', (e, d) => this.handleClick(e, d));
 
-        // Labels for well-connected nodes and sun
+        // Labels only for important nodes (5+ connections) and sun
         this.labelElements = this.nodesGroup
             .selectAll('text')
-            .data(this.nodes.filter(n => n.connections >= 2 || n.isSun))
+            .data(this.nodes.filter(n => n.connections >= 5 || n.isSun))
             .enter()
             .append('text')
+            .attr('class', 'node-label')
+            .attr('data-id', d => d.id)
             .attr('dy', d => d.isSun ? 25 : Math.max(3, 3 + Math.sqrt(d.connections) * 2) + 10)
             .attr('text-anchor', 'middle')
             .text(d => d.name.length > 20 ? d.name.slice(0, 18) + '...' : d.name)
@@ -368,22 +370,38 @@ class KnowledgeGardenGraph {
             const tgt = typeof l.target === 'object' ? l.target.id : l.target;
             return (src === node.id || tgt === node.id) ? 1 : 0.03;
         });
+
+        // Hide all labels except hovered node
+        this.labelElements.style('opacity', d => d.id === node.id ? 1 : 0);
     }
 
     hideTooltip() {
         this.tooltip.style('opacity', 0);
         this.nodeElements.style('opacity', 1);
         this.linkElements.style('opacity', 1);
+        // Restore label visibility
+        this.labelElements.style('opacity', 0.85);
     }
 
     handleClick(event, node) {
         event.stopPropagation();
-        if (node.isSun) return; // Don't navigate for sun
+        event.preventDefault();
 
-        if (node.path && window.garden) {
-            // Hide graph and navigate to note
-            document.getElementById('graphContainer').style.display = 'none';
-            window.garden.viewFileByPath(node.path);
+        if (node.isSun) return;
+
+        console.log('Graph node clicked:', node.name, node.path);
+
+        if (node.path) {
+            // Close graph overlay
+            const graphContainer = document.getElementById('graphContainer');
+            if (graphContainer) graphContainer.style.display = 'none';
+
+            // Navigate to note
+            if (window.garden && typeof window.garden.viewFileByPath === 'function') {
+                window.garden.viewFileByPath(node.path);
+            } else {
+                console.error('garden.viewFileByPath not available');
+            }
         }
     }
 
