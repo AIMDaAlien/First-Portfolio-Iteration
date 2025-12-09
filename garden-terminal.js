@@ -1,87 +1,41 @@
 /**
  * Knowledge Garden - Obsidian-Style Interface
- * Spotlight terminal + Sidebar + Content Viewer
+ * Dynamically fetches file tree from GitHub API
  */
 
 class KnowledgeGarden {
     constructor() {
-        // GitHub Configuration
+        // GitHub Configuration - UPDATED REPO
         this.vaultOwner = 'AIMDaAlien';
-        this.vaultRepo = 'knowledge-garden-vault';
+        this.vaultRepo = 'Obsidian-Vault';
         this.branch = 'main';
+        this.apiBase = `https://api.github.com/repos/${this.vaultOwner}/${this.vaultRepo}/contents`;
+        this.rawBase = `https://raw.githubusercontent.com/${this.vaultOwner}/${this.vaultRepo}/${this.branch}`;
 
         // State
-        this.currentPath = '~';
+        this.currentPath = '';
         this.currentFile = null;
         this.noteCache = new Map();
+        this.treeCache = new Map();
         this.commandHistory = [];
         this.historyIndex = -1;
 
-        // Virtual Filesystem (matching actual GitHub vault structure)
-        this.filesystem = {
-            '~': {
-                type: 'dir',
-                name: 'knowledge-garden',
-                children: {
-                    'Systems': {
-                        type: 'dir',
-                        name: 'Systems',
-                        icon: 'terminal',
-                        expanded: true,
-                        children: {
-                            'Development Tools.md': { type: 'file', path: 'Systems/Development Tools.md', name: 'Development Tools', icon: 'build' },
-                            'Obsidian Productivity Mastery.md': { type: 'file', path: 'Systems/Obsidian Productivity Mastery.md', name: 'Obsidian Mastery', icon: 'book' }
-                        }
-                    },
-                    'Technology': {
-                        type: 'dir',
-                        name: 'Technology',
-                        icon: 'computer',
-                        children: {
-                            'Homelab': {
-                                type: 'dir',
-                                name: 'Homelab',
-                                icon: 'storage',
-                                children: {
-                                    'Prometheus-Grafana-Lessons.md': { type: 'file', path: 'Technology/Homelab/Prometheus Grafana Monitoring Stack - Lessons Learned.md', name: 'Prometheus Lessons', icon: 'science' },
-                                    'Prometheus-Grafana-Guide.md': { type: 'file', path: 'Technology/Homelab/Prometheus Grafana Stack - Implementation Guide.md', name: 'Prometheus Guide', icon: 'science' }
-                                }
-                            }
-                        }
-                    },
-                    'Programming': {
-                        type: 'dir',
-                        name: 'Programming',
-                        icon: 'code',
-                        children: {}
-                    },
-                    'Projects': {
-                        type: 'dir',
-                        name: 'Projects',
-                        icon: 'build',
-                        children: {}
-                    },
-                    'Teardown Cafe': {
-                        type: 'dir',
-                        name: 'Teardown Cafe',
-                        icon: 'groups',
-                        children: {}
-                    },
-                    'Learning': {
-                        type: 'dir',
-                        name: 'Learning',
-                        icon: 'school',
-                        children: {}
-                    },
-                    'Router Configuration': {
-                        type: 'dir',
-                        name: 'Router Configuration',
-                        icon: 'router',
-                        children: {}
-                    },
-                    'README.md': { type: 'file', path: '🗺️ Knowledge Base - Main Index.md', name: 'Main Index', icon: 'book' }
-                }
-            }
+        // Hidden files/folders
+        this.hiddenItems = ['.obsidian', '.stfolder', '.DS_Store', '.gitignore', 'Myself', 'images'];
+
+        // Icon mapping by folder name
+        this.iconMap = {
+            'Business': 'groups',
+            'Computer Related Stuff': 'computer',
+            'IT Projects': 'build',
+            'Learning': 'school',
+            'Meta': 'badge',
+            'Projects': 'build',
+            'Router Configuration': 'router',
+            'Sessions': 'memory',
+            'Technical': 'code',
+            'default_folder': 'storage',
+            'default_file': 'book'
         };
 
         // DOM Elements
@@ -99,13 +53,10 @@ class KnowledgeGarden {
         this.init();
     }
 
-    init() {
+    async init() {
         // Spotlight input
         this.spotlightInput.addEventListener('keydown', (e) => this.handleSpotlightKey(e));
         this.spotlightInput.addEventListener('focus', () => this.spotlightOutput.style.display = 'none');
-
-        // Render file tree
-        this.renderFileTree();
 
         // Sidebar toggle
         document.getElementById('sidebarToggle').addEventListener('click', () => {
@@ -132,63 +83,135 @@ class KnowledgeGarden {
         // Load history
         const saved = localStorage.getItem('garden-history');
         if (saved) this.commandHistory = JSON.parse(saved);
+
+        // Load file tree from GitHub
+        this.statusInfo.textContent = 'Loading vault...';
+        await this.loadFileTree();
+        this.statusInfo.textContent = 'Ready';
     }
 
     // ============================================
-    // FILE TREE
+    // DYNAMIC FILE TREE
     // ============================================
 
-    renderFileTree() {
-        this.fileTree.innerHTML = '';
-        this.renderTreeNode(this.filesystem['~'], '~', this.fileTree, 0);
-    }
-
-    renderTreeNode(node, path, container, depth) {
-        if (node.type === 'dir' && node.children) {
-            Object.entries(node.children).forEach(([name, child]) => {
-                const item = document.createElement('div');
-                item.className = `tree-item ${child.type}`;
-                item.style.paddingLeft = `${12 + depth * 16}px`;
-
-                // SVG icon
-                const icon = document.createElement('svg');
-                icon.className = 'tree-icon';
-                icon.innerHTML = `<use href="icons-sprite.svg#icon-${child.icon || (child.type === 'dir' ? 'storage' : 'book')}"></use>`;
-
-                const label = document.createElement('span');
-                label.className = 'tree-label';
-                label.textContent = child.name || name;
-
-                item.appendChild(icon);
-                item.appendChild(label);
-                container.appendChild(item);
-
-                const childPath = path === '~' ? `~/${name}` : `${path}/${name}`;
-
-                if (child.type === 'dir') {
-                    const childContainer = document.createElement('div');
-                    childContainer.className = `tree-children ${child.expanded ? '' : 'collapsed'}`;
-                    container.appendChild(childContainer);
-
-                    item.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        child.expanded = !child.expanded;
-                        childContainer.classList.toggle('collapsed');
-                        item.classList.toggle('expanded');
-                    });
-
-                    if (child.expanded) item.classList.add('expanded');
-
-                    this.renderTreeNode(child, childPath, childContainer, depth + 1);
-                } else {
-                    item.addEventListener('click', () => {
-                        this.viewFileByPath(child.path);
-                        document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
-                        item.classList.add('active');
-                    });
-                }
-            });
+    async loadFileTree() {
+        try {
+            const items = await this.fetchDirectory('');
+            this.fileTree.innerHTML = '';
+            this.renderTreeItems(items, this.fileTree, 0);
+        } catch (error) {
+            console.error('Failed to load file tree:', error);
+            this.fileTree.innerHTML = '<div class="tree-error">Failed to load files</div>';
         }
+    }
+
+    async fetchDirectory(path) {
+        const cacheKey = path || '_root';
+        if (this.treeCache.has(cacheKey)) {
+            return this.treeCache.get(cacheKey);
+        }
+
+        const url = path ? `${this.apiBase}/${encodeURIComponent(path)}` : this.apiBase;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const items = await response.json();
+
+        // Filter and sort
+        const filtered = items.filter(item =>
+            !this.hiddenItems.includes(item.name) &&
+            !item.name.startsWith('.') &&
+            (item.type === 'dir' || item.name.endsWith('.md'))
+        );
+
+        // Sort: folders first, then files, alphabetically
+        filtered.sort((a, b) => {
+            if (a.type === 'dir' && b.type !== 'dir') return -1;
+            if (a.type !== 'dir' && b.type === 'dir') return 1;
+            return a.name.localeCompare(b.name);
+        });
+
+        this.treeCache.set(cacheKey, filtered);
+        return filtered;
+    }
+
+    renderTreeItems(items, container, depth) {
+        items.forEach(item => {
+            const isFolder = item.type === 'dir';
+            const displayName = item.name.replace('.md', '');
+            const iconKey = this.iconMap[item.name] || (isFolder ? 'default_folder' : 'default_file');
+
+            const itemEl = document.createElement('div');
+            itemEl.className = `tree-item ${isFolder ? 'folder' : 'file'}`;
+            itemEl.style.paddingLeft = `${12 + depth * 16}px`;
+
+            // Chevron for folders
+            if (isFolder) {
+                const chevron = document.createElement('span');
+                chevron.className = 'tree-chevron';
+                chevron.textContent = '▶';
+                itemEl.appendChild(chevron);
+            }
+
+            // SVG icon
+            const icon = document.createElement('svg');
+            icon.className = 'tree-icon';
+            icon.innerHTML = `<use href="icons-sprite.svg#icon-${iconKey}"></use>`;
+            itemEl.appendChild(icon);
+
+            // Label
+            const label = document.createElement('span');
+            label.className = 'tree-label';
+            label.textContent = displayName;
+            itemEl.appendChild(label);
+
+            container.appendChild(itemEl);
+
+            if (isFolder) {
+                // Create children container
+                const childContainer = document.createElement('div');
+                childContainer.className = 'tree-children collapsed';
+                container.appendChild(childContainer);
+
+                let loaded = false;
+
+                itemEl.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+
+                    const isExpanded = !childContainer.classList.contains('collapsed');
+
+                    if (!loaded) {
+                        // Load children on first expand
+                        const loader = document.createElement('div');
+                        loader.className = 'tree-loading';
+                        loader.textContent = 'Loading...';
+                        childContainer.appendChild(loader);
+                        childContainer.classList.remove('collapsed');
+                        itemEl.classList.add('expanded');
+
+                        try {
+                            const children = await this.fetchDirectory(item.path);
+                            childContainer.innerHTML = '';
+                            this.renderTreeItems(children, childContainer, depth + 1);
+                            loaded = true;
+                        } catch (error) {
+                            childContainer.innerHTML = '<div class="tree-error">Failed to load</div>';
+                        }
+                    } else {
+                        // Toggle visibility
+                        childContainer.classList.toggle('collapsed');
+                        itemEl.classList.toggle('expanded');
+                    }
+                });
+            } else {
+                // File click
+                itemEl.addEventListener('click', () => {
+                    this.viewFileByPath(item.path);
+                    document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
+                    itemEl.classList.add('active');
+                });
+            }
+        });
     }
 
     // ============================================
@@ -205,7 +228,8 @@ class KnowledgeGarden {
             const html = this.renderMarkdown(content);
 
             this.contentBody.innerHTML = `<div class="markdown-content">${html}</div>`;
-            this.statusInfo.textContent = `${content.split('\n').length} lines`;
+            const lineCount = content.split('\n').length;
+            this.statusInfo.textContent = `${lineCount} lines`;
         } catch (error) {
             console.error('Fetch error:', error);
             this.contentBody.innerHTML = `<div class="error-content">
@@ -215,29 +239,6 @@ class KnowledgeGarden {
             </div>`;
             this.statusInfo.textContent = 'Error';
         }
-    }
-
-    async viewFile(localPath) {
-        const file = this.resolveFile(localPath);
-        if (!file || file.type === 'dir') {
-            this.showNotification('File not found');
-            return;
-        }
-        await this.viewFileByPath(file.path);
-    }
-
-    resolveFile(path) {
-        const parts = path.replace(/^~\/?/, '').split('/').filter(p => p);
-        let current = this.filesystem['~'];
-
-        for (const part of parts) {
-            if (current.children && current.children[part]) {
-                current = current.children[part];
-            } else {
-                return null;
-            }
-        }
-        return current;
     }
 
     updateBreadcrumb(path) {
@@ -252,11 +253,8 @@ class KnowledgeGarden {
             return this.noteCache.get(path);
         }
 
-        // Properly encode the path for URLs with spaces
         const encodedPath = path.split('/').map(part => encodeURIComponent(part)).join('/');
-        const url = `https://raw.githubusercontent.com/${this.vaultOwner}/${this.vaultRepo}/${this.branch}/${encodedPath}`;
-
-        console.log('Fetching:', url);
+        const url = `${this.rawBase}/${encodedPath}`;
 
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -308,75 +306,20 @@ class KnowledgeGarden {
         const [cmd, ...args] = input.split(/\s+/);
 
         switch (cmd.toLowerCase()) {
-            case 'cd':
-                this.cmdCd(args);
-                break;
             case 'cat':
-                if (args[0]) this.viewFile(this.resolvePath(args[0]));
-                break;
-            case 'ls':
-                this.cmdLs(args);
+            case 'open':
+                if (args[0]) this.viewFileByPath(args.join(' '));
                 break;
             case 'help':
-                this.cmdHelp();
+                this.showOutput(`<b>open [file]</b> view note  <b>help</b> show this`);
                 break;
             case 'clear':
                 this.spotlightOutput.style.display = 'none';
                 this.spotlightOutput.innerHTML = '';
                 break;
             default:
-                this.showOutput(`Command not found: ${cmd}`);
+                this.showOutput(`Unknown: ${cmd}. Try 'help'`);
         }
-    }
-
-    cmdCd(args) {
-        const target = args[0] || '~';
-        const newPath = this.resolvePath(target);
-        const node = this.resolveFile(newPath);
-
-        if (!node) {
-            this.showOutput(`cd: no such directory: ${target}`);
-            return;
-        }
-        if (node.type !== 'dir') {
-            this.showOutput(`cd: not a directory: ${target}`);
-            return;
-        }
-
-        this.currentPath = newPath;
-        this.spotlightPath.textContent = newPath;
-        this.statusPath.textContent = newPath.replace('~', '~/knowledge-garden');
-    }
-
-    cmdLs(args) {
-        const path = args[0] ? this.resolvePath(args[0]) : this.currentPath;
-        const node = this.resolveFile(path);
-
-        if (!node || node.type !== 'dir') {
-            this.showOutput(`ls: cannot access '${path}'`);
-            return;
-        }
-
-        const items = Object.entries(node.children || {}).map(([name, item]) => {
-            const isDir = item.type === 'dir';
-            return `<span style="color: ${isDir ? 'var(--terminal-blue)' : 'inherit'}">${item.name || name}</span>`;
-        });
-
-        this.showOutput(items.join('  ') || '(empty)');
-    }
-
-    cmdHelp() {
-        this.showOutput(`<b>ls</b> list  <b>cd</b> navigate  <b>cat</b> view  <b>clear</b> reset`);
-    }
-
-    resolvePath(target) {
-        if (target.startsWith('~') || target.startsWith('/')) return target;
-        if (target === '..') {
-            const parts = this.currentPath.split('/');
-            parts.pop();
-            return parts.length === 0 ? '~' : parts.join('/');
-        }
-        return this.currentPath === '~' ? `~/${target}` : `${this.currentPath}/${target}`;
     }
 
     showOutput(html) {
@@ -411,11 +354,6 @@ class KnowledgeGarden {
             hour: '2-digit',
             minute: '2-digit'
         });
-    }
-
-    showNotification(msg) {
-        this.statusInfo.textContent = msg;
-        setTimeout(() => this.statusInfo.textContent = 'Ready', 2000);
     }
 
     escapeHtml(text) {
