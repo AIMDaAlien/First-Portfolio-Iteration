@@ -204,26 +204,26 @@ class KnowledgeGardenGraph {
 
     setupSimulation() {
         const rect = this.container.getBoundingClientRect();
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
 
         this.simulation = d3.forceSimulation(this.nodes)
             .force('link', d3.forceLink(this.links)
                 .id(d => d.id)
-                .distance(30)  // Shorter links
-                .strength(1))  // Stronger link attraction
+                .distance(40)
+                .strength(0.8))
+            // Mass-based charge: more connections = stronger pull (less repulsion)
             .force('charge', d3.forceManyBody()
-                .strength(-50))  // Less repulsion
-            .force('center', d3.forceCenter(rect.width / 2, rect.height / 2)
-                .strength(0.1))  // Stronger center pull
-            .force('collision', d3.forceCollide().radius(6))
-            // Group by folder - nodes with same folder attract
-            .force('x', d3.forceX().x(d => {
-                const folderIndex = [...new Set(this.nodes.map(n => n.folder))].indexOf(d.folder);
-                return rect.width * 0.2 + (folderIndex % 4) * (rect.width * 0.2);
-            }).strength(0.15))
-            .force('y', d3.forceY().y(d => {
-                const folderIndex = [...new Set(this.nodes.map(n => n.folder))].indexOf(d.folder);
-                return rect.height * 0.2 + Math.floor(folderIndex / 4) * (rect.height * 0.3);
-            }).strength(0.15))
+                .strength(d => -30 + (d.connections * 5)))  // Well-connected nodes attract more
+            // Single "sun" center of gravity
+            .force('center', d3.forceCenter(centerX, centerY))
+            // Radial force: pull everything toward center based on connections
+            .force('radial', d3.forceRadial(
+                d => Math.max(50, 300 - d.connections * 20),  // More connections = closer to center
+                centerX, centerY
+            ).strength(0.3))
+            .force('collision', d3.forceCollide().radius(d =>
+                Math.max(4, 4 + Math.sqrt(d.connections) * 2) + 2))
             .on('tick', () => this.tick());
     }
 
