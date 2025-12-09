@@ -243,9 +243,44 @@ class KnowledgeGarden {
 
     updateBreadcrumb(path) {
         const parts = path.split('/').filter(p => p);
-        this.breadcrumb.innerHTML = '<span class="breadcrumb-item">~</span>' +
-            parts.map(p => `<span class="breadcrumb-item">${p.replace('.md', '')}</span>`).join('');
+        let cumPath = '';
+
+        // Build clickable breadcrumb
+        let html = '<span class="breadcrumb-item clickable" data-path="">~</span>';
+        parts.forEach((part, i) => {
+            cumPath += (cumPath ? '/' : '') + part;
+            const isFile = part.endsWith('.md');
+            const displayName = part.replace('.md', '');
+
+            if (isFile) {
+                html += `<span class="breadcrumb-item current">${displayName}</span>`;
+            } else {
+                html += `<span class="breadcrumb-item clickable" data-path="${cumPath}">${displayName}</span>`;
+            }
+        });
+
+        this.breadcrumb.innerHTML = html;
         this.statusPath.textContent = `~/${path}`;
+
+        // Add click handlers
+        this.breadcrumb.querySelectorAll('.breadcrumb-item.clickable').forEach(item => {
+            item.addEventListener('click', () => {
+                const targetPath = item.dataset.path;
+                // Show welcome content for root, otherwise could expand folder
+                if (!targetPath) {
+                    this.showWelcome();
+                }
+            });
+        });
+    }
+
+    showWelcome() {
+        this.contentBody.innerHTML = `
+            <div class="welcome-content">
+                <h1>Knowledge Garden</h1>
+                <p class="muted">Select a file from the sidebar or use the spotlight.</p>
+            </div>`;
+        this.breadcrumb.innerHTML = '<span class="breadcrumb-item">~</span>';
     }
 
     async fetchNote(path) {

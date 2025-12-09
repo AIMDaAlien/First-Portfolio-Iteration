@@ -422,10 +422,28 @@ body {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     font-size: 12px;
     color: var(--md-sys-color-on-surface-variant);
+    flex-wrap: wrap;
 }
 
 .breadcrumb-item {
     color: var(--terminal-cyan);
+}
+
+.breadcrumb-item.clickable {
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    transition: all 0.15s ease;
+}
+
+.breadcrumb-item.clickable:hover {
+    background: rgba(124, 58, 237, 0.2);
+    color: var(--md-sys-color-primary);
+}
+
+.breadcrumb-item.current {
+    color: var(--md-sys-color-on-surface);
+    font-weight: 500;
 }
 
 .breadcrumb-item::after {

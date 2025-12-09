@@ -1,42 +1,38 @@
 /**
  * Knowledge Garden Graph View
- * Dynamic graph from GitHub API with D3.js
+ * Zettelkasten-style graph with [[wikilink]] parsing
  */
 
 class KnowledgeGardenGraph {
     constructor() {
-        // Config
         this.config = {
-            nodeRadius: 8,
-            linkDistance: 100,
-            chargeStrength: -300,
-            centerStrength: 0.05
+            nodeRadius: 6,
+            linkDistance: 60,
+            chargeStrength: -150
         };
 
-        // GitHub config
         this.vaultOwner = 'AIMDaAlien';
         this.vaultRepo = 'Obsidian-Vault';
         this.hiddenItems = ['.obsidian', '.stfolder', '.DS_Store', '.gitignore', 'Myself', 'Business', 'images'];
 
-        // Color palette by folder
-        this.groupColors = {
-            'Computer Related Stuff': '#10B981',
-            'IT Projects': '#3B82F6',
-            'Learning': '#F59E0B',
-            'Meta': '#EC4899',
-            'Projects': '#22D3EE',
-            'Router Configuration': '#10B981',
-            'Sessions': '#F97316',
-            'Technical': '#8B5CF6',
-            'root': '#7C3AED',
+        // Colors by tag/folder
+        this.tagColors = {
+            'homelab': '#10B981',
+            'privacy': '#EC4899',
+            'networking': '#3B82F6',
+            'linux': '#F59E0B',
+            'docker': '#22D3EE',
+            'security': '#EF4444',
+            'programming': '#8B5CF6',
+            'projects': '#06B6D4',
+            'learning': '#F97316',
             'default': '#A78BFA'
         };
 
-        // Data
         this.nodes = [];
         this.links = [];
+        this.nodeMap = new Map();
 
-        // D3
         this.svg = null;
         this.simulation = null;
         this.container = null;
@@ -48,16 +44,11 @@ class KnowledgeGardenGraph {
         this.container = document.getElementById(containerId);
         if (!this.container) return;
 
-        // Show loading
-        this.container.innerHTML = '<div style="color:#A78BFA;text-align:center;padding:50px;">Loading graph...</div>';
+        this.container.innerHTML = '<div style="color:#A78BFA;text-align:center;padding:50px;">Building graph from vault...</div>';
 
-        // Fetch data from GitHub
         await this.fetchGraphData();
 
-        // Clear loading
         this.container.innerHTML = '';
-
-        // Create SVG
         this.createSVG();
         this.createTooltip();
         this.createLegend();
@@ -69,79 +60,80 @@ class KnowledgeGardenGraph {
 
     async fetchGraphData() {
         try {
-            const response = await fetch(
+            // Get file tree
+            const treeRes = await fetch(
                 `https://api.github.com/repos/${this.vaultOwner}/${this.vaultRepo}/git/trees/main?recursive=1`
             );
-            if (!response.ok) throw new Error('API failed');
+            if (!treeRes.ok) throw new Error('API failed');
+            const treeData = await treeRes.json();
 
-            const data = await response.json();
-            const tree = data.tree || [];
-
-            // Build nodes and links
-            this.nodes = [{ id: 'root', name: 'Knowledge Garden', group: 'root', isHub: true, connections: 0 }];
-            this.links = [];
-
-            const folders = new Set();
-            const filesByFolder = {};
-
-            // Process tree
-            tree.forEach(item => {
+            // Collect all markdown files
+            const mdFiles = (treeData.tree || []).filter(item => {
+                if (item.type !== 'blob' || !item.path.endsWith('.md')) return false;
                 const parts = item.path.split('/');
-                const isHidden = parts.some(p => this.hiddenItems.includes(p) || p.startsWith('.'));
-                if (isHidden) return;
+                return !parts.some(p => this.hiddenItems.includes(p) || p.startsWith('.'));
+            });
 
-                if (item.type === 'tree' && parts.length === 1) {
-                    // Top-level folder
-                    folders.add(item.path);
-                    filesByFolder[item.path] = [];
-                } else if (item.type === 'blob' && item.path.endsWith('.md')) {
-                    const folder = parts.length > 1 ? parts[0] : 'root';
-                    if (!filesByFolder[folder]) filesByFolder[folder] = [];
-                    filesByFolder[folder].push({
-                        path: item.path,
-                        name: parts[parts.length - 1].replace('.md', '')
-                    });
+            // Build nodes
+            this.nodes = [];
+            this.nodeMap = new Map();
+
+            mdFiles.forEach(file => {
+                const name = file.path.split('/').pop().replace('.md', '');
+                const folder = file.path.includes('/') ? file.path.split('/')[0] : 'root';
+                const node = {
+                    id: file.path,
+                    name: name,
+                    folder: folder,
+                    tags: [],
+                    connections: 0,
+                    path: file.path
+                };
+                this.nodes.push(node);
+                this.nodeMap.set(name.toLowerCase(), node);
+                this.nodeMap.set(file.path.toLowerCase(), node);
+            });
+
+            // Fetch content and parse [[links]] (sample for performance)
+            this.links = [];
+            const filesToParse = mdFiles.slice(0, 40); // Limit for performance
+
+            await Promise.all(filesToParse.map(async file => {
+                try {
+                    const url = `https://raw.githubusercontent.com/${this.vaultOwner}/${this.vaultRepo}/main/${encodeURIComponent(file.path).replace(/%2F/g, '/')}`;
+                    const res = await fetch(url);
+                    if (!res.ok) return;
+                    const content = await res.text();
+
+                    // Parse [[wikilinks]]
+                    const linkRegex = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;
+                    let match;
+                    while ((match = linkRegex.exec(content)) !== null) {
+                        const linkName = match[1].toLowerCase().trim();
+                        const targetNode = this.nodeMap.get(linkName);
+                        if (targetNode && targetNode.id !== file.path) {
+                            this.links.push({
+                                source: file.path,
+                                target: targetNode.id
+                            });
+                        }
+                    }
+
+                    // Parse tags from frontmatter
+                    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+                    if (frontmatterMatch) {
+                        const tagsMatch = frontmatterMatch[1].match(/tags:\s*\[([^\]]+)\]/);
+                        if (tagsMatch) {
+                            const node = this.nodeMap.get(file.path.toLowerCase());
+                            if (node) {
+                                node.tags = tagsMatch[1].split(',').map(t => t.trim().toLowerCase().replace(/['"]/g, ''));
+                            }
+                        }
+                    }
+                } catch (e) {
+                    // Skip errors
                 }
-            });
-
-            // Add folder nodes
-            folders.forEach(folder => {
-                if (!this.hiddenItems.includes(folder)) {
-                    this.nodes.push({
-                        id: folder,
-                        name: folder,
-                        group: folder,
-                        isHub: true,
-                        connections: (filesByFolder[folder] || []).length + 1
-                    });
-                    this.links.push({ source: 'root', target: folder });
-                }
-            });
-
-            // Add file nodes (limit to prevent overload)
-            let fileCount = 0;
-            const maxFiles = 50;
-
-            Object.entries(filesByFolder).forEach(([folder, files]) => {
-                if (this.hiddenItems.includes(folder)) return;
-
-                files.slice(0, 10).forEach(file => {
-                    if (fileCount >= maxFiles) return;
-                    fileCount++;
-
-                    const nodeId = file.path.replace(/[\/\s\.]/g, '_');
-                    this.nodes.push({
-                        id: nodeId,
-                        name: file.name,
-                        group: folder,
-                        path: file.path,
-                        connections: 1
-                    });
-
-                    const target = folders.has(folder) ? folder : 'root';
-                    this.links.push({ source: target, target: nodeId });
-                });
-            });
+            }));
 
             // Update connection counts
             this.nodes.forEach(node => {
@@ -151,11 +143,30 @@ class KnowledgeGardenGraph {
             });
 
         } catch (error) {
-            console.error('Graph fetch error:', error);
-            // Fallback data
-            this.nodes = [{ id: 'root', name: 'Failed to load', group: 'default', isHub: true }];
+            console.error('Graph error:', error);
+            this.nodes = [{ id: 'error', name: 'Failed to load', folder: 'default', tags: [] }];
             this.links = [];
         }
+    }
+
+    getNodeColor(node) {
+        // Use first tag color, mix if multiple
+        if (node.tags && node.tags.length > 0) {
+            const color = this.tagColors[node.tags[0]] || this.tagColors.default;
+            return color;
+        }
+        // Fallback to folder-based color
+        const folderColors = {
+            'Technical': '#8B5CF6',
+            'Projects': '#3B82F6',
+            'Learning': '#F59E0B',
+            'IT Projects': '#22D3EE',
+            'Router Configuration': '#10B981',
+            'Computer Related Stuff': '#EC4899',
+            'Sessions': '#F97316',
+            'Meta': '#A78BFA'
+        };
+        return folderColors[node.folder] || this.tagColors.default;
     }
 
     createSVG() {
@@ -168,13 +179,13 @@ class KnowledgeGardenGraph {
             .attr('viewBox', `0 0 ${rect.width} ${rect.height}`);
 
         this.zoom = d3.zoom()
-            .scaleExtent([0.2, 4])
-            .on('zoom', (event) => this.svgGroup.attr('transform', event.transform));
+            .scaleExtent([0.1, 4])
+            .on('zoom', (e) => this.svgGroup.attr('transform', e.transform));
 
         this.svg.call(this.zoom);
         this.svgGroup = this.svg.append('g');
-        this.linksGroup = this.svgGroup.append('g').attr('class', 'links');
-        this.nodesGroup = this.svgGroup.append('g').attr('class', 'nodes');
+        this.linksGroup = this.svgGroup.append('g');
+        this.nodesGroup = this.svgGroup.append('g');
     }
 
     createTooltip() {
@@ -185,18 +196,18 @@ class KnowledgeGardenGraph {
     }
 
     createLegend() {
+        const folders = [...new Set(this.nodes.map(n => n.folder))].filter(f => f !== 'root');
         const legend = document.createElement('div');
         legend.className = 'graph-legend';
         legend.innerHTML = `
-            <div class="legend-title">Categories</div>
-            ${Object.entries(this.groupColors)
-                .filter(([k]) => k !== 'default' && k !== 'root')
-                .map(([name, color]) => `
-                    <div class="legend-item">
-                        <span class="legend-color" style="background:${color}"></span>
-                        <span class="legend-label">${name}</span>
-                    </div>
-                `).join('')}
+            <div class="legend-title">Folders</div>
+            ${folders.slice(0, 8).map(folder => {
+            const color = this.getNodeColor({ folder, tags: [] });
+            return `<div class="legend-item">
+                    <span class="legend-color" style="background:${color}"></span>
+                    <span class="legend-label">${folder}</span>
+                </div>`;
+        }).join('')}
         `;
         this.container.appendChild(legend);
     }
@@ -211,7 +222,7 @@ class KnowledgeGardenGraph {
             .force('charge', d3.forceManyBody()
                 .strength(this.config.chargeStrength))
             .force('center', d3.forceCenter(rect.width / 2, rect.height / 2))
-            .force('collision', d3.forceCollide().radius(20))
+            .force('collision', d3.forceCollide().radius(12))
             .on('tick', () => this.tick());
     }
 
@@ -222,35 +233,34 @@ class KnowledgeGardenGraph {
             .data(this.links)
             .enter()
             .append('line')
-            .style('stroke', 'rgba(124, 58, 237, 0.3)')
+            .style('stroke', 'rgba(124, 58, 237, 0.25)')
             .style('stroke-width', 1);
 
         // Nodes
         this.nodeElements = this.nodesGroup
-            .selectAll('g')
+            .selectAll('circle')
             .data(this.nodes)
             .enter()
-            .append('g')
+            .append('circle')
+            .attr('r', d => Math.max(4, 4 + d.connections * 1.5))
+            .attr('fill', d => this.getNodeColor(d))
+            .style('cursor', 'pointer')
             .call(this.drag())
             .on('mouseover', (e, d) => this.showTooltip(e, d))
             .on('mouseout', () => this.hideTooltip())
             .on('click', (e, d) => this.handleClick(e, d));
 
-        // Circles
-        this.nodeElements
-            .append('circle')
-            .attr('r', d => d.isHub ? 16 : 8 + Math.min(d.connections * 2, 6))
-            .attr('fill', d => this.groupColors[d.group] || this.groupColors.default)
-            .style('cursor', 'pointer');
-
-        // Labels
-        this.nodeElements
+        // Labels for connected nodes only
+        this.labelElements = this.nodesGroup
+            .selectAll('text')
+            .data(this.nodes.filter(n => n.connections >= 2))
+            .enter()
             .append('text')
-            .attr('dy', d => (d.isHub ? 16 : 8) + 14)
+            .attr('dy', d => Math.max(4, 4 + d.connections * 1.5) + 12)
             .attr('text-anchor', 'middle')
-            .text(d => d.name.length > 20 ? d.name.slice(0, 18) + '...' : d.name)
-            .style('font-size', '10px')
-            .style('fill', 'rgba(255,255,255,0.7)')
+            .text(d => d.name.length > 15 ? d.name.slice(0, 13) + '...' : d.name)
+            .style('font-size', '9px')
+            .style('fill', 'rgba(255,255,255,0.6)')
             .style('pointer-events', 'none');
     }
 
@@ -262,41 +272,60 @@ class KnowledgeGardenGraph {
             .attr('y2', d => d.target.y);
 
         this.nodeElements
-            .attr('transform', d => `translate(${d.x},${d.y})`);
+            .attr('cx', d => d.x)
+            .attr('cy', d => d.y);
+
+        this.labelElements
+            .attr('x', d => d.x)
+            .attr('y', d => d.y);
     }
 
     drag() {
         return d3.drag()
             .on('start', (e, d) => {
                 if (!e.active) this.simulation.alphaTarget(0.3).restart();
-                d.fx = d.x;
-                d.fy = d.y;
+                d.fx = d.x; d.fy = d.y;
             })
-            .on('drag', (e, d) => {
-                d.fx = e.x;
-                d.fy = e.y;
-            })
+            .on('drag', (e, d) => { d.fx = e.x; d.fy = e.y; })
             .on('end', (e, d) => {
                 if (!e.active) this.simulation.alphaTarget(0);
-                d.fx = null;
-                d.fy = null;
+                d.fx = null; d.fy = null;
             });
     }
 
     showTooltip(event, node) {
+        const tags = node.tags?.length ? `<br>Tags: ${node.tags.join(', ')}` : '';
         this.tooltip
-            .html(`<strong>${node.name}</strong><br>${node.connections} connections`)
+            .html(`<strong>${node.name}</strong><br>${node.connections} links${tags}`)
             .style('left', (event.pageX + 10) + 'px')
             .style('top', (event.pageY - 10) + 'px')
             .style('opacity', 1);
+
+        // Highlight connected
+        const connected = new Set([node.id]);
+        this.links.forEach(l => {
+            const src = typeof l.source === 'object' ? l.source.id : l.source;
+            const tgt = typeof l.target === 'object' ? l.target.id : l.target;
+            if (src === node.id) connected.add(tgt);
+            if (tgt === node.id) connected.add(src);
+        });
+
+        this.nodeElements.style('opacity', d => connected.has(d.id) ? 1 : 0.15);
+        this.linkElements.style('opacity', l => {
+            const src = typeof l.source === 'object' ? l.source.id : l.source;
+            const tgt = typeof l.target === 'object' ? l.target.id : l.target;
+            return (src === node.id || tgt === node.id) ? 1 : 0.05;
+        });
     }
 
     hideTooltip() {
         this.tooltip.style('opacity', 0);
+        this.nodeElements.style('opacity', 1);
+        this.linkElements.style('opacity', 1);
     }
 
     handleClick(event, node) {
-        if (!node.isHub && node.path && window.garden) {
+        if (node.path && window.garden) {
             window.garden.viewFileByPath(node.path);
             document.getElementById('graphContainer').style.display = 'none';
         }
@@ -304,12 +333,10 @@ class KnowledgeGardenGraph {
 
     show() {
         this.isVisible = true;
-        this.simulation?.alpha(0.5).restart();
+        this.simulation?.alpha(0.3).restart();
     }
 
-    hide() {
-        this.isVisible = false;
-    }
+    hide() { this.isVisible = false; }
 
     handleResize() {
         if (!this.isVisible || !this.svg) return;
@@ -317,9 +344,7 @@ class KnowledgeGardenGraph {
         this.svg.attr('viewBox', `0 0 ${rect.width} ${rect.height}`);
     }
 
-    animate() {
-        this.simulation?.alpha(1).restart();
-    }
+    animate() { this.simulation?.alpha(1).restart(); }
 }
 
 window.KnowledgeGardenGraph = KnowledgeGardenGraph;
