@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (startupQuoter) {
                 startupQuoter.style.opacity = '0';
             }
-        }, 5000);  // Extended from 2500ms
+        }, 2500);  // Reduced to 2500ms
 
         setTimeout(() => {
             startupIntro.style.opacity = '0';
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 checkElementsVisibility();
             }, 700);
-        }, 6500);  // Extended from 4000ms to give users time to interact
+        }, 3000);  // Reduced to 3000ms
     }
 
     setTimeout(startWebsite, 200);
