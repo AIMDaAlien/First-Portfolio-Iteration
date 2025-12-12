@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (startupQuoter) {
                 startupQuoter.style.opacity = '0';
             }
-        }, 1250);  // 1.25s: Start fading out text
+        }, 2000);  // 2s: Start fading out text (extended)
 
         setTimeout(() => {
             startupIntro.style.opacity = '1'; // Ensure visible
@@ -92,8 +92,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     checkElementsVisibility();
                 }, 500);
-            }, 700);  // Wait for CRT animation (0.6s) + small buffer
-        }, 1500); // Trigger CRT animation start
+            }, 900);  // Wait for CRT animation (0.8s) + small buffer
+        }, 2500); // Trigger CRT animation start (after quote fades)
     }
 
     setTimeout(startWebsite, 200);
