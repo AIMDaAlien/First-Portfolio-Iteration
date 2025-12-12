@@ -56,39 +56,44 @@ document.addEventListener('DOMContentLoaded', () => {
             if (startupQuoter) {
                 startupQuoter.style.opacity = '0';
             }
-        }, 2500);  // Reduced to 2500ms
+        }, 1250);  // 1.25s: Start fading out text
 
         setTimeout(() => {
-            startupIntro.style.opacity = '0';
-            mainContent.style.display = 'block';
+            startupIntro.classList.add('crt-off'); // Trigger CRT animation
 
+            // Wait for animation to finish before removing
             setTimeout(() => {
                 startupIntro.style.display = 'none';
-                mainNav.classList.add('visible');
+                mainContent.style.display = 'block';
 
-                if (heroTitle && heroTitle.textContent) {
-                    const heroText = heroTitle.textContent;
-                    heroTitle.innerHTML = heroText.split('').map((char, i) =>
-                        `<span style="transition-delay: ${i * 50}ms">${char === ' ' ? '&nbsp;' : char}</span>`
-                    ).join('');
-                }
+                setTimeout(() => {
+                    startupIntro.style.display = 'none';
+                    mainNav.classList.add('visible');
 
-                if (heroTitle) {
-                    heroTitle.style.opacity = '1';
-                    heroTitle.style.transform = 'translateY(0) scale(1)';
-                    heroTitle.classList.add('visible');
-                }
-                if (heroSubtitle) {
-                    heroSubtitle.style.opacity = '1';
-                    heroSubtitle.style.transform = 'translateY(0) scale(1)';
-                }
-                if (scrollIndicator) {
-                    scrollIndicator.style.opacity = '1';
-                }
+                    if (heroTitle && heroTitle.textContent) {
+                        const heroText = heroTitle.textContent;
+                        heroTitle.innerHTML = heroText.split('').map((char, i) =>
+                            `<span style="transition-delay: ${i * 50}ms">${char === ' ' ? '&nbsp;' : char}</span>`
+                        ).join('');
+                    }
 
-                checkElementsVisibility();
-            }, 700);
-        }, 3000);  // Reduced to 3000ms
+                    if (heroTitle) {
+                        heroTitle.style.opacity = '1';
+                        heroTitle.style.transform = 'translateY(0) scale(1)';
+                        heroTitle.classList.add('visible');
+                    }
+                    if (heroSubtitle) {
+                        heroSubtitle.style.opacity = '1';
+                        heroSubtitle.style.transform = 'translateY(0) scale(1)';
+                    }
+                    if (scrollIndicator) {
+                        scrollIndicator.style.opacity = '1';
+                    }
+
+                    checkElementsVisibility();
+                }, 700);
+            }, 1200);  // Wait for CRT animation (approx 1s) + buffer
+        }, 1500); // Trigger CRT animation start
     }
 
     setTimeout(startWebsite, 200);
