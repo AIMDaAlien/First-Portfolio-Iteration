@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1250);  // 1.25s: Start fading out text
 
         setTimeout(() => {
+            startupIntro.style.opacity = '1'; // Ensure visible
             startupIntro.classList.add('crt-off'); // Trigger CRT animation
 
             // Wait for animation to finish before removing
@@ -67,7 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 mainContent.style.display = 'block';
 
                 setTimeout(() => {
-                    startupIntro.style.display = 'none';
                     mainNav.classList.add('visible');
 
                     if (heroTitle && heroTitle.textContent) {
@@ -91,8 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     checkElementsVisibility();
-                }, 700);
-            }, 1200);  // Wait for CRT animation (approx 1s) + buffer
+                }, 500);
+            }, 700);  // Wait for CRT animation (0.6s) + small buffer
         }, 1500); // Trigger CRT animation start
     }
 
