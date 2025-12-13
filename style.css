@@ -138,11 +138,11 @@ body::before {
 }
 
 .bios-content {
-    font-family: 'Courier New', 'Consolas', monospace;
-    color: #00ff00;
-    font-size: clamp(12px, 1.5vw, 16px);
+    font-family: var(--font-primary);
+    color: var(--fg-dark);
+    font-size: clamp(14px, 1.8vw, 20px);
     line-height: 1.8;
-    text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+    text-shadow: 0 0 8px rgba(167, 129, 210, 0.4);
 }
 
 .bios-line {
