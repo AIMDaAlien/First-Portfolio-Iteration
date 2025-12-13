@@ -81,61 +81,41 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 biosScreen.style.display = 'none';
 
-                // Show quote
+                // Skip quote - go directly to CRT transition
                 startupIntro.style.opacity = '1';
-                setTimeout(() => {
-                    startupQuote.style.opacity = '1';
-                    startupQuote.style.transform = 'scale(1.6)';
-                    if (startupQuoter) {
-                        startupQuoter.style.opacity = '1';
-                        startupQuoter.style.transform = 'translateY(0)';
-                    }
-                }, 100);
+                startupIntro.classList.add('crt-off');
 
                 setTimeout(() => {
-                    startupQuote.style.transform = 'scale(0.6)';
-                    startupQuote.style.opacity = '0';
-                    if (startupQuoter) {
-                        startupQuoter.style.opacity = '0';
-                    }
-                }, 2000);
-
-                setTimeout(() => {
-                    startupIntro.style.opacity = '1';
-                    startupIntro.classList.add('crt-off');
+                    startupIntro.style.display = 'none';
+                    mainContent.style.display = 'block';
 
                     setTimeout(() => {
-                        startupIntro.style.display = 'none';
-                        mainContent.style.display = 'block';
+                        mainNav.classList.add('visible');
 
-                        setTimeout(() => {
-                            mainNav.classList.add('visible');
+                        if (heroTitle && heroTitle.textContent) {
+                            const heroText = heroTitle.textContent;
+                            heroTitle.innerHTML = heroText.split('').map((char, i) =>
+                                `<span style="transition-delay: ${i * 50}ms">${char === ' ' ? '&nbsp;' : char}</span>`
+                            ).join('');
+                        }
 
-                            if (heroTitle && heroTitle.textContent) {
-                                const heroText = heroTitle.textContent;
-                                heroTitle.innerHTML = heroText.split('').map((char, i) =>
-                                    `<span style="transition-delay: ${i * 50}ms">${char === ' ' ? '&nbsp;' : char}</span>`
-                                ).join('');
-                            }
+                        if (heroTitle) {
+                            heroTitle.style.opacity = '1';
+                            heroTitle.style.transform = 'translateY(0) scale(1)';
+                            heroTitle.classList.add('visible');
+                        }
+                        if (heroSubtitle) {
+                            heroSubtitle.style.opacity = '1';
+                            heroSubtitle.style.transform = 'translateY(0) scale(1)';
+                            typeSubtitle('Aspiring IT Professional • Systems Optimization');
+                        }
+                        if (scrollIndicator) {
+                            scrollIndicator.style.opacity = '1';
+                        }
 
-                            if (heroTitle) {
-                                heroTitle.style.opacity = '1';
-                                heroTitle.style.transform = 'translateY(0) scale(1)';
-                                heroTitle.classList.add('visible');
-                            }
-                            if (heroSubtitle) {
-                                heroSubtitle.style.opacity = '1';
-                                heroSubtitle.style.transform = 'translateY(0) scale(1)';
-                                typeSubtitle('IT Professional (in the making) • Systems Optimization');
-                            }
-                            if (scrollIndicator) {
-                                scrollIndicator.style.opacity = '1';
-                            }
-
-                            checkElementsVisibility();
-                        }, 500);
-                    }, 900);
-                }, 2500);
+                        checkElementsVisibility();
+                    }, 500);
+                }, 900);
             }, 500); // Wait for BIOS fade out
         }, biosEndDelay);
     }

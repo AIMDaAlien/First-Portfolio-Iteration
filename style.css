@@ -819,6 +819,30 @@ body::before {
 }
 
 /* --- About Section --- */
+
+/* Quote Epigraph */
+.about-epigraph {
+    font-size: 1.2rem;
+    font-style: italic;
+    color: var(--fg-dark);
+    opacity: 0.85;
+    text-align: center;
+    margin: 0 auto calc(var(--spacing-unit) * 4);
+    padding: calc(var(--spacing-unit) * 2) calc(var(--spacing-unit) * 4);
+    border-left: 3px solid var(--accent-color);
+    background: rgba(167, 129, 210, 0.05);
+    border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0;
+    max-width: 600px;
+}
+
+.about-epigraph cite {
+    display: block;
+    font-size: 0.9rem;
+    margin-top: calc(var(--spacing-unit) * 1);
+    opacity: 0.7;
+    font-style: normal;
+}
+
 #about .bio-text {
     font-size: 1.1rem;
     line-height: 1.8;
@@ -1187,6 +1211,45 @@ body::before {
 
 .contact-info a:hover {
     opacity: 0.7;
+}
+
+/* Resume Download Button */
+.resume-download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(var(--spacing-unit) * 1);
+    margin-top: calc(var(--spacing-unit) * 3);
+    padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 3);
+    background: var(--accent-color);
+    color: var(--bg-dark);
+    text-decoration: none;
+    border-radius: var(--border-radius-md);
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all var(--duration-short) var(--ease-emphasized);
+    box-shadow: 0 4px 12px rgba(167, 129, 210, 0.3);
+}
+
+.resume-download-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+.resume-download-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(167, 129, 210, 0.4);
+    background: #b99fe8;
+}
+
+/* Studying Card Highlight */
+.stat-card-studying {
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.stat-card-studying h3 {
+    color: #10b981;
 }
 
 .contact-info a::after {
