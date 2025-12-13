@@ -21,6 +21,21 @@ document.addEventListener('DOMContentLoaded', () => {
     ));
     const cards = Array.from(document.querySelectorAll('.stat-card, .skill-category, .project-card'));
 
+    // --- Typing Effect for Subtitle ---
+    function typeSubtitle(text, speed = 50) {
+        const typedElement = document.getElementById('typed-subtitle');
+        if (!typedElement) return;
+
+        let i = 0;
+        function type() {
+            if (i < text.length) {
+                typedElement.textContent += text.charAt(i);
+                i++;
+                setTimeout(type, speed);
+            }
+        }
+        type();
+    }
 
     // --- Section Offsets for Scroll Tracking ---
     let sectionOffsets = [];
@@ -35,65 +50,94 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Loading and Startup Sequence ---
     function startWebsite() {
+        const biosScreen = document.getElementById('bios-screen');
+        const biosLines = document.querySelectorAll('.bios-line');
+
+        // Hide loader
         loader.style.transition = 'opacity 0.5s ease-out';
         loader.style.opacity = '0';
         setTimeout(() => { loader.style.display = 'none'; }, 500);
 
+        // Show BIOS screen
+        biosScreen.style.opacity = '1';
 
-        startupIntro.style.opacity = '1';
-        setTimeout(() => {
-            startupQuote.style.opacity = '1';
-            startupQuote.style.transform = 'scale(1.6)';
-            if (startupQuoter) {
-                startupQuoter.style.opacity = '1';
-                startupQuoter.style.transform = 'translateY(0)';
-            }
-        }, 100);
-
-        setTimeout(() => {
-            startupQuote.style.transform = 'scale(0.6)';
-            startupQuote.style.opacity = '0';
-            if (startupQuoter) {
-                startupQuoter.style.opacity = '0';
-            }
-        }, 2000);  // 2s: Start fading out text (extended)
-
-        setTimeout(() => {
-            startupIntro.style.opacity = '1'; // Ensure visible
-            startupIntro.classList.add('crt-off'); // Trigger CRT animation
-
-            // Wait for animation to finish before removing
+        // Animate BIOS lines
+        biosLines.forEach((line, index) => {
+            const delay = parseInt(line.dataset.delay) || index * 200;
             setTimeout(() => {
-                startupIntro.style.display = 'none';
-                mainContent.style.display = 'block';
+                line.classList.add('visible');
+            }, delay);
+        });
+
+        // After last BIOS line, transition to quote
+        const lastLineDelay = Math.max(...Array.from(biosLines).map(l => parseInt(l.dataset.delay) || 0));
+        const biosEndDelay = lastLineDelay + 1000; // 1s after last line
+
+        setTimeout(() => {
+            // Fade out BIOS
+            biosScreen.style.transition = 'opacity 0.5s ease-out';
+            biosScreen.style.opacity = '0';
+
+            setTimeout(() => {
+                biosScreen.style.display = 'none';
+
+                // Show quote
+                startupIntro.style.opacity = '1';
+                setTimeout(() => {
+                    startupQuote.style.opacity = '1';
+                    startupQuote.style.transform = 'scale(1.6)';
+                    if (startupQuoter) {
+                        startupQuoter.style.opacity = '1';
+                        startupQuoter.style.transform = 'translateY(0)';
+                    }
+                }, 100);
 
                 setTimeout(() => {
-                    mainNav.classList.add('visible');
+                    startupQuote.style.transform = 'scale(0.6)';
+                    startupQuote.style.opacity = '0';
+                    if (startupQuoter) {
+                        startupQuoter.style.opacity = '0';
+                    }
+                }, 2000);
 
-                    if (heroTitle && heroTitle.textContent) {
-                        const heroText = heroTitle.textContent;
-                        heroTitle.innerHTML = heroText.split('').map((char, i) =>
-                            `<span style="transition-delay: ${i * 50}ms">${char === ' ' ? '&nbsp;' : char}</span>`
-                        ).join('');
-                    }
+                setTimeout(() => {
+                    startupIntro.style.opacity = '1';
+                    startupIntro.classList.add('crt-off');
 
-                    if (heroTitle) {
-                        heroTitle.style.opacity = '1';
-                        heroTitle.style.transform = 'translateY(0) scale(1)';
-                        heroTitle.classList.add('visible');
-                    }
-                    if (heroSubtitle) {
-                        heroSubtitle.style.opacity = '1';
-                        heroSubtitle.style.transform = 'translateY(0) scale(1)';
-                    }
-                    if (scrollIndicator) {
-                        scrollIndicator.style.opacity = '1';
-                    }
+                    setTimeout(() => {
+                        startupIntro.style.display = 'none';
+                        mainContent.style.display = 'block';
 
-                    checkElementsVisibility();
-                }, 500);
-            }, 900);  // Wait for CRT animation (0.8s) + small buffer
-        }, 2500); // Trigger CRT animation start (after quote fades)
+                        setTimeout(() => {
+                            mainNav.classList.add('visible');
+
+                            if (heroTitle && heroTitle.textContent) {
+                                const heroText = heroTitle.textContent;
+                                heroTitle.innerHTML = heroText.split('').map((char, i) =>
+                                    `<span style="transition-delay: ${i * 50}ms">${char === ' ' ? '&nbsp;' : char}</span>`
+                                ).join('');
+                            }
+
+                            if (heroTitle) {
+                                heroTitle.style.opacity = '1';
+                                heroTitle.style.transform = 'translateY(0) scale(1)';
+                                heroTitle.classList.add('visible');
+                            }
+                            if (heroSubtitle) {
+                                heroSubtitle.style.opacity = '1';
+                                heroSubtitle.style.transform = 'translateY(0) scale(1)';
+                                typeSubtitle('IT Professional (in the making) • Systems Optimization');
+                            }
+                            if (scrollIndicator) {
+                                scrollIndicator.style.opacity = '1';
+                            }
+
+                            checkElementsVisibility();
+                        }, 500);
+                    }, 900);
+                }, 2500);
+            }, 500); // Wait for BIOS fade out
+        }, biosEndDelay);
     }
 
     setTimeout(startWebsite, 200);
@@ -434,3 +478,72 @@ async function updateGardenStats() {
     }
 }
 document.addEventListener('DOMContentLoaded', updateGardenStats);
+
+// --- Matrix Rain Effect ---
+function initMatrixRain() {
+    const canvas = document.getElementById('matrix-rain');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+        canvas.width = canvas.parentElement.offsetWidth;
+        canvas.height = canvas.parentElement.offsetHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789';
+    const fontSize = 14;
+    const columns = Math.floor(canvas.width / fontSize);
+    const drops = new Array(columns).fill(1);
+
+    function draw() {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#00ff00';
+        ctx.font = `${fontSize}px monospace`;
+
+        for (let i = 0; i < drops.length; i++) {
+            const char = chars[Math.floor(Math.random() * chars.length)];
+            ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+
+            if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                drops[i] = 0;
+            }
+            drops[i]++;
+        }
+    }
+
+    setInterval(draw, 50);
+}
+
+// --- Uptime Counter ---
+function initUptimeCounter() {
+    const uptimeEl = document.getElementById('uptime-value');
+    if (!uptimeEl) return;
+
+    // Portfolio "launch date" - adjust as needed
+    const launchDate = new Date('2024-01-01T00:00:00');
+
+    function updateUptime() {
+        const now = new Date();
+        const diff = now - launchDate;
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        uptimeEl.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    }
+
+    updateUptime();
+    setInterval(updateUptime, 1000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initMatrixRain();
+    initUptimeCounter();
+});
