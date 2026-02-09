@@ -13,19 +13,15 @@ class KnowledgeGardenGraph {
 
         this.vaultOwner = 'AIMDaAlien';
         this.vaultRepo = 'Obsidian-Vault';
-        this.hiddenItems = ['.obsidian', '.stfolder', '.DS_Store', '.gitignore', 'Myself', 'Business', 'images'];
+        this.hiddenItems = ['.obsidian', '.stfolder', '.DS_Store', '.gitignore', '.github', 'Myself', 'images'];
 
         // Colors by folder
         this.folderColors = {
             'IT Projects': '#22D3EE',
-            'Learning': '#F59E0B',
-            'Meta': '#A78BFA',
+            'Learning Journals': '#F59E0B',
+            'Programming Concepts': '#8B5CF6',
             'Projects': '#3B82F6',
-            'Router Configuration': '#10B981',
-            'Sessions': '#F97316',
-            'Technical': '#8B5CF6',
-            'Computer Related Stuff': '#EC4899',
-            'Web': '#FF6B6B',
+            'Systems': '#22C55E',
             'sun': '#FFD93D',
             'root': '#7C3AED'
         };
@@ -40,15 +36,14 @@ class KnowledgeGardenGraph {
             'privacy filter - matrix decode',
             'knowledge base - main index',
             'truenas build guide',
-            'truenas build entry',
-            'pi-hole setup',
-            '00 - router optimization',
-            'pihole truenas ne...',
-            'readme',
-            'session index',
-            'workflow dashboard',
-            'man pages',
-            'about me draft'
+            'pi-hole setup guide - complete journey',
+            '00 - router optimization index',
+            '00 - typinglab project overview',
+            'python fundamentals',
+            'about me draft',
+            'privacy hardening journey',
+            'prometheus grafana stack - implementation guide',
+            'troubleshooting lessons learned'
         ]);
 
         this.nodes = [];
@@ -116,11 +111,6 @@ class KnowledgeGardenGraph {
             mdFiles.forEach(file => {
                 const fileName = file.path.split('/').pop().replace('.md', '');
                 let folder = file.path.includes('/') ? file.path.split('/')[0] : 'root';
-
-                // Categorize Step notes as Web
-                if (/^Step\s*\d/i.test(fileName)) {
-                    folder = 'Web';
-                }
 
                 const node = {
                     id: file.path,

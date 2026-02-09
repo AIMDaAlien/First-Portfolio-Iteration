@@ -17,26 +17,26 @@ class KnowledgeGarden {
         this.currentFile = null;
         this.noteCache = new Map();
         this.treeCache = new Map();
+        this.gitTreeCache = null; // cached result of git/trees?recursive=1
         this.commandHistory = [];
         this.historyIndex = -1;
 
         // Hidden files/folders
-        this.hiddenItems = ['.obsidian', '.stfolder', '.DS_Store', '.gitignore', 'Myself', 'Business', 'images'];
+        this.hiddenItems = ['.obsidian', '.stfolder', '.DS_Store', '.gitignore', '.github', 'Myself', 'images'];
 
         // Icon mapping by folder name
         this.iconMap = {
-            'Business': 'groups',
-            'Computer Related Stuff': 'computer',
             'IT Projects': 'build',
-            'Learning': 'school',
-            'Meta': 'badge',
+            'Learning Journals': 'school',
+            'Programming Concepts': 'code',
             'Projects': 'build',
-            'Router Configuration': 'router',
-            'Sessions': 'memory',
-            'Technical': 'code',
+            'Systems': 'computer',
             'default_folder': 'storage',
             'default_file': 'book'
         };
+
+        // Cached manifest data
+        this.manifest = null;
 
         // DOM Elements
         this.terminalInput = document.getElementById('terminalInput');
@@ -88,12 +88,12 @@ class KnowledgeGarden {
         document.getElementById('closeGraphBtn')?.addEventListener('click', () => this.hideGraph());
         document.getElementById('animateBtn')?.addEventListener('click', () => window.graph?.animate());
 
-        // Note card clicks
-        document.querySelectorAll('.note-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const file = card.dataset.file;
-                if (file) this.viewFileByPath(file);
-            });
+        // Note card clicks (works for dynamically-rendered featured projects)
+        document.addEventListener('click', (e) => {
+            const card = e.target?.closest?.('.note-card');
+            if (!card) return;
+            const file = card.dataset.file;
+            if (file) this.viewFileByPath(file);
         });
 
         // Update time
@@ -107,6 +107,10 @@ class KnowledgeGarden {
         // Load file tree from GitHub
         this.statusInfo.textContent = 'Loading vault...';
         await this.loadFileTree();
+
+        // Load featured projects (published_to_garden=true, sorted by last_published)
+        await this.loadFeaturedProjects();
+
         this.statusInfo.textContent = 'Ready';
     }
 
@@ -116,13 +120,339 @@ class KnowledgeGarden {
 
     async loadFileTree() {
         try {
-            const items = await this.fetchDirectory('');
+            // Try manifest-based tree first (0 API calls)
+            const manifest = await this.fetchManifest();
+            const items = this.buildTreeFromManifest(manifest, '');
             this.fileTree.innerHTML = '';
-            this.renderTreeItems(items, this.fileTree, 0);
+            this.renderManifestTree(items, this.fileTree, 0);
         } catch (error) {
-            console.error('Failed to load file tree:', error);
-            this.fileTree.innerHTML = '<div class="tree-error">Failed to load files</div>';
+            console.warn('Manifest tree failed, falling back to API:', error);
+            try {
+                const items = await this.fetchDirectory('');
+                this.fileTree.innerHTML = '';
+                this.renderTreeItems(items, this.fileTree, 0);
+            } catch (fallbackError) {
+                console.error('Failed to load file tree:', fallbackError);
+                this.fileTree.innerHTML = '<div class="tree-error">Failed to load files</div>';
+            }
         }
+    }
+
+    buildTreeFromManifest(manifest, parentPath) {
+        const tree = manifest.tree || [];
+        const items = [];
+
+        for (const entry of tree) {
+            const parts = entry.path.split('/');
+
+            // Determine the parent of this entry
+            const entryParent = parts.length > 1 ? parts.slice(0, -1).join('/') : '';
+            if (entryParent !== parentPath) continue;
+
+            const name = parts[parts.length - 1];
+
+            // Filter hidden items
+            if (this.hiddenItems.includes(name) || name.startsWith('.')) continue;
+
+            // Only show .md files (skip .base and other types)
+            if (entry.type === 'file' && !name.endsWith('.md')) continue;
+
+            items.push({
+                name: name,
+                path: entry.path,
+                type: entry.type === 'dir' ? 'dir' : 'file'
+            });
+        }
+
+        // Sort: folders first, then files, alphabetically
+        items.sort((a, b) => {
+            if (a.type === 'dir' && b.type !== 'dir') return -1;
+            if (a.type !== 'dir' && b.type === 'dir') return 1;
+            return a.name.localeCompare(b.name);
+        });
+
+        return items;
+    }
+
+    renderManifestTree(items, container, depth) {
+        items.forEach(item => {
+            const isFolder = item.type === 'dir';
+            const displayName = item.name.replace('.md', '');
+            const iconKey = this.iconMap[item.name] || (isFolder ? 'default_folder' : 'default_file');
+
+            const itemEl = document.createElement('div');
+            itemEl.className = `tree-item ${isFolder ? 'folder' : 'file'}`;
+            itemEl.style.paddingLeft = `${12 + depth * 16}px`;
+
+            if (isFolder) {
+                const chevron = document.createElement('span');
+                chevron.className = 'tree-chevron';
+                chevron.textContent = '\u25B6';
+                itemEl.appendChild(chevron);
+            }
+
+            const icon = document.createElement('svg');
+            icon.className = 'tree-icon';
+            icon.innerHTML = `<use href="icons-sprite.svg#icon-${iconKey}"></use>`;
+            itemEl.appendChild(icon);
+
+            const label = document.createElement('span');
+            label.className = 'tree-label';
+            label.textContent = displayName;
+            itemEl.appendChild(label);
+
+            container.appendChild(itemEl);
+
+            if (isFolder) {
+                const childContainer = document.createElement('div');
+                childContainer.className = 'tree-children collapsed';
+                container.appendChild(childContainer);
+
+                let loaded = false;
+
+                itemEl.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isExpanded = !childContainer.classList.contains('collapsed');
+
+                    if (!loaded) {
+                        const children = this.buildTreeFromManifest(this.manifest, item.path);
+                        childContainer.classList.remove('collapsed');
+                        itemEl.classList.add('expanded');
+                        this.renderManifestTree(children, childContainer, depth + 1);
+                        loaded = true;
+                    } else {
+                        childContainer.classList.toggle('collapsed');
+                        itemEl.classList.toggle('expanded');
+                    }
+                });
+            } else {
+                itemEl.addEventListener('click', () => {
+                    this.viewFileByPath(item.path);
+                    document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
+                    itemEl.classList.add('active');
+                    this.closeMobileSidebar();
+                });
+            }
+        });
+    }
+
+    // ============================================
+    // FEATURED PROJECTS
+    // ============================================
+
+    async fetchManifest() {
+        if (this.manifest) return this.manifest;
+
+        const url = `${this.rawBase}/garden-manifest.json`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Manifest fetch failed: HTTP ${res.status}`);
+        this.manifest = await res.json();
+        return this.manifest;
+    }
+
+    async loadFeaturedProjects() {
+        const container = document.getElementById('featuredNotes');
+        if (!container) return;
+
+        container.setAttribute('aria-busy', 'true');
+
+        try {
+            // Try manifest-based approach first (1 request instead of 70+)
+            const featured = await this.loadFeaturedFromManifest();
+
+            if (featured.length === 0) {
+                container.innerHTML = '<div class="muted">No featured projects found.</div>';
+                return;
+            }
+
+            container.innerHTML = featured.map(meta => this.renderFeaturedCard(meta)).join('');
+
+        } catch (error) {
+            console.warn('Manifest approach failed, falling back to per-file fetch:', error);
+            await this.loadFeaturedProjectsFallback(container);
+        } finally {
+            container.removeAttribute('aria-busy');
+        }
+    }
+
+    async loadFeaturedFromManifest() {
+        const manifest = await this.fetchManifest();
+        const metadata = manifest.metadata || {};
+
+        const published = [];
+        for (const [path, fm] of Object.entries(metadata)) {
+            if (fm.published_to_garden !== true) continue;
+            if (!this.isCandidateFeaturedPath(path)) continue;
+
+            const title = fm.title || path.split('/').pop().replace(/\.md$/, '');
+            const sortDate = this.parseDate(fm.last_published) || this.parseDate(fm.created);
+
+            published.push({ path, title, published_to_garden: true, last_published: fm.last_published, created: fm.created, sortDate });
+        }
+
+        published.sort((a, b) => (b.sortDate || 0) - (a.sortDate || 0));
+        return published.slice(0, 6);
+    }
+
+    async loadFeaturedProjectsFallback(container) {
+        try {
+            const tree = await this.fetchGitTreeRecursive();
+
+            const candidatePaths = (tree.tree || [])
+                .filter(item => item.type === 'blob' && item.path.endsWith('.md'))
+                .map(item => item.path)
+                .filter(p => this.isCandidateFeaturedPath(p));
+
+            const metas = await this.fetchFeaturedMetadata(candidatePaths.slice(0, 120));
+            const published = metas.filter(m => m.published_to_garden === true);
+            published.sort((a, b) => (b.sortDate || 0) - (a.sortDate || 0));
+
+            const featured = published.slice(0, 6);
+
+            if (featured.length === 0) {
+                container.innerHTML = '<div class="muted">No featured projects found.</div>';
+                return;
+            }
+
+            container.innerHTML = featured.map(meta => this.renderFeaturedCard(meta)).join('');
+        } catch (error) {
+            console.warn('Fallback featured projects also failed:', error);
+        }
+    }
+
+    async fetchGitTreeRecursive() {
+        if (this.gitTreeCache) return this.gitTreeCache;
+
+        const url = `https://api.github.com/repos/${this.vaultOwner}/${this.vaultRepo}/git/trees/${this.branch}?recursive=1`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Tree fetch failed: HTTP ${res.status}`);
+        const data = await res.json();
+        this.gitTreeCache = data;
+        return data;
+    }
+
+    isCandidateFeaturedPath(path) {
+        // Never surface hidden/private areas
+        const parts = path.split('/');
+        if (parts.some(p => this.hiddenItems.includes(p) || p.startsWith('.'))) return false;
+
+        // Only treat these as "project" content for the featured strip
+        return (
+            path.startsWith('Projects/') ||
+            path.startsWith('Systems/Homelab/') ||
+            path.startsWith('Systems/Router Configuration/') ||
+            path.startsWith('Learning Journals/') ||
+            path.startsWith('IT Projects/')
+        );
+    }
+
+    async fetchFeaturedMetadata(paths) {
+        const metas = [];
+
+        // Fetch in small batches to reduce perceived latency
+        const batchSize = 12;
+        for (let i = 0; i < paths.length; i += batchSize) {
+            const batch = paths.slice(i, i + batchSize);
+            const results = await Promise.all(batch.map(p => this.fetchNoteFrontmatter(p)));
+            for (const r of results) {
+                if (r) metas.push(r);
+            }
+        }
+
+        return metas;
+    }
+
+    async fetchNoteFrontmatter(path) {
+        try {
+            const encodedPath = path.split('/').map(s => encodeURIComponent(s)).join('/');
+            const url = `${this.rawBase}/${encodedPath}`;
+            const res = await fetch(url);
+            if (!res.ok) return null;
+
+            const text = await res.text();
+            const fm = this.parseFrontmatter(text);
+
+            // Title: use first H1 after frontmatter, else filename
+            const title = this.extractTitle(text) || path.split('/').pop().replace(/\.md$/, '');
+
+            const lastPublishedRaw = fm.last_published;
+            const createdRaw = fm.created;
+
+            const sortDate = this.parseDate(lastPublishedRaw) || this.parseDate(createdRaw);
+
+            return {
+                path,
+                title,
+                published_to_garden: fm.published_to_garden === true,
+                last_published: lastPublishedRaw,
+                created: createdRaw,
+                sortDate
+            };
+        } catch (e) {
+            return null;
+        }
+    }
+
+    parseFrontmatter(mdText) {
+        // Very small parser: supports the keys we care about.
+        // Frontmatter must be the first block.
+        if (!mdText.startsWith('---')) return {};
+        const end = mdText.indexOf('\n---', 3);
+        if (end === -1) return {};
+
+        const block = mdText.slice(3, end).trim();
+        const out = {};
+
+        block.split('\n').forEach(line => {
+            const m = line.match(/^([A-Za-z0-9_\-]+):\s*(.*)$/);
+            if (!m) return;
+            const key = m[1];
+            let value = m[2].trim();
+
+            // Strip quotes
+            value = value.replace(/^['"]/, '').replace(/['"]$/, '');
+
+            if (value === 'true') out[key] = true;
+            else if (value === 'false') out[key] = false;
+            else if (value === 'null') out[key] = null;
+            else out[key] = value;
+        });
+
+        return out;
+    }
+
+    extractTitle(mdText) {
+        // Remove frontmatter if present
+        let body = mdText;
+        if (body.startsWith('---')) {
+            const end = body.indexOf('\n---', 3);
+            if (end !== -1) body = body.slice(end + 4);
+        }
+
+        const m = body.match(/^\s*#\s+(.+)$/m);
+        return m ? m[1].trim() : null;
+    }
+
+    parseDate(raw) {
+        if (!raw) return null;
+        const d = new Date(raw);
+        return isNaN(d.getTime()) ? null : d;
+    }
+
+    renderFeaturedCard(meta) {
+        const topFolder = meta.path.split('/')[0];
+        const iconKey = this.iconMap[topFolder] || 'default_file';
+        const title = this.escapeHtml(meta.title);
+        const file = this.escapeHtml(meta.path);
+
+        return `
+            <div class="note-card" data-file="${file}">
+                <svg class="note-icon">
+                    <use href="icons-sprite.svg#icon-${iconKey}"></use>
+                </svg>
+                <span class="note-title">${title}</span>
+            </div>
+        `;
     }
 
     async fetchDirectory(path) {
