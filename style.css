@@ -668,6 +668,7 @@ body::before {
     overflow: hidden;
     cursor: pointer;
     text-align: center;
+    will-change: transform;
 }
 
 /* State layer overlay */
@@ -719,7 +720,7 @@ body::before {
 .card-icon {
     width: 64px;
     height: 64px;
-    background: var(--md-sys-color-primary-container);
+    background: var(--md-icon-container-bg);
     border-radius: var(--md-sys-shape-corner-medium);
     display: flex;
     align-items: center;
@@ -734,7 +735,7 @@ body::before {
 .card-icon svg {
     width: 36px;
     height: 36px;
-    fill: var(--md-sys-color-on-primary-container);
+    fill: var(--md-icon-container-on);
 }
 
 .stat-card:hover .card-icon {
@@ -801,6 +802,7 @@ body::before {
     position: relative;
     cursor: pointer;
     overflow: hidden;
+    will-change: transform;
 }
 
 /* State layer */
@@ -839,7 +841,7 @@ body::before {
 .skill-icon-wrapper {
     width: 56px;
     height: 56px;
-    background: var(--md-sys-color-primary-container);
+    background: var(--md-icon-container-bg);
     border-radius: var(--md-sys-shape-corner-medium);
     display: flex;
     align-items: center;
@@ -852,7 +854,7 @@ body::before {
 .skill-icon-wrapper svg {
     width: 32px;
     height: 32px;
-    fill: var(--md-sys-color-on-primary-container);
+    fill: var(--md-icon-container-on);
     transition: all 300ms;
 }
 
@@ -914,6 +916,7 @@ body::before {
     position: relative;
     cursor: pointer;
     overflow: hidden;
+    will-change: transform;
 }
 
 /* State layer */
@@ -1080,6 +1083,7 @@ body::before {
     overflow: hidden;
     transition: transform 350ms var(--motion-spring-bouncy),
         box-shadow 350ms var(--motion-spring-bouncy);
+    will-change: transform;
 }
 
 /* State layer */
@@ -1123,7 +1127,7 @@ body::before {
     width: 48px;
     height: 48px;
     border-radius: var(--md-sys-shape-corner-medium);
-    background: var(--md-sys-color-primary-container);
+    background: var(--md-icon-container-bg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1135,7 +1139,7 @@ body::before {
 .project-icon svg {
     width: 28px;
     height: 28px;
-    fill: var(--md-sys-color-on-primary-container);
+    fill: var(--md-icon-container-on);
 }
 
 .project-card:hover .project-icon {

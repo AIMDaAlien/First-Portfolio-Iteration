@@ -227,8 +227,11 @@ document.addEventListener('DOMContentLoaded', () => {
         let targetX = auraX;
         let targetY = auraY;
         let pointerLocked = false;
+        let auraIdle = false;
+        let lastMove = Date.now();
 
         document.addEventListener('mousemove', (e) => {
+            lastMove = Date.now();
             if (!pointerLocked) {
                 targetX = e.clientX;
                 targetY = e.clientY;
@@ -238,9 +241,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 targetX = Math.max(0, Math.min(window.innerWidth, targetX));
                 targetY = Math.max(0, Math.min(window.innerHeight, targetY));
             }
+            if (auraIdle) {
+                auraIdle = false;
+                requestAnimationFrame(animateAura);
+            }
         });
 
         function animateAura() {
+            if (Date.now() - lastMove > 2000) {
+                auraIdle = true;
+                return;
+            }
             auraX += (targetX - auraX) * 0.25;
             auraY += (targetY - auraY) * 0.25;
             cursorAura.style.transform = `translate3d(${auraX}px, ${auraY}px, 0)`;
@@ -496,7 +507,15 @@ function initMatrixRain() {
         }
     }
 
-    setInterval(draw, 50);
+    let lastDraw = 0;
+    function animateDraw(timestamp) {
+        if (timestamp - lastDraw >= 50) {
+            draw();
+            lastDraw = timestamp;
+        }
+        requestAnimationFrame(animateDraw);
+    }
+    requestAnimationFrame(animateDraw);
 }
 
 // --- Uptime Counter ---

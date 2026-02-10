@@ -12,6 +12,10 @@
     --md-sys-color-primary-container: #383F90;
     --md-sys-color-on-primary-container: #DEE0FF;
 
+    /* Icon container override (Very Peri — brighter periwinkle) */
+    --md-icon-container-bg: #6667AB;
+    --md-icon-container-on: #E8E0FF;
+
     /* Secondary (Desaturated Periwinkle) */
     --md-sys-color-secondary: #C4C4DD;
     --md-sys-color-on-secondary: #2D2F42;
