@@ -32,25 +32,32 @@ body {
     color: var(--fg-dark);
 }
 
-/* --- Body Noise Texture Overlay --- */
-body::before {
-    content: "";
+/* --- Floating Particles --- */
+.particles-container {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 300vw;
-    height: 300vh;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    background-repeat: repeat;
-    opacity: 0.025;
+    inset: 0;
     z-index: -1;
     pointer-events: none;
-    animation: driftNoise 45s linear infinite;
+    overflow: hidden;
 }
 
-@keyframes driftNoise {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(-100vw, -100vh); }
+.particle {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--md-sys-color-primary), transparent);
+    will-change: transform;
+    animation: particleDrift var(--p-dur) linear infinite;
+}
+
+.particle--sm { width: 2px; height: 2px; }
+.particle--md { width: 3px; height: 3px; }
+.particle--lg { width: 4px; height: 4px; }
+
+@keyframes particleDrift {
+    0%   { transform: translateY(0) translateX(0); opacity: 0; }
+    10%  { opacity: var(--p-opacity); }
+    90%  { opacity: var(--p-opacity); }
+    100% { transform: translateY(-100vh) translateX(var(--p-drift-x)); opacity: 0; }
 }
 
 /* === LOADING === */
@@ -461,6 +468,7 @@ body::before {
     height: 32px;
     fill: var(--fg-dark);
     animation: bounceExpressive 2s var(--ease-emphasized) infinite;
+    animation-play-state: paused;
 }
 
 @keyframes bounceExpressive {
@@ -491,6 +499,7 @@ body::before {
     filter: blur(60px);
     opacity: 0.4;
     animation: blobMorph 15s ease-in-out infinite;
+    animation-play-state: paused;
 }
 
 .blob-1 {
@@ -575,6 +584,7 @@ body::before {
     margin-left: 4px;
     vertical-align: text-bottom;
     animation: cursorBlink 1s step-end infinite;
+    animation-play-state: paused;
 }
 
 @keyframes cursorBlink {
@@ -1015,6 +1025,7 @@ body::before {
     background: #10b981;
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
     animation: statusPulse 2s ease-in-out infinite;
+    animation-play-state: paused;
 }
 
 .status-dot.past {
@@ -1176,6 +1187,7 @@ body::before {
     height: 8px;
     border-radius: 50%;
     animation: statusPulse 2s ease-in-out infinite;
+    animation-play-state: paused;
 }
 
 .status-indicator.active {
@@ -1980,8 +1992,8 @@ footer {
         transition-duration: 0.01ms !important;
     }
 
-    body::before {
-        animation: none !important;
+    .particles-container {
+        display: none;
     }
 
     .blob {
@@ -1997,6 +2009,15 @@ footer {
         animation: none;
     }
 }
+
+/* === SECTION VISIBILITY ACTIVATION === */
+#hero.section-visible .blob,
+#hero.section-visible .scroll-arrow,
+#hero.section-visible .typing-cursor { animation-play-state: running; }
+
+#experience.section-visible .status-dot { animation-play-state: running; }
+
+#projects.section-visible .status-indicator { animation-play-state: running; }
 
 /* Magnetic hover (utility) */
 .magnetic-hover {

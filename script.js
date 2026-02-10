@@ -89,6 +89,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     startupIntro.style.display = 'none';
                     mainContent.style.display = 'block';
 
+                    // Pre-warm hero animations immediately
+                    const heroSection = document.getElementById('hero');
+                    if (heroSection) heroSection.classList.add('section-visible');
+
                     setTimeout(() => {
                         mainNav.classList.add('visible');
 
@@ -114,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
 
                         checkElementsVisibility();
+                        initSectionVisibilityObserver();
                     }, 500);
                 }, 900);
             }, 500); // Wait for BIOS fade out
@@ -470,12 +475,46 @@ async function updateGardenStats() {
 }
 document.addEventListener('DOMContentLoaded', updateGardenStats);
 
-// --- Matrix Rain Effect ---
+// --- Floating Particles ---
+function initFloatingParticles() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const container = document.getElementById('particles-container');
+    if (!container) return;
+
+    const COUNT = 40;
+    const sizes = ['sm', 'md', 'lg'];
+    const weights = [0.6, 0.3, 0.1]; // probability weights
+    const opacities = [0.05, 0.08, 0.12];
+
+    for (let i = 0; i < COUNT; i++) {
+        const el = document.createElement('div');
+
+        // Weighted random size
+        const r = Math.random();
+        const sizeIdx = r < weights[0] ? 0 : r < weights[0] + weights[1] ? 1 : 2;
+
+        el.className = `particle particle--${sizes[sizeIdx]}`;
+        el.style.left = `${Math.random() * 100}%`;
+        el.style.top = `${Math.random() * 100}%`;
+        el.style.setProperty('--p-dur', `${15 + Math.random() * 20}s`);
+        el.style.setProperty('--p-drift-x', `${(Math.random() - 0.5) * 100}px`);
+        el.style.setProperty('--p-opacity', opacities[sizeIdx]);
+        el.style.animationDelay = `-${Math.random() * 35}s`;
+
+        container.appendChild(el);
+    }
+}
+document.addEventListener('DOMContentLoaded', initFloatingParticles);
+
+// --- Matrix Rain Effect (visibility-gated) ---
 function initMatrixRain() {
     const canvas = document.getElementById('matrix-rain');
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
+    let isVisible = false;
+    let rafId = null;
 
     function resizeCanvas() {
         canvas.width = canvas.parentElement.offsetWidth;
@@ -509,13 +548,46 @@ function initMatrixRain() {
 
     let lastDraw = 0;
     function animateDraw(timestamp) {
+        if (!isVisible) { rafId = null; return; }
         if (timestamp - lastDraw >= 50) {
             draw();
             lastDraw = timestamp;
         }
-        requestAnimationFrame(animateDraw);
+        rafId = requestAnimationFrame(animateDraw);
     }
-    requestAnimationFrame(animateDraw);
+
+    window.matrixRain = {
+        start() {
+            if (isVisible) return;
+            isVisible = true;
+            rafId = requestAnimationFrame(animateDraw);
+        },
+        stop() {
+            isVisible = false;
+            if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+        }
+    };
+}
+
+// --- Section Visibility Observer ---
+function initSectionVisibilityObserver() {
+    const sections = document.querySelectorAll('#hero, #experience, #projects, footer');
+    if (!sections.length) return;
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const el = entry.target;
+            if (entry.isIntersecting) {
+                el.classList.add('section-visible');
+                if (el.tagName === 'FOOTER' && window.matrixRain) window.matrixRain.start();
+            } else {
+                el.classList.remove('section-visible');
+                if (el.tagName === 'FOOTER' && window.matrixRain) window.matrixRain.stop();
+            }
+        });
+    }, { rootMargin: '50px', threshold: 0 });
+
+    sections.forEach(s => observer.observe(s));
 }
 
 // --- Uptime Counter ---
