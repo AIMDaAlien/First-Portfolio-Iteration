@@ -143,7 +143,6 @@ class KnowledgeGardenGraph {
                 ).length;
             });
 
-            console.log(`Graph: ${this.nodes.length} nodes, ${this.links.length} links`);
 
         } catch (error) {
             console.error('Graph error:', error);
@@ -386,8 +385,6 @@ class KnowledgeGardenGraph {
         // Don't navigate for sun node
         if (node.isSun) return;
 
-        console.log('Graph click:', node.name, node.path);
-
         // Close graph first
         const graphContainer = document.getElementById('graphContainer');
         if (graphContainer) graphContainer.style.display = 'none';
@@ -395,9 +392,6 @@ class KnowledgeGardenGraph {
         // Try to navigate
         if (node.path && window.garden) {
             window.garden.viewFileByPath(node.path);
-        } else if (node.path) {
-            // Fallback: direct navigation attempt
-            console.warn('Garden not found, node path:', node.path);
         }
     }
 

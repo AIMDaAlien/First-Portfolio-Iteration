@@ -126,7 +126,7 @@ class KnowledgeGarden {
             this.fileTree.innerHTML = '';
             this.renderManifestTree(items, this.fileTree, 0);
         } catch (error) {
-            console.warn('Manifest tree failed, falling back to API:', error);
+            // Manifest tree failed, falling back to API
             try {
                 const items = await this.fetchDirectory('');
                 this.fileTree.innerHTML = '';
@@ -268,7 +268,7 @@ class KnowledgeGarden {
             container.innerHTML = featured.map(meta => this.renderFeaturedCard(meta)).join('');
 
         } catch (error) {
-            console.warn('Manifest approach failed, falling back to per-file fetch:', error);
+            // Manifest approach failed, falling back to per-file fetch
             await this.loadFeaturedProjectsFallback(container);
         } finally {
             container.removeAttribute('aria-busy');
@@ -316,7 +316,7 @@ class KnowledgeGarden {
 
             container.innerHTML = featured.map(meta => this.renderFeaturedCard(meta)).join('');
         } catch (error) {
-            console.warn('Fallback featured projects also failed:', error);
+            // Fallback featured projects also failed
         }
     }
 

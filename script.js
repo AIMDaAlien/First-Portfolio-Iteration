@@ -358,8 +358,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Scroll & Resize Listeners ---
+    let navTicking = false;
     window.addEventListener('scroll', () => {
-        updateActiveNavLink();
+        if (!navTicking) {
+            requestAnimationFrame(() => {
+                updateActiveNavLink();
+                navTicking = false;
+            });
+            navTicking = true;
+        }
         if (window.scrollY < window.innerHeight) {
             requestTick();
         }
@@ -375,23 +382,6 @@ document.addEventListener('DOMContentLoaded', () => {
         requestTick();
     }
 });
-
-// --- Preload Images ---
-function preloadImages() {
-    const images = document.querySelectorAll('img[data-src]');
-    images.forEach(img => {
-        const src = img.getAttribute('data-src');
-        if (src) {
-            const newImg = new Image();
-            newImg.src = src;
-            newImg.onload = () => {
-                img.src = src;
-                img.removeAttribute('data-src');
-            };
-        }
-    });
-}
-document.addEventListener('DOMContentLoaded', preloadImages);
 
 // --- Dynamic Knowledge Garden Stats from GitHub API ---
 async function updateGardenStats() {
@@ -473,7 +463,18 @@ async function updateGardenStats() {
         if (folderCountEl) folderCountEl.textContent = '8';
     }
 }
-document.addEventListener('DOMContentLoaded', updateGardenStats);
+// Defer garden stats fetch until section is visible
+document.addEventListener('DOMContentLoaded', () => {
+    const gardenSection = document.getElementById('knowledge-garden-showcase');
+    if (!gardenSection) return;
+    const gardenObserver = new IntersectionObserver((entries, obs) => {
+        if (entries[0].isIntersecting) {
+            updateGardenStats();
+            obs.disconnect();
+        }
+    }, { rootMargin: '200px', threshold: 0 });
+    gardenObserver.observe(gardenSection);
+});
 
 // --- Floating Particles ---
 function initFloatingParticles() {
@@ -482,7 +483,7 @@ function initFloatingParticles() {
     const container = document.getElementById('particles-container');
     if (!container) return;
 
-    const COUNT = 40;
+    const COUNT = (navigator.hardwareConcurrency || 4) <= 4 ? 20 : 40;
     const sizes = ['sm', 'md', 'lg'];
     const weights = [0.6, 0.3, 0.1]; // probability weights
     const opacities = [0.05, 0.08, 0.12];
