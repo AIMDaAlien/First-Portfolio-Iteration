@@ -499,7 +499,7 @@ class KnowledgeGarden {
             if (isFolder) {
                 const chevron = document.createElement('span');
                 chevron.className = 'tree-chevron';
-                chevron.textContent = '▶';
+                chevron.textContent = '\u25B6';
                 itemEl.appendChild(chevron);
             }
 
@@ -793,6 +793,9 @@ class KnowledgeGarden {
             const input = this.terminalInput.value.trim();
             if (input) this.executeCommand(input);
             this.terminalInput.value = '';
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            this.handleTabCompletion();
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
             this.navigateHistory(-1);
@@ -804,11 +807,190 @@ class KnowledgeGarden {
         }
     }
 
+    handleTabCompletion() {
+        const input = this.terminalInput.value;
+        const parts = input.split(/\s+/);
+
+        // If only one part, complete commands
+        if (parts.length <= 1) {
+            const partial = parts[0].toLowerCase();
+            const commands = ['cat', 'cd', 'clear', 'cowsay', 'find', 'grep', 'head', 'help', 'ls', 'man', 'matrix', 'neofetch', 'open', 'pwd', 'sudo', 'theme', 'tree', 'whoami'];
+            const matches = commands.filter(c => c.startsWith(partial));
+            if (matches.length === 1) {
+                this.terminalInput.value = matches[0] + ' ';
+            } else if (matches.length > 1) {
+                this.showOutput(matches.join('  '));
+            }
+            return;
+        }
+
+        // Complete file/folder names for the last argument
+        const lastArg = parts[parts.length - 1];
+
+        // Determine partial directory and prefix for completion
+        let searchDir = this.currentPath;
+        let partial = lastArg;
+
+        // If the argument contains a slash, split into dir prefix and name partial
+        const lastSlash = lastArg.lastIndexOf('/');
+        if (lastSlash !== -1) {
+            const dirPart = lastArg.substring(0, lastSlash);
+            partial = lastArg.substring(lastSlash + 1);
+            searchDir = this.resolvePath(dirPart);
+        }
+
+        if (!this.manifest) return;
+
+        const entries = this.getManifestEntries(searchDir);
+        const matches = entries.filter(e => e.name.toLowerCase().startsWith(partial.toLowerCase()));
+
+        if (matches.length === 0) return;
+
+        if (matches.length === 1) {
+            const match = matches[0];
+            const prefix = lastSlash !== -1 ? lastArg.substring(0, lastSlash + 1) : '';
+            const completion = match.type === 'dir' ? match.name + '/' : match.name;
+            parts[parts.length - 1] = prefix + completion;
+            this.terminalInput.value = parts.join(' ');
+        } else {
+            // Show all matches
+            const names = matches.map(m => m.type === 'dir' ? m.name + '/' : m.name);
+            this.showOutput(names.join('  '));
+
+            // Complete common prefix
+            const commonPrefix = this.findCommonPrefix(matches.map(m => m.name));
+            if (commonPrefix.length > partial.length) {
+                const prefix = lastSlash !== -1 ? lastArg.substring(0, lastSlash + 1) : '';
+                parts[parts.length - 1] = prefix + commonPrefix;
+                this.terminalInput.value = parts.join(' ');
+            }
+        }
+    }
+
+    findCommonPrefix(strings) {
+        if (strings.length === 0) return '';
+        let prefix = strings[0];
+        for (let i = 1; i < strings.length; i++) {
+            while (!strings[i].toLowerCase().startsWith(prefix.toLowerCase())) {
+                prefix = prefix.slice(0, -1);
+                if (prefix === '') return '';
+            }
+        }
+        return prefix;
+    }
+
     navigateHistory(dir) {
         if (this.commandHistory.length === 0) return;
         this.historyIndex = Math.max(0, Math.min(this.commandHistory.length - 1, this.historyIndex + dir));
         this.terminalInput.value = this.commandHistory[this.historyIndex];
     }
+
+    // ============================================
+    // PATH RESOLUTION HELPERS
+    // ============================================
+
+    /**
+     * Resolves a target path relative to this.currentPath.
+     * Handles: '~' (root), '..' (parent), '.' (current), absolute paths, relative paths.
+     * Returns the resolved path string with no leading or trailing slashes.
+     */
+    resolvePath(target) {
+        if (!target || target === '~' || target === '/') return '';
+
+        // Strip leading ~ or ~/
+        if (target.startsWith('~/')) {
+            target = target.substring(2);
+        } else if (target === '~') {
+            return '';
+        }
+
+        // If the target starts with / treat as absolute from vault root
+        if (target.startsWith('/')) {
+            target = target.substring(1);
+        }
+
+        // Build the starting segments from currentPath
+        let segments;
+        if (target.startsWith('/') || target === '') {
+            segments = [];
+        } else {
+            segments = this.currentPath ? this.currentPath.split('/') : [];
+        }
+
+        const parts = target.split('/');
+        for (const part of parts) {
+            if (part === '' || part === '.') continue;
+            if (part === '..') {
+                segments.pop();
+            } else {
+                segments.push(part);
+            }
+        }
+
+        return segments.join('/');
+    }
+
+    /**
+     * Resolves a target to a file path.
+     * If target ends with .md, use as-is via resolvePath.
+     * Otherwise try target + '.md'.
+     * Returns the resolved file path string.
+     */
+    resolveFilePath(target) {
+        if (!target) return '';
+
+        if (target.endsWith('.md')) {
+            return this.resolvePath(target);
+        }
+
+        return this.resolvePath(target + '.md');
+    }
+
+    /**
+     * Gets directory entries from the manifest for a given directory path.
+     * Uses this.manifest.tree to find entries whose parent is dirPath.
+     * Filters hidden items and only returns .md files for blobs.
+     * Returns array of {name, path, type} sorted folders-first then alphabetically.
+     */
+    getManifestEntries(dirPath) {
+        if (!this.manifest || !this.manifest.tree) return [];
+
+        const entries = [];
+
+        for (const entry of this.manifest.tree) {
+            const parts = entry.path.split('/');
+            const entryParent = parts.length > 1 ? parts.slice(0, -1).join('/') : '';
+
+            if (entryParent !== dirPath) continue;
+
+            const name = parts[parts.length - 1];
+
+            // Filter hidden items
+            if (this.hiddenItems.includes(name) || name.startsWith('.')) continue;
+
+            // Only show .md files for blob/file types
+            if (entry.type === 'file' && !name.endsWith('.md')) continue;
+
+            entries.push({
+                name: name,
+                path: entry.path,
+                type: entry.type === 'dir' ? 'dir' : 'file'
+            });
+        }
+
+        // Sort: folders first, then files, alphabetically
+        entries.sort((a, b) => {
+            if (a.type === 'dir' && b.type !== 'dir') return -1;
+            if (a.type !== 'dir' && b.type === 'dir') return 1;
+            return a.name.localeCompare(b.name);
+        });
+
+        return entries;
+    }
+
+    // ============================================
+    // COMMAND EXECUTION
+    // ============================================
 
     executeCommand(input) {
         this.commandHistory.push(input);
@@ -820,25 +1002,75 @@ class KnowledgeGarden {
         switch (cmd.toLowerCase()) {
             case 'cat':
             case 'open':
-                if (args[0]) this.viewFileByPath(args.join(' '));
+                if (args[0]) {
+                    const filePath = this.resolveFilePath(args.join(' '));
+                    this.viewFileByPath(filePath);
+                } else {
+                    this.showOutput('Usage: ' + cmd + ' [filename]');
+                }
                 break;
+
+            case 'ls':
+                this.executeLs(args);
+                break;
+
+            case 'cd':
+                this.executeCd(args);
+                break;
+
+            case 'pwd':
+                this.showOutput('<span style="color:var(--terminal-cyan)">~/' + this.escapeHtml(this.currentPath) + '</span>');
+                break;
+
+            case 'head':
+                this.executeHead(args);
+                break;
+
+            case 'find':
+                this.executeFind(args);
+                break;
+
+            case 'grep':
+                this.executeGrep(args);
+                break;
+
+            case 'tree':
+                this.executeTree(args);
+                break;
+
             case 'help':
                 this.showOutput(`<b>Commands:</b>
-open [file] - View a note
-man [cmd] - Show manual for command
-theme [dark|light] - Toggle theme
-clear - Clear output
-neofetch - System info`);
+<span style="color:var(--terminal-cyan)">ls</span> [-l] [dir]       List directory contents
+<span style="color:var(--terminal-cyan)">cd</span> [dir]            Change directory
+<span style="color:var(--terminal-cyan)">pwd</span>                 Print working directory
+<span style="color:var(--terminal-cyan)">cat</span> [file]          View a note (alias: open)
+<span style="color:var(--terminal-cyan)">open</span> [file]         View a note (alias: cat)
+<span style="color:var(--terminal-cyan)">head</span> [-n N] [file]  Show first N lines of a note
+<span style="color:var(--terminal-cyan)">find</span> [pattern]      Search file names
+<span style="color:var(--terminal-cyan)">grep</span> [pattern]      Search cached file contents
+<span style="color:var(--terminal-cyan)">tree</span> [dir]          Show directory tree
+<span style="color:var(--terminal-cyan)">man</span> [cmd]           Show manual for command
+<span style="color:var(--terminal-cyan)">theme</span> [dark|light]  Toggle theme
+<span style="color:var(--terminal-cyan)">clear</span>               Clear output
+<span style="color:var(--terminal-cyan)">neofetch</span>            System info
+<span style="color:var(--terminal-cyan)">cowsay</span> [msg]        Moo
+<span style="color:var(--terminal-cyan)">matrix</span>              Enter the matrix
+
+<span class="muted">Tab completion supported for commands and file names.</span>`);
                 break;
+
             case 'man':
                 this.showManPage(args[0]);
                 break;
+
             case 'theme':
                 this.setTheme(args[0]);
                 break;
+
             case 'clear':
                 this.terminalOutput.innerHTML = '';
                 break;
+
             // Easter eggs
             case 'neofetch':
                 this.showNeofetch();
@@ -853,20 +1085,330 @@ neofetch - System info`);
                 this.showOutput('<span style="color:var(--terminal-green)">visitor@knowledge-garden</span>');
                 break;
             case 'sudo':
-                this.showOutput('<span style="color:var(--terminal-red)">Nice try! 🔒</span>');
+                this.showOutput('<span style="color:var(--terminal-red)">Nice try!</span>');
                 break;
             default:
-                this.showOutput(`<span style="color:var(--terminal-red)">Unknown: ${cmd}</span>. Try 'help'`);
+                this.showOutput(`<span style="color:var(--terminal-red)">Unknown: ${this.escapeHtml(cmd)}</span>. Try 'help'`);
         }
+    }
+
+    // ============================================
+    // TERMINAL COMMAND IMPLEMENTATIONS
+    // ============================================
+
+    executeLs(args) {
+        if (!this.manifest) {
+            this.showOutput('<span style="color:var(--terminal-red)">Manifest not loaded. Try again shortly.</span>');
+            return;
+        }
+
+        let longFormat = false;
+        let targetDir = this.currentPath;
+
+        // Parse arguments
+        const filteredArgs = [];
+        for (const arg of args) {
+            if (arg === '-l') {
+                longFormat = true;
+            } else if (arg === '-la' || arg === '-al') {
+                longFormat = true;
+            } else {
+                filteredArgs.push(arg);
+            }
+        }
+
+        if (filteredArgs.length > 0) {
+            targetDir = this.resolvePath(filteredArgs.join(' '));
+        }
+
+        const entries = this.getManifestEntries(targetDir);
+
+        if (entries.length === 0) {
+            const dirExists = this.manifest.tree.some(e => e.path === targetDir && e.type === 'dir');
+            if (!dirExists && targetDir !== '') {
+                this.showOutput(`<span style="color:var(--terminal-red)">ls: no such directory: ${this.escapeHtml(targetDir)}</span>`);
+                return;
+            }
+            this.showOutput('<span class="muted">(empty directory)</span>');
+            return;
+        }
+
+        if (longFormat) {
+            const lines = entries.map(e => {
+                const typeIndicator = e.type === 'dir' ? 'drwxr-xr-x' : '-rw-r--r--';
+                const colorStyle = e.type === 'dir' ? 'color:var(--terminal-blue)' : 'color:var(--terminal-cyan)';
+                const displayName = e.type === 'dir' ? e.name + '/' : e.name;
+                return `${typeIndicator}  <span style="${colorStyle}">${this.escapeHtml(displayName)}</span>`;
+            });
+            this.showOutput('<pre>' + lines.join('\n') + '</pre>');
+        } else {
+            const items = entries.map(e => {
+                const colorStyle = e.type === 'dir' ? 'color:var(--terminal-blue)' : 'color:var(--terminal-cyan)';
+                const displayName = e.type === 'dir' ? e.name + '/' : e.name;
+                return `<span style="${colorStyle}">${this.escapeHtml(displayName)}</span>`;
+            });
+            this.showOutput(items.join('  '));
+        }
+    }
+
+    executeCd(args) {
+        if (!this.manifest) {
+            this.showOutput('<span style="color:var(--terminal-red)">Manifest not loaded. Try again shortly.</span>');
+            return;
+        }
+
+        const target = args.join(' ') || '~';
+        const resolved = this.resolvePath(target);
+
+        // Root is always valid
+        if (resolved === '') {
+            this.currentPath = '';
+            this.terminalPath.textContent = '~';
+            return;
+        }
+
+        // Check if directory exists in manifest
+        const dirExists = this.manifest.tree.some(e => e.path === resolved && e.type === 'dir');
+        if (!dirExists) {
+            this.showOutput(`<span style="color:var(--terminal-red)">cd: no such directory: ${this.escapeHtml(resolved)}</span>`);
+            return;
+        }
+
+        this.currentPath = resolved;
+        this.terminalPath.textContent = '~/' + resolved;
+    }
+
+    async executeHead(args) {
+        let numLines = 10;
+        let fileArgs = [];
+
+        // Parse -n flag
+        for (let i = 0; i < args.length; i++) {
+            if (args[i] === '-n' && i + 1 < args.length) {
+                const n = parseInt(args[i + 1], 10);
+                if (!isNaN(n) && n > 0) {
+                    numLines = n;
+                    i++; // skip next arg
+                } else {
+                    this.showOutput('<span style="color:var(--terminal-red)">head: invalid line count</span>');
+                    return;
+                }
+            } else {
+                fileArgs.push(args[i]);
+            }
+        }
+
+        if (fileArgs.length === 0) {
+            this.showOutput('Usage: head [-n N] [file]');
+            return;
+        }
+
+        const filePath = this.resolveFilePath(fileArgs.join(' '));
+
+        try {
+            const content = await this.fetchNote(filePath);
+            // Strip frontmatter for display
+            let body = content;
+            if (body.startsWith('---')) {
+                const end = body.indexOf('\n---', 3);
+                if (end !== -1) body = body.slice(end + 4).trimStart();
+            }
+
+            const lines = body.split('\n').slice(0, numLines);
+            const displayName = filePath.split('/').pop();
+            this.showOutput(
+                `<span style="color:var(--terminal-cyan)">--- ${this.escapeHtml(displayName)} (first ${numLines} lines) ---</span>\n<pre>${this.escapeHtml(lines.join('\n'))}</pre>`
+            );
+        } catch (error) {
+            this.showOutput(`<span style="color:var(--terminal-red)">head: cannot read '${this.escapeHtml(filePath)}': ${error.message}</span>`);
+        }
+    }
+
+    executeFind(args) {
+        if (!this.manifest) {
+            this.showOutput('<span style="color:var(--terminal-red)">Manifest not loaded. Try again shortly.</span>');
+            return;
+        }
+
+        if (args.length === 0) {
+            this.showOutput('Usage: find [pattern]');
+            return;
+        }
+
+        const pattern = args.join(' ').toLowerCase();
+        const results = [];
+
+        for (const entry of this.manifest.tree) {
+            // Filter hidden
+            const parts = entry.path.split('/');
+            if (parts.some(p => this.hiddenItems.includes(p) || p.startsWith('.'))) continue;
+
+            // Only .md files for file type
+            if (entry.type === 'file' && !entry.path.endsWith('.md')) continue;
+
+            // Match against file name
+            const name = parts[parts.length - 1];
+            if (name.toLowerCase().includes(pattern)) {
+                results.push(entry);
+            }
+
+            if (results.length >= 20) break;
+        }
+
+        if (results.length === 0) {
+            this.showOutput(`<span class="muted">No files matching '${this.escapeHtml(pattern)}'</span>`);
+            return;
+        }
+
+        const lines = results.map(e => {
+            const colorStyle = e.type === 'dir' ? 'color:var(--terminal-blue)' : 'color:var(--terminal-cyan)';
+            return `<span style="${colorStyle}">${this.escapeHtml(e.path)}</span>`;
+        });
+
+        const suffix = results.length >= 20 ? '\n<span class="muted">(showing first 20 results)</span>' : '';
+        this.showOutput(lines.join('\n') + suffix);
+    }
+
+    executeGrep(args) {
+        if (args.length === 0) {
+            this.showOutput('Usage: grep [pattern]');
+            return;
+        }
+
+        const pattern = args.join(' ').toLowerCase();
+        const results = [];
+
+        for (const [path, content] of this.noteCache.entries()) {
+            const lines = content.split('\n');
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].toLowerCase().includes(pattern)) {
+                    const displayLine = lines[i].trim();
+                    // Highlight the match
+                    const escaped = this.escapeHtml(displayLine);
+                    const regex = new RegExp('(' + this.escapeHtml(pattern).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+                    const highlighted = escaped.replace(regex, '<b style="color:var(--terminal-yellow)">$1</b>');
+
+                    results.push(
+                        `<span style="color:var(--terminal-cyan)">${this.escapeHtml(path)}:${i + 1}</span>: ${highlighted}`
+                    );
+
+                    if (results.length >= 20) break;
+                }
+            }
+            if (results.length >= 20) break;
+        }
+
+        if (results.length === 0) {
+            this.showOutput(`<span class="muted">No matches for '${this.escapeHtml(pattern)}' in cached notes (${this.noteCache.size} files cached)</span>`);
+            return;
+        }
+
+        const suffix = results.length >= 20 ? '\n<span class="muted">(showing first 20 results)</span>' : '';
+        this.showOutput('<pre>' + results.join('\n') + suffix + '</pre>');
+    }
+
+    executeTree(args) {
+        if (!this.manifest) {
+            this.showOutput('<span style="color:var(--terminal-red)">Manifest not loaded. Try again shortly.</span>');
+            return;
+        }
+
+        let targetDir = this.currentPath;
+        if (args.length > 0) {
+            targetDir = this.resolvePath(args.join(' '));
+        }
+
+        // Verify directory exists (root is always valid)
+        if (targetDir !== '') {
+            const dirExists = this.manifest.tree.some(e => e.path === targetDir && e.type === 'dir');
+            if (!dirExists) {
+                this.showOutput(`<span style="color:var(--terminal-red)">tree: no such directory: ${this.escapeHtml(targetDir)}</span>`);
+                return;
+            }
+        }
+
+        const displayRoot = targetDir || '~';
+        const lines = [`<span style="color:var(--terminal-blue)">${this.escapeHtml(displayRoot)}</span>`];
+        let fileCount = 0;
+        let dirCount = 0;
+
+        const buildTree = (dirPath, prefix, depth) => {
+            if (depth > 3) return;
+
+            const entries = this.getManifestEntries(dirPath);
+
+            entries.forEach((entry, index) => {
+                const isLast = index === entries.length - 1;
+                const connector = isLast ? '\u2514\u2500\u2500 ' : '\u251C\u2500\u2500 ';
+                const childPrefix = isLast ? '    ' : '\u2502   ';
+
+                if (entry.type === 'dir') {
+                    dirCount++;
+                    lines.push(`${prefix}${connector}<span style="color:var(--terminal-blue)">${this.escapeHtml(entry.name)}/</span>`);
+                    buildTree(entry.path, prefix + childPrefix, depth + 1);
+                } else {
+                    fileCount++;
+                    const displayName = entry.name;
+                    lines.push(`${prefix}${connector}<span style="color:var(--terminal-cyan)">${this.escapeHtml(displayName)}</span>`);
+                }
+            });
+        };
+
+        buildTree(targetDir, '', 0);
+        lines.push('');
+        lines.push(`<span class="muted">${dirCount} directories, ${fileCount} files</span>`);
+
+        this.showOutput('<pre>' + lines.join('\n') + '</pre>');
     }
 
     showManPage(cmd) {
         const manPages = {
             open: `<b>open</b> [filename]
   Opens and displays a note from the vault.
-  Example: open Technical/Git.md`,
+  Resolves paths relative to current directory.
+  Example: open Git.md
+  Example: open ~/Projects/Portfolio.md`,
             cat: `<b>cat</b> [filename]
-  Alias for 'open'. Displays file contents.`,
+  Alias for 'open'. Displays file contents.
+  Resolves paths relative to current directory.
+  Example: cat README.md`,
+            ls: `<b>ls</b> [-l] [directory]
+  List directory contents using vault manifest.
+  -l    Long format with type indicators
+  Example: ls
+  Example: ls -l Projects
+  Example: ls ..`,
+            cd: `<b>cd</b> [directory]
+  Change the current working directory.
+  Supports: .., ~, relative and absolute paths.
+  Example: cd Projects
+  Example: cd ..
+  Example: cd ~/Systems/Homelab`,
+            pwd: `<b>pwd</b>
+  Print the current working directory path.`,
+            head: `<b>head</b> [-n N] [filename]
+  Show the first N lines of a note (default 10).
+  Strips frontmatter before counting lines.
+  Example: head README.md
+  Example: head -n 5 Git.md`,
+            find: `<b>find</b> [pattern]
+  Search file names matching a pattern (case-insensitive).
+  Searches the entire vault manifest.
+  Shows up to 20 results.
+  Example: find docker
+  Example: find .md`,
+            grep: `<b>grep</b> [pattern]
+  Search cached file contents for a pattern.
+  Only searches notes already viewed this session.
+  Shows filename, line number, and matching line.
+  Up to 20 results.
+  Example: grep kubernetes
+  Example: grep TODO`,
+            tree: `<b>tree</b> [directory]
+  Display a tree view of the directory structure.
+  Uses the vault manifest. Depth limited to 3 levels.
+  Example: tree
+  Example: tree Projects`,
             theme: `<b>theme</b> [dark|light]
   Switches the color scheme.
   Example: theme dark`,
@@ -884,7 +1426,7 @@ neofetch - System info`);
         } else if (manPages[cmd.toLowerCase()]) {
             this.showOutput(`<pre>${manPages[cmd.toLowerCase()]}</pre>`);
         } else {
-            this.showOutput(`No manual entry for '${cmd}'`);
+            this.showOutput(`No manual entry for '${this.escapeHtml(cmd)}'`);
         }
     }
 
@@ -906,10 +1448,10 @@ neofetch - System info`);
   /  \\        -------------------------
  /    \\       OS: Knowledge Garden Web
 /______\\      Kernel: D3.js Force Graph
-              Shell: Catppuccin Zsh
+              Shell: Periwinkle Zsh
   ____        Notes: ${this.noteCache?.size || '~300'}
- |    |       Theme: Mocha Lavender
- |____|       Terminal: Floating v1.0
+ |    |       Theme: M3 Periwinkle Dark
+ |____|       Terminal: Floating v2.0
 </pre>`);
     }
 

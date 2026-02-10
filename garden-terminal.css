@@ -1,46 +1,32 @@
 /* Knowledge Garden - Obsidian-Style Layout */
-/* M3 Expressive + Catppuccin Mocha */
+/* M3 Expressive + Periwinkle Dark Theme */
 
 /* ============================================
-   1. ROOT VARIABLES (Catppuccin Mocha)
+   1. ROOT VARIABLES (M3 Periwinkle references)
+   Colors inherited from m3e-tokens.css.
+   Only terminal semantic colors and layout vars here.
    ============================================ */
 :root {
-    /* Catppuccin Mocha Palette */
-    --md-sys-color-primary: #cba6f7;
-    --md-sys-color-on-primary: #1e1e2e;
-    --md-sys-color-primary-container: #45475a;
-
-    /* Surface System (Catppuccin Mocha) */
-    --md-sys-color-surface: #1e1e2e;
-    --md-sys-color-surface-dim: #181825;
-    --md-sys-color-surface-container: #313244;
-    --md-sys-color-surface-container-high: #45475a;
-    --md-sys-color-on-surface: #cdd6f4;
-    --md-sys-color-on-surface-variant: #a6adc8;
-    --md-sys-color-outline: #6c7086;
-
-    /* Terminal colors (Catppuccin) */
+    /* Terminal semantic colors (kept distinct from M3 palette) */
     --terminal-green: #a6e3a1;
     --terminal-red: #f38ba8;
     --terminal-yellow: #f9e2af;
     --terminal-cyan: #89dceb;
     --terminal-blue: #89b4fa;
-    --terminal-magenta: #f5c2e7;
+    --terminal-magenta: #E8B9D5;
 
-    /* Shape System */
-    --radius-sm: 4px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 16px;
+    /* Shape aliases (reference M3 tokens) */
+    --radius-sm: var(--md-sys-shape-corner-extra-small);
+    --radius-md: var(--md-sys-shape-corner-small);
+    --radius-lg: var(--md-sys-shape-corner-medium);
+    --radius-xl: var(--md-sys-shape-corner-large);
 
-    /* Motion */
-    --motion-spring: linear(0, 0.009, 0.035 2.1%, 0.141 4.4%, 0.723 12.9%, 0.938 16.7%, 1.074 20.8%,
-            1.137 25.2%, 1.146 29.8%, 1.119 34.8%, 1.077 40.1%, 1.036 45.9%,
-            1.007 52.3%, 0.991 59.8%, 0.996 76%, 1 100%);
+    /* Motion aliases (reference M3 tokens) */
+    --motion-spring: var(--motion-spring-bouncy);
     --motion-jiggle: cubic-bezier(0.36, 0.07, 0.19, 0.97);
 
     /* Typography */
-    --font-chrome: 'Ubuntu', sans-serif;
+    --font-chrome: var(--md-ref-typeface-brand);
     --font-terminal: 'JetBrains Mono', monospace;
 
     /* Sidebar */
@@ -90,7 +76,7 @@ body {
 .blob-1 {
     width: 500px;
     height: 500px;
-    background: radial-gradient(circle, var(--md-sys-color-primary), transparent 70%);
+    background: radial-gradient(circle, rgba(187, 195, 255, 0.6), transparent 70%);
     top: -150px;
     left: -150px;
 }
@@ -98,7 +84,7 @@ body {
 .blob-2 {
     width: 400px;
     height: 400px;
-    background: radial-gradient(circle, var(--terminal-magenta), transparent 70%);
+    background: radial-gradient(circle, rgba(232, 185, 213, 0.5), transparent 70%);
     bottom: -100px;
     right: -100px;
     animation-delay: -15s;
@@ -142,12 +128,12 @@ body {
     height: 300px;
     min-width: 320px;
     min-height: 180px;
-    background: rgba(30, 30, 46, 0.85);
+    background: rgba(18, 19, 24, 0.85);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(203, 166, 247, 0.2);
+    border: 1px solid rgba(187, 195, 255, 0.2);
     border-radius: var(--radius-lg);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--elevation-2);
     z-index: 1000;
     display: flex;
     flex-direction: column;
@@ -158,7 +144,7 @@ body {
 
 .floating-terminal.dragging {
     animation: terminalJiggle 0.15s var(--motion-jiggle);
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--elevation-3);
 }
 
 .floating-terminal.minimized {
@@ -196,7 +182,7 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 8px 12px;
-    background: rgba(17, 17, 27, 0.6);
+    background: rgba(13, 14, 19, 0.6);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     cursor: grab;
     user-select: none;
@@ -254,12 +240,16 @@ body {
     color: var(--md-sys-color-on-surface-variant);
     font-size: 12px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.15s var(--motion-spring);
 }
 
 .terminal-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--state-hover);
     color: var(--md-sys-color-on-surface);
+}
+
+.terminal-btn:active {
+    transform: scale(0.95);
 }
 
 /* Terminal Body */
@@ -275,16 +265,16 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: var(--md-sys-color-surface-dim);
-    border: 1px solid rgba(203, 166, 247, 0.2);
+    background: var(--md-sys-color-surface-container-lowest);
+    border: 1px solid rgba(187, 195, 255, 0.2);
     border-radius: var(--radius-md);
     padding: 10px 14px;
-    transition: all 0.2s ease;
+    transition: all 0.2s var(--motion-spring);
 }
 
 .terminal-input-wrapper:focus-within {
     border-color: var(--md-sys-color-primary);
-    box-shadow: 0 0 0 3px rgba(203, 166, 247, 0.15);
+    box-shadow: 0 0 0 3px rgba(187, 195, 255, 0.15);
 }
 
 .terminal-prompt {
@@ -336,7 +326,7 @@ body {
     flex: 1;
     margin-top: 12px;
     padding: 12px;
-    background: rgba(17, 17, 27, 0.4);
+    background: rgba(13, 14, 19, 0.4);
     border-radius: var(--radius-md);
     font-size: 12px;
     overflow-y: auto;
@@ -354,7 +344,7 @@ body {
     top: 0;
     bottom: 0;
     width: 3px;
-    background: rgba(203, 166, 247, 0.1);
+    background: rgba(187, 195, 255, 0.1);
     overflow: hidden;
 }
 
@@ -362,7 +352,7 @@ body {
     width: 100%;
     height: 0%;
     background: var(--md-sys-color-primary);
-    transition: height 0.3s ease;
+    transition: height 0.3s var(--motion-spring);
 }
 
 /* ============================================
@@ -380,10 +370,10 @@ body {
 .sidebar {
     width: var(--sidebar-width);
     background: var(--md-sys-color-surface-dim);
-    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    border-right: 1px solid var(--md-sys-color-outline-variant);
     display: flex;
     flex-direction: column;
-    transition: width 0.25s var(--motion-spring);
+    transition: width 0.25s var(--motion-spring-expressive);
 }
 
 .sidebar.collapsed {
@@ -409,12 +399,16 @@ body {
     color: var(--md-sys-color-on-surface-variant);
     border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s var(--motion-spring);
 }
 
 .sidebar-toggle:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--state-hover);
     color: var(--md-sys-color-on-surface);
+}
+
+.sidebar-toggle:active {
+    transform: scale(0.95);
 }
 
 .sidebar-title {
@@ -443,17 +437,17 @@ body {
     gap: 6px;
     padding: 6px 12px;
     cursor: pointer;
-    transition: background 0.15s;
+    transition: background 0.15s var(--motion-spring);
     font-size: 13px;
     color: var(--md-sys-color-on-surface);
 }
 
 .tree-item:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--state-hover);
 }
 
 .tree-item.active {
-    background: rgba(124, 58, 237, 0.15);
+    background: rgba(187, 195, 255, 0.15);
     color: var(--md-sys-color-primary);
 }
 
@@ -495,7 +489,7 @@ body {
     justify-content: center;
     font-size: 10px;
     color: var(--md-sys-color-on-surface-variant);
-    transition: transform 0.2s ease;
+    transition: transform 0.2s var(--motion-spring);
 }
 
 .tree-item.expanded .tree-chevron {
@@ -532,9 +526,9 @@ body {
     justify-content: center;
     gap: 6px;
     padding: 8px 12px;
-    background: rgba(124, 58, 237, 0.1);
-    border: 1px solid rgba(124, 58, 237, 0.3);
-    border-radius: var(--radius-md);
+    background: rgba(187, 195, 255, 0.1);
+    border: 1px solid rgba(187, 195, 255, 0.3);
+    border-radius: var(--md-sys-shape-corner-full);
     color: var(--md-sys-color-on-surface);
     font-family: var(--font-chrome);
     font-size: 13px;
@@ -543,8 +537,12 @@ body {
 }
 
 .sidebar-btn:hover {
-    background: rgba(124, 58, 237, 0.2);
+    background: rgba(187, 195, 255, 0.2);
     border-color: var(--md-sys-color-primary);
+}
+
+.sidebar-btn:active {
+    transform: scale(0.95);
 }
 
 /* ============================================
@@ -577,11 +575,11 @@ body {
     cursor: pointer;
     padding: 2px 6px;
     border-radius: var(--radius-sm);
-    transition: all 0.15s ease;
+    transition: all 0.15s var(--motion-spring);
 }
 
 .breadcrumb-item.clickable:hover {
-    background: rgba(124, 58, 237, 0.2);
+    background: rgba(187, 195, 255, 0.2);
     color: var(--md-sys-color-primary);
 }
 
@@ -611,7 +609,7 @@ body {
     font-family: var(--font-chrome);
     font-size: 2rem;
     font-weight: 700;
-    color: var(--terminal-cyan);
+    color: var(--md-sys-color-primary);
     margin-bottom: 8px;
 }
 
@@ -636,11 +634,11 @@ body {
 .quick-start li {
     padding: 8px 0;
     color: var(--md-sys-color-on-surface-variant);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .quick-start code {
-    background: rgba(124, 58, 237, 0.15);
+    background: rgba(187, 195, 255, 0.15);
     padding: 2px 8px;
     border-radius: var(--radius-sm);
     color: var(--terminal-cyan);
@@ -650,7 +648,7 @@ body {
 .folder-view h2 {
     font-family: var(--font-chrome);
     font-size: 1.5rem;
-    color: var(--terminal-cyan);
+    color: var(--md-sys-color-primary);
     margin-bottom: 16px;
 }
 
@@ -666,16 +664,20 @@ body {
     gap: 10px;
     padding: 12px 16px;
     background: var(--md-sys-color-surface-container);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--md-sys-color-outline-variant);
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s var(--motion-spring);
 }
 
 .folder-item:hover {
     background: var(--md-sys-color-surface-container-high);
     border-color: var(--md-sys-color-primary);
     transform: translateY(-2px);
+}
+
+.folder-item:active {
+    transform: scale(0.98);
 }
 
 .folder-item.folder {
@@ -716,7 +718,7 @@ body {
     gap: 12px;
     padding: 14px;
     background: var(--md-sys-color-surface-container);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--md-sys-color-outline-variant);
     border-radius: var(--radius-lg);
     cursor: pointer;
     transition: all 0.2s var(--motion-spring);
@@ -725,7 +727,11 @@ body {
 .note-card:hover {
     background: var(--md-sys-color-surface-container-high);
     border-color: var(--md-sys-color-primary);
-    transform: translateY(-2px);
+    transform: translateY(-4px) scale(1.02);
+}
+
+.note-card:active {
+    transform: scale(0.95);
 }
 
 .note-icon {
@@ -750,17 +756,17 @@ body {
     font-family: var(--font-chrome);
     font-size: 2rem;
     font-weight: 700;
-    color: var(--terminal-cyan);
+    color: var(--md-sys-color-primary);
     margin: 0 0 16px;
     padding-bottom: 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .markdown-content h2 {
     font-family: var(--font-chrome);
     font-size: 1.4rem;
     font-weight: 600;
-    color: var(--terminal-cyan);
+    color: var(--md-sys-color-primary);
     margin: 32px 0 12px;
 }
 
@@ -787,19 +793,19 @@ body {
 }
 
 .markdown-content code {
-    background: rgba(124, 58, 237, 0.15);
+    background: rgba(187, 195, 255, 0.15);
     padding: 2px 6px;
     border-radius: var(--radius-sm);
     font-size: 0.9em;
 }
 
 .markdown-content pre {
-    background: var(--md-sys-color-surface);
+    background: var(--md-sys-color-surface-container-lowest);
     padding: 16px;
     border-radius: var(--radius-md);
     overflow-x: auto;
     margin: 16px 0;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .markdown-content pre code {
@@ -833,10 +839,10 @@ body {
     align-items: center;
     height: 24px;
     padding: 0 12px;
-    background: var(--md-sys-color-primary);
+    background: var(--md-sys-color-primary-container);
     font-family: var(--font-terminal);
     font-size: 11px;
-    color: var(--md-sys-color-on-primary);
+    color: var(--md-sys-color-on-primary-container);
 }
 
 .status-left,
@@ -851,7 +857,7 @@ body {
 }
 
 /* ============================================
-   10. GRAPH VIEW (reused)
+   10. GRAPH VIEW
    ============================================ */
 .graph-container {
     position: fixed;
@@ -859,7 +865,7 @@ body {
     z-index: 100;
     display: flex;
     flex-direction: column;
-    background: rgba(15, 14, 23, 0.98);
+    background: rgba(13, 14, 19, 0.98);
     backdrop-filter: blur(20px);
 }
 
@@ -869,7 +875,7 @@ body {
     align-items: center;
     padding: 16px 24px;
     background: var(--md-sys-color-surface-container);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .graph-title {
@@ -887,18 +893,22 @@ body {
 .graph-control-btn {
     padding: 8px 14px;
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-md);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-full);
     color: var(--md-sys-color-on-surface);
     font-family: var(--font-chrome);
     font-size: 13px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s var(--motion-spring);
 }
 
 .graph-control-btn:hover {
-    background: rgba(124, 58, 237, 0.2);
+    background: rgba(187, 195, 255, 0.2);
     border-color: var(--md-sys-color-primary);
+}
+
+.graph-control-btn:active {
+    transform: scale(0.95);
 }
 
 .graph-canvas {
@@ -911,7 +921,7 @@ body {
     position: fixed;
     padding: 8px 12px;
     background: var(--md-sys-color-surface-container-high);
-    border: 1px solid rgba(124, 58, 237, 0.3);
+    border: 1px solid rgba(187, 195, 255, 0.3);
     border-radius: var(--radius-sm);
     font-family: var(--font-chrome);
     font-size: 12px;
@@ -924,8 +934,8 @@ body {
     position: absolute;
     bottom: 20px;
     left: 20px;
-    background: rgba(15, 14, 23, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(13, 14, 19, 0.9);
+    border: 1px solid var(--md-sys-color-outline-variant);
     border-radius: var(--radius-md);
     padding: 12px 16px;
     max-height: 300px;
@@ -963,6 +973,14 @@ body {
     white-space: nowrap;
 }
 
+.legend-stats {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    font-size: 11px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
 /* ============================================
    11. RESPONSIVE
    ============================================ */
@@ -975,7 +993,7 @@ body {
     align-items: center;
     justify-content: center;
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--md-sys-color-outline-variant);
     color: var(--md-sys-color-on-surface);
     border-radius: var(--radius-sm);
     cursor: pointer;
@@ -1036,7 +1054,7 @@ body {
         width: 280px;
         z-index: 50;
         transform: translateX(-100%);
-        transition: transform 0.3s var(--motion-spring);
+        transition: transform 0.3s var(--motion-spring-expressive);
     }
 
     .sidebar.open {
@@ -1172,41 +1190,7 @@ body {
 }
 
 /* ============================================
-   13. LIGHT THEME
-   ============================================ */
-body.light-theme {
-    --md-sys-color-primary: #7c3aed;
-    --md-sys-color-on-primary: #ffffff;
-    --md-sys-color-surface: #eff1f5;
-    --md-sys-color-surface-dim: #e6e9ef;
-    --md-sys-color-surface-container: #dce0e8;
-    --md-sys-color-surface-container-high: #ccd0da;
-    --md-sys-color-on-surface: #4c4f69;
-    --md-sys-color-on-surface-variant: #6c6f85;
-    --md-sys-color-outline: #8c8fa1;
-    --terminal-green: #40a02b;
-    --terminal-red: #d20f39;
-    --terminal-yellow: #df8e1d;
-    --terminal-cyan: #179299;
-    --terminal-blue: #1e66f5;
-    --terminal-magenta: #ea76cb;
-}
-
-body.light-theme .floating-terminal {
-    background: rgba(239, 241, 245, 0.9);
-    border-color: rgba(124, 58, 237, 0.3);
-}
-
-body.light-theme .terminal-titlebar {
-    background: rgba(220, 224, 232, 0.8);
-}
-
-body.light-theme .terminal-body {
-    background: transparent;
-}
-
-/* ============================================
-   14. FLOATING TERMINAL MOBILE
+   13. FLOATING TERMINAL MOBILE
    ============================================ */
 @media (max-width: 768px) {
     .floating-terminal {

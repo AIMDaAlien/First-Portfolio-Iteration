@@ -1,0 +1,162 @@
+/* ============================================
+   M3 EXPRESSIVE DESIGN TOKENS
+   Seed: Pastel Periwinkle #8E99F3 (Dark Mode)
+   ============================================ */
+
+:root {
+    /* === COLOR SYSTEM (Periwinkle HCT Dark Palette) === */
+
+    /* Primary */
+    --md-sys-color-primary: #BBC3FF;
+    --md-sys-color-on-primary: #1F2578;
+    --md-sys-color-primary-container: #383F90;
+    --md-sys-color-on-primary-container: #DEE0FF;
+
+    /* Secondary (Desaturated Periwinkle) */
+    --md-sys-color-secondary: #C4C4DD;
+    --md-sys-color-on-secondary: #2D2F42;
+    --md-sys-color-secondary-container: #444559;
+    --md-sys-color-on-secondary-container: #E0E0F9;
+
+    /* Tertiary (Warm Rose) */
+    --md-sys-color-tertiary: #E8B9D5;
+    --md-sys-color-on-tertiary: #46263B;
+    --md-sys-color-tertiary-container: #5F3C52;
+    --md-sys-color-on-tertiary-container: #FFD8EE;
+
+    /* Error */
+    --md-sys-color-error: #FFB4AB;
+    --md-sys-color-on-error: #690005;
+    --md-sys-color-error-container: #93000A;
+    --md-sys-color-on-error-container: #FFDAD6;
+
+    /* Surface System */
+    --md-sys-color-surface: #121318;
+    --md-sys-color-surface-dim: #121318;
+    --md-sys-color-surface-bright: #38393F;
+    --md-sys-color-surface-container-lowest: #0D0E13;
+    --md-sys-color-surface-container-low: #1A1B21;
+    --md-sys-color-surface-container: #1E1F25;
+    --md-sys-color-surface-container-high: #292A30;
+    --md-sys-color-surface-container-highest: #34343B;
+
+    /* On Surface */
+    --md-sys-color-on-surface: #E4E1E9;
+    --md-sys-color-on-surface-variant: #C6C5D0;
+    --md-sys-color-outline: #908F9A;
+    --md-sys-color-outline-variant: #46464F;
+    --md-sys-color-inverse-surface: #E4E1E9;
+    --md-sys-color-inverse-on-surface: #303036;
+    --md-sys-color-inverse-primary: #505AA6;
+
+    /* Scrim & Shadow */
+    --md-sys-color-scrim: #000000;
+    --md-sys-color-shadow: #000000;
+
+    /* === STATE LAYER OPACITIES === */
+    --md-sys-state-hover-opacity: 0.08;
+    --md-sys-state-focus-opacity: 0.12;
+    --md-sys-state-pressed-opacity: 0.16;
+    --md-sys-state-dragged-opacity: 0.16;
+
+    /* Pre-computed state layers (primary on surface) */
+    --state-hover: rgba(187, 195, 255, 0.08);
+    --state-focus: rgba(187, 195, 255, 0.12);
+    --state-press: rgba(187, 195, 255, 0.16);
+
+    /* === SHAPE SYSTEM (M3 Expressive) === */
+    --md-sys-shape-corner-extra-small: 4px;
+    --md-sys-shape-corner-small: 8px;
+    --md-sys-shape-corner-medium: 16px;
+    --md-sys-shape-corner-large: 24px;
+    --md-sys-shape-corner-extra-large: 28px;
+    --md-sys-shape-corner-full: 9999px;
+
+    /* Component shape aliases */
+    --md-card-container-shape: var(--md-sys-shape-corner-extra-large);
+    --md-dialog-container-shape: var(--md-sys-shape-corner-extra-large);
+    --md-list-container-shape: var(--md-sys-shape-corner-medium);
+
+    /* === MOTION SYSTEM (Spring Physics) === */
+
+    /* Bouncy - Hover states, toggles, icon presses (Stiffness 200, Damping 15) */
+    --motion-spring-bouncy: linear(
+        0, 0.009, 0.035 2.1%, 0.141 4.4%, 0.723 12.9%, 0.938 16.7%, 1.074 20.8%,
+        1.137 25.2%, 1.146 29.8%, 1.119 34.8%, 1.077 40.1%, 1.036 45.9%,
+        1.007 52.3%, 0.991 59.8%, 0.996 76%, 1 100%
+    );
+
+    /* Expressive - Container entrances, modals, page transitions (Stiffness 300, Damping 30) */
+    --motion-spring-expressive: linear(
+        0, 0.006, 0.025 2.8%, 0.101 6.1%, 0.539 15.2%, 0.719 19.6%, 0.849 24.3%,
+        0.937 29.2%, 0.986 34.3%, 1.006 39.7%, 1.008 45.4%, 1.001 51.5%,
+        0.999 57.8%, 1 100%
+    );
+
+    /* Morph - Border-radius changes (Square -> Circle), always 500ms */
+    --motion-morph: linear(0, 0.005, 0.02 2.2%, 0.65 14.8%, 0.85 20.8%, 1 100%);
+
+    /* Fallback durations */
+    --duration-short: 200ms;
+    --duration-medium: 300ms;
+    --duration-long: 500ms;
+    --duration-extra-long: 700ms;
+
+    /* === TYPOGRAPHY SCALE === */
+    --md-ref-typeface-brand: 'Ubuntu', sans-serif;
+    --md-ref-typeface-plain: 'Ubuntu', sans-serif;
+
+    /* Display Large (Hero) */
+    --md-sys-typescale-display-large-size: 57px;
+    --md-sys-typescale-display-large-weight: 700;
+    --md-sys-typescale-display-large-line-height: 64px;
+    --md-sys-typescale-display-large-tracking: -0.25px;
+
+    /* Headline Large (Section Headers) */
+    --md-sys-typescale-headline-large-size: 32px;
+    --md-sys-typescale-headline-large-weight: 600;
+    --md-sys-typescale-headline-large-line-height: 40px;
+    --md-sys-typescale-headline-large-tracking: 0px;
+
+    /* Title Large */
+    --md-sys-typescale-title-large-size: 22px;
+    --md-sys-typescale-title-large-weight: 500;
+    --md-sys-typescale-title-large-line-height: 28px;
+    --md-sys-typescale-title-large-tracking: 0px;
+
+    /* Body Large */
+    --md-sys-typescale-body-large-size: 16px;
+    --md-sys-typescale-body-large-weight: 400;
+    --md-sys-typescale-body-large-line-height: 24px;
+    --md-sys-typescale-body-large-tracking: 0.5px;
+
+    /* Label Large */
+    --md-sys-typescale-label-large-size: 14px;
+    --md-sys-typescale-label-large-weight: 500;
+    --md-sys-typescale-label-large-line-height: 20px;
+    --md-sys-typescale-label-large-tracking: 0.1px;
+
+    /* === M3 ELEVATIONS === */
+    --elevation-1: 0 1px 3px 1px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --elevation-2: 0 2px 6px 2px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --elevation-3: 0 4px 8px 3px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.3);
+
+    /* === LEGACY ALIASES (Backward compatibility) === */
+    --bg-dark: var(--md-sys-color-surface);
+    --fg-dark: var(--md-sys-color-on-surface);
+    --accent-color: var(--md-sys-color-primary);
+    --cursor-aura-color: rgba(187, 195, 255, 0.3);
+    --font-primary: var(--md-ref-typeface-brand);
+    --border-radius-md: var(--md-sys-shape-corner-medium);
+    --border-radius-lg: var(--md-sys-shape-corner-large);
+    --spacing-unit: 8px;
+}
+
+/* === REDUCED MOTION FALLBACKS === */
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --motion-spring-bouncy: ease;
+        --motion-spring-expressive: ease;
+        --motion-morph: ease;
+    }
+}

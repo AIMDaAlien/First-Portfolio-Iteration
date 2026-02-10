@@ -15,15 +15,15 @@ class KnowledgeGardenGraph {
         this.vaultRepo = 'Obsidian-Vault';
         this.hiddenItems = ['.obsidian', '.stfolder', '.DS_Store', '.gitignore', '.github', 'Myself', 'images'];
 
-        // Colors by folder
+        // Colors by folder (periwinkle-aligned palette)
         this.folderColors = {
-            'IT Projects': '#22D3EE',
-            'Learning Journals': '#F59E0B',
-            'Programming Concepts': '#8B5CF6',
-            'Projects': '#3B82F6',
-            'Systems': '#22C55E',
+            'IT Projects': '#89dceb',
+            'Learning Journals': '#f9e2af',
+            'Programming Concepts': '#BBC3FF',
+            'Projects': '#89b4fa',
+            'Systems': '#a6e3a1',
             'sun': '#FFD93D',
-            'root': '#7C3AED'
+            'root': '#BBC3FF'
         };
 
         // Curated important notes (content value, not link count)
@@ -60,7 +60,7 @@ class KnowledgeGardenGraph {
         this.container = document.getElementById(containerId);
         if (!this.container) return;
 
-        this.container.innerHTML = '<div style="color:#A78BFA;text-align:center;padding:50px;font-family:monospace;">Parsing vault for [[wikilinks]]...</div>';
+        this.container.innerHTML = '<div style="color:#BBC3FF;text-align:center;padding:50px;font-family:monospace;">Parsing vault for [[wikilinks]]...</div>';
 
         await this.fetchGraphData();
 
@@ -72,7 +72,7 @@ class KnowledgeGardenGraph {
         this.render();
 
         // Set background
-        this.container.style.background = '#1e1e2e';
+        this.container.style.background = '#121318';
 
         window.addEventListener('resize', () => this.handleResize());
     }
@@ -188,7 +188,7 @@ class KnowledgeGardenGraph {
     }
 
     getNodeColor(node) {
-        return this.folderColors[node.folder] || '#A78BFA';
+        return this.folderColors[node.folder] || '#BBC3FF';
     }
 
     createSVG() {
@@ -282,7 +282,7 @@ class KnowledgeGardenGraph {
             .data(this.links)
             .enter()
             .append('line')
-            .style('stroke', 'rgba(139, 92, 246, 0.15)')
+            .style('stroke', 'rgba(187, 195, 255, 0.15)')
             .style('stroke-width', 0.5);
 
         // Nodes

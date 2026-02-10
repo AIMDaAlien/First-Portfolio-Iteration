@@ -218,8 +218,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Optimized Cursor Aura ---
     if (cursorAura) {
-        cursorAura.style.background = 'rgba(255,255,255,0.7)';
-        cursorAura.style.boxShadow = '0 0 16px 4px rgba(255,255,255,0.5)';
+        cursorAura.style.background = 'rgba(187,195,255,0.7)';
+        cursorAura.style.boxShadow = '0 0 16px 4px rgba(187,195,255,0.5)';
         document.body.style.cursor = 'none';
 
         let auraX = window.innerWidth / 2;
@@ -482,7 +482,7 @@ function initMatrixRain() {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        ctx.fillStyle = '#00ff00';
+        ctx.fillStyle = '#BBC3FF';
         ctx.font = `${fontSize}px monospace`;
 
         for (let i = 0; i < drops.length; i++) {

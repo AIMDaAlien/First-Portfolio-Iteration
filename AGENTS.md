@@ -1,215 +1,226 @@
 # M3 EXPRESSIVE WEB SPECIFICATION (STRICT)
-**Version:** 2.0 (Dec 2025)
-**Scope:** Global UI, Motion, & Interaction
-**Enforcement:** CRITICAL. Override all default Material 2/3 assumptions.
+**Version:** 3.0 (Feb 2026)
+**Seed Color:** #8E99F3 (Pastel Periwinkle)
+**Mode:** Dark
+**Stack:** Vanilla HTML / CSS / JavaScript (no frameworks, no build tools)
 
 ---
 
-## 1. THE SYSTEM ARCHITECTURE (Root Variables)
-*The default M3 radius is 12px. We reject this. Expressive is 28px.*
+## 1. COLOR SYSTEM (Periwinkle HCT Dark Palette)
 
-Define these variables in your root CSS file (`layout.tsx` or `globals.css`).
+All tokens live in `m3e-tokens.css` under `:root`.
 
-### A. The Lavender HCT Palette (Computed)
-*Based on Seed Color: #7C3AED (Deep Lavender)*
-```css
-:root {
-  /* Core Roles */
-  --md-sys-color-primary: #7C3AED;
-  --md-sys-color-on-primary: #FFFFFF;
-  --md-sys-color-primary-container: #EADDFF;
-  --md-sys-color-on-primary-container: #21005D;
+### Primary
+| Token | Value | Usage |
+|---|---|---|
+| `--md-sys-color-primary` | `#BBC3FF` | Links, active indicators, accent text |
+| `--md-sys-color-on-primary` | `#1F2578` | Text on primary-filled surfaces |
+| `--md-sys-color-primary-container` | `#383F90` | Card backgrounds, badges |
+| `--md-sys-color-on-primary-container` | `#DEE0FF` | Text on primary containers |
 
-  /* Surface System (Tinted) */
-  --md-sys-color-surface: #FFFBFE;
-  --md-sys-color-surface-dim: #DED8E1; /* Low prominence */
-  --md-sys-color-surface-bright: #FFFBFE; /* High prominence */
-  --md-sys-color-surface-container-lowest: #FFFFFF;
-  --md-sys-color-surface-container-low: #F7F2FA;
-  --md-sys-color-surface-container: #F3E5F5; /* Main Background */
-  --md-sys-color-surface-container-high: #ECE6F0;
-  --md-sys-color-surface-container-highest: #E6E0E9;
-  
-  /* Text & Icons */
-  --md-sys-color-on-surface: #1C1B1F;
-  --md-sys-color-on-surface-variant: #49454F;
-  --md-sys-color-outline: #79747E;
-  --md-sys-color-outline-variant: #CAC4D0;
-}
+### Secondary (Desaturated Periwinkle)
+| Token | Value |
+|---|---|
+| `--md-sys-color-secondary` | `#C4C4DD` |
+| `--md-sys-color-on-secondary` | `#2D2F42` |
+| `--md-sys-color-secondary-container` | `#444559` |
+| `--md-sys-color-on-secondary-container` | `#E0E0F9` |
+
+### Tertiary (Warm Rose)
+| Token | Value |
+|---|---|
+| `--md-sys-color-tertiary` | `#E8B9D5` |
+| `--md-sys-color-on-tertiary` | `#46263B` |
+| `--md-sys-color-tertiary-container` | `#5F3C52` |
+| `--md-sys-color-on-tertiary-container` | `#FFD8EE` |
+
+### Surface System
+| Token | Value | Usage |
+|---|---|---|
+| `--md-sys-color-surface` | `#121318` | Page background |
+| `--md-sys-color-surface-dim` | `#121318` | Low-prominence background |
+| `--md-sys-color-surface-bright` | `#38393F` | High-prominence background |
+| `--md-sys-color-surface-container-lowest` | `#0D0E13` | Deepest layer |
+| `--md-sys-color-surface-container-low` | `#1A1B21` | Recessed panels |
+| `--md-sys-color-surface-container` | `#1E1F25` | Default card/container background |
+| `--md-sys-color-surface-container-high` | `#292A30` | Elevated containers |
+| `--md-sys-color-surface-container-highest` | `#34343B` | Top-level overlays |
+
+### Text, Outline, Inverse
+| Token | Value |
+|---|---|
+| `--md-sys-color-on-surface` | `#E4E1E9` |
+| `--md-sys-color-on-surface-variant` | `#C6C5D0` |
+| `--md-sys-color-outline` | `#908F9A` |
+| `--md-sys-color-outline-variant` | `#46464F` |
+| `--md-sys-color-inverse-surface` | `#E4E1E9` |
+| `--md-sys-color-inverse-on-surface` | `#303036` |
+| `--md-sys-color-inverse-primary` | `#505AA6` |
+
+### State Layers
 ```
-
-### B. The Shape System (Squaricle Enforcement)
-
-*Standard M3 uses "Small/Medium/Large". Expressive scales everything up.*
-
-```css
-:root {
-  /* System Overrides */
-  --md-sys-shape-corner-extra-small: 4px;
-  --md-sys-shape-corner-small: 8px;
-  --md-sys-shape-corner-medium: 16px;
-  --md-sys-shape-corner-large: 24px;
-  --md-sys-shape-corner-extra-large: 28px; /* The "Expressive" Standard */
-  --md-sys-shape-corner-full: 9999px;
-  
-  /* Global Component Defaults */
-  --md-card-container-shape: var(--md-sys-shape-corner-extra-large);
-  --md-dialog-container-shape: var(--md-sys-shape-corner-extra-large);
-  --md-list-container-shape: var(--md-sys-shape-corner-medium);
-}
+hover   0.08  ->  --state-hover: rgba(187, 195, 255, 0.08)
+focus   0.12  ->  --state-focus: rgba(187, 195, 255, 0.12)
+press   0.16  ->  --state-press: rgba(187, 195, 255, 0.16)
+dragged 0.16
 ```
 
 ---
 
-## 2. MOTION PHYSICS (The "Spring" Engine)
-
-*Standard easing (`cubic-bezier`) is forbidden for interactions. Use these calculated Linear Spring strings.*
-
-### Token: `--motion-spring-bouncy`
-
-**Use for:** Hover states, FABs, Switch toggles, Icon Button presses.
-**Physics:** Stiffness 200, Damping 15.
-
-```css
---motion-spring-bouncy: linear(
-  0, 0.009, 0.035 2.1%, 0.141 4.4%, 0.723 12.9%, 0.938 16.7%, 1.074 20.8%, 
-  1.137 25.2%, 1.146 29.8%, 1.119 34.8%, 1.077 40.1%, 1.036 45.9%, 
-  1.007 52.3%, 0.991 59.8%, 0.996 76%, 1 100%
-);
-```
-
-### Token: `--motion-spring-expressive`
-
-**Use for:** Large containers entering (Modals, Side sheets), Page transitions.
-**Physics:** Stiffness 300, Damping 30.
+## 2. SHAPE SYSTEM
 
 ```css
---motion-spring-expressive: linear(
-  0, 0.006, 0.025 2.8%, 0.101 6.1%, 0.539 15.2%, 0.719 19.6%, 0.849 24.3%, 
-  0.937 29.2%, 0.986 34.3%, 1.006 39.7%, 1.008 45.4%, 1.001 51.5%, 
-  0.999 57.8%, 1 100%
-);
+--md-sys-shape-corner-extra-small:  4px;
+--md-sys-shape-corner-small:        8px;
+--md-sys-shape-corner-medium:       16px;
+--md-sys-shape-corner-large:        24px;
+--md-sys-shape-corner-extra-large:  28px;   /* The "Expressive" default */
+--md-sys-shape-corner-full:         9999px;
 ```
 
-### Token: `--motion-morph`
+Cards and dialogs default to `28px`. Use progressive enhancement for squircle via `paint(squircle)` where supported.
 
-**Use for:** `border-radius` changes (Square -> Circle).
-**Duration:** 500ms always.
+---
+
+## 3. MOTION SYSTEM (Spring Physics)
+
+All interactive animations use `linear()` spring easing. Standard `cubic-bezier` is forbidden for interactions.
+
+### `--motion-spring-bouncy` (Stiffness 200 / Damping 15)
+For hover states, toggles, icon presses.
+```css
+linear(
+    0, 0.009, 0.035 2.1%, 0.141 4.4%, 0.723 12.9%, 0.938 16.7%, 1.074 20.8%,
+    1.137 25.2%, 1.146 29.8%, 1.119 34.8%, 1.077 40.1%, 1.036 45.9%,
+    1.007 52.3%, 0.991 59.8%, 0.996 76%, 1 100%
+)
+```
+
+### `--motion-spring-expressive` (Stiffness 300 / Damping 30)
+For container entrances, modals, page transitions.
+```css
+linear(
+    0, 0.006, 0.025 2.8%, 0.101 6.1%, 0.539 15.2%, 0.719 19.6%, 0.849 24.3%,
+    0.937 29.2%, 0.986 34.3%, 1.006 39.7%, 1.008 45.4%, 1.001 51.5%,
+    0.999 57.8%, 1 100%
+)
+```
+
+### `--motion-morph` (always 500ms)
+For border-radius animations (square to circle transitions).
+```css
+linear(0, 0.005, 0.02 2.2%, 0.65 14.8%, 0.85 20.8%, 1 100%)
+```
+
+### Duration Tokens
+```
+--duration-short:       200ms
+--duration-medium:      300ms
+--duration-long:        500ms
+--duration-extra-long:  700ms
+```
+
+Reduced motion: all spring easings fall back to `ease` via `@media (prefers-reduced-motion: reduce)`.
+
+---
+
+## 4. TYPOGRAPHY
+
+**Brand font:** Ubuntu (Display, Headline, Title, Body, Label)
+**Code font:** JetBrains Mono (terminal, code blocks)
+
+| Role | Size | Weight | Line Height | Tracking |
+|---|---|---|---|---|
+| Display Large | 57px | 700 | 64px | -0.25px |
+| Headline Large | 32px | 600 | 40px | 0 |
+| Title Large | 22px | 500 | 28px | 0 |
+| Body Large | 16px | 400 | 24px | 0.5px |
+| Label Large | 14px | 500 | 20px | 0.1px |
+
+---
+
+## 5. INTERACTION PROTOCOLS
+
+1. **Squeeze:** On click/active, scale element to `0.95` using `--motion-spring-bouncy`.
+2. **Lift:** On hover, `translateY(-4px)` + `scale(1.02)` using `--motion-spring-bouncy`. Combine with surface-container elevation shift.
+3. **Morph:** On state change, animate `border-radius` (e.g., `28px` to `4px`) over `500ms` using `--motion-morph`.
+
+---
+
+## 6. FILE STRUCTURE
+
+```
+/
+├── index.html                 Main portfolio page
+├── garden-terminal.html       Knowledge Garden terminal page
+├── m3e-tokens.css             Design tokens (colors, shape, motion, type)
+├── style.css                  Main site styles (index.html)
+├── garden-terminal.css        Terminal page styles (garden-terminal.html)
+├── terminal-privacy.css       Redacted text / matrix decode effect
+├── script.js                  Main site JS (BIOS boot, matrix footer, uptime)
+├── terminal.js                Contact section privacy redaction
+├── garden-terminal.js         Terminal class: commands, file tree, vault API
+├── garden-graph.js            D3 force-directed graph visualization
+└── AGENTS.md                  This file
+```
+
+### Key architectural notes
+- **No build step.** All CSS and JS is loaded directly via `<link>` and `<script>`.
+- **No frameworks.** No React, no Tailwind, no shadcn. Pure vanilla HTML/CSS/JS.
+- `m3e-tokens.css` is loaded first and provides all `:root` custom properties.
+- `style.css` and `garden-terminal.css` consume those tokens.
+- `garden-terminal.js` defines the `KnowledgeGarden` class that fetches from GitHub API.
+
+---
+
+## 7. TERMINAL COMMANDS REFERENCE
+
+Commands implemented in `garden-terminal.js` `executeCommand()`:
+
+| Command | Description |
+|---|---|
+| `cat [file]` / `open [file]` | View a note from the vault |
+| `help` | List available commands |
+| `man [cmd]` | Show manual page for a command |
+| `theme [dark\|light]` | Switch color scheme |
+| `clear` | Clear terminal output |
+| `neofetch` | Display system info card |
+| `cowsay [text]` | ASCII cow with message |
+| `matrix` | Matrix rain animation |
+| `whoami` | Print current user identity |
+| `sudo` | Permission denied easter egg |
+
+### Planned (Phase 7 expansion)
+`ls`, `cd`, `pwd`, `head`, `find`, `grep`, `tree` -- filesystem navigation commands for the vault.
+
+---
+
+## 8. ELEVATION
+
+Dark-mode M3 elevation uses shadow + surface tint, not just box-shadow.
 
 ```css
---motion-morph: linear(0, 0.005, 0.02 2.2%, 0.65 14.8%, 0.85 20.8%, 1 100%);
+--elevation-1: 0 1px 3px 1px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.3);
+--elevation-2: 0 2px 6px 2px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.3);
+--elevation-3: 0 4px 8px 3px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.3);
 ```
 
----
-
-## 3. TYPOGRAPHY (Ubuntu Override)
-
-*M3 Expressive requires tighter tracking on Display fonts to avoid "falling apart."*
-
-```css
-:root {
-  --md-ref-typeface-brand: 'Ubuntu', sans-serif;
-  --md-ref-typeface-plain: 'Ubuntu', sans-serif;
-  
-  /* Display Large (Hero Text) */
-  --md-sys-typescale-display-large-font: 'Ubuntu';
-  --md-sys-typescale-display-large-weight: 700;
-  --md-sys-typescale-display-large-size: 57px;
-  --md-sys-typescale-display-large-line-height: 64px;
-  --md-sys-typescale-display-large-tracking: -0.25px;
-
-  /* Headline Large (Section Headers) */
-  --md-sys-typescale-headline-large-font: 'Ubuntu';
-  --md-sys-typescale-headline-large-weight: 500;
-  --md-sys-typescale-headline-large-size: 32px;
-  --md-sys-typescale-headline-large-line-height: 40px;
-  --md-sys-typescale-headline-large-tracking: 0px;
-}
-```
+Higher elevation = lighter surface tint (use `surface-container-high` / `surface-container-highest`).
 
 ---
 
-## 4. COMPONENT IMPLEMENTATION GUIDE (Shadcn + M3)
+## 9. FORBIDDEN PATTERNS
 
-### A. The Card (M3 Elevated)
-
-*Remove borders. Use Surface Tint.*
-
-- **Class:** `bg-surface-container-low hover:bg-surface-container-high transition-colors duration-300`
-- **Shape:** `rounded-[28px]`
-- **Elevation:** Do not use shadow. Use Color Tint opacity.
-
-### B. The "Squaricle" Button
-
-*Standard buttons are pills. Expressive buttons can be large rounded rectangles.*
-
-- **CSS Variable Override:**
-  ```css
-  md-filled-button {
-    --md-filled-button-container-shape: 16px; /* Not 999px */
-    --md-filled-button-container-height: 56px; /* Taller target */
-    --md-filled-button-label-text-font: 'Ubuntu';
-    --md-filled-button-label-text-weight: 500;
-  }
-  ```
-
-### C. The Navigation Rail (Expressive)
-
-*Do not use a bottom tab bar for desktop. Use a floating rail.*
-
-- **Position:** Fixed left, vertically centered.
-- **Container:** Floating pill shape (`rounded-full`), not full height.
-- **Item Active Indicator:**
-  ```css
-  --md-navigation-rail-indicator-shape: 16px; /* Squaricle match */
-  --md-navigation-rail-indicator-color: var(--md-sys-color-primary-container);
-  ```
-
----
-
-## 5. LAYOUT PATTERNS (The "Masonry")
-
-*Do not use uniform grids. Expressive design embraces variable aspect ratios.*
-
-**The "Staggered" Rule:**
-When displaying a collection of items (Cards, Images), verify if `grid-template-rows: masonry` is supported.
-If NOT, use a 3-column grid where items span row-heights randomly:
-
-```tsx
-// Tailwind Pattern
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-  <Card className="row-span-2" /> {/* Tall Item */}
-  <Card className="row-span-1" /> {/* Standard Item */}
-  <Card className="col-span-2" /> {/* Wide Item */}
-</div>
-```
-
----
-
-## 6. INTERACTION PROTOCOLS
-
-1. **The "Squeeze":** When a user clicks a button, scale it to `0.95` using `--motion-spring-bouncy`.
-2. **The "Lift":** When a user hovers a card, scale it to `1.02` and increase Surface Tint brightness.
-3. **The "Morph":** If a user selects an item, animate the container's `border-radius` from `28px` to `4px` (or `0px` if going full screen).
-
----
-
-## 7. FORBIDDEN PATTERNS
-
-🚫 **DO NOT USE:**
-- Material 2 styles (flat shadows, sharp corners, `Roboto` default)
-- Standard `box-shadow` CSS (Use M3 Elevation tokens or surface tint)
-- Dense layouts (M3 Expressive requires whitespace)
-- `cubic-bezier` for interactive animations (Use `linear()` springs)
-- Default 12px border-radius (Expressive is 28px)
-- Bottom tab bars on desktop (Use floating navigation rail)
-
----
-
-## 8. PROMPT TEMPLATE
-
-When coding with this specification, use this prompt structure:
-
-> "Initialize the project using the **Strict M3 Expressive Spec**. I want the `layout.tsx` to include the root CSS variables for the Lavender/Ubuntu theme defined in the knowledge file. Create a `Button` component that uses the `linear()` spring physics for its hover state."
-
-This gives the agent **no wiggle room**. It cannot "invent" a shadow because the spec says "Elevation: Use Color Tint." It cannot use Roboto because the root variable is hardcoded to Ubuntu.
+**DO NOT:**
+- Use Tailwind CSS classes. This is a vanilla CSS project.
+- Use shadcn/ui components. There is no component library.
+- Reference `layout.tsx`, `globals.css`, or any Next.js/React file. There is no framework.
+- Use `cubic-bezier` for interactive animations. Use `linear()` spring tokens.
+- Use Material 2 styles (flat shadows, sharp corners, Roboto).
+- Use default `12px` border-radius. Expressive default is `28px`.
+- Use dense layouts. M3 Expressive requires generous whitespace.
+- Use bottom tab bars on desktop. Use a floating navigation rail.
+- Add npm dependencies or build tooling. Everything ships as plain files.
+- Introduce a CSS preprocessor (no Sass, no PostCSS). Raw CSS only.
+- Use light-mode colors (#7C3AED lavender, white surfaces). The palette is dark-mode periwinkle.
+- Use `Roboto` or system fonts for brand text. The brand font is `Ubuntu`.
