@@ -11,6 +11,12 @@ class KnowledgeGarden {
         this.branch = 'main';
         this.apiBase = `https://api.github.com/repos/${this.vaultOwner}/${this.vaultRepo}/contents`;
         this.rawBase = `https://raw.githubusercontent.com/${this.vaultOwner}/${this.vaultRepo}/${this.branch}`;
+        this.markedScriptUrl = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+        this.d3ScriptUrl = 'https://d3js.org/d3.v7.min.js';
+        this.manifestCacheKey = `garden-manifest-cache:${this.vaultOwner}/${this.vaultRepo}/${this.branch}`;
+        this.manifestCacheMaxAgeMs = 5 * 60 * 1000; // 5 minutes
+        this.vaultSyncIntervalMs = 5 * 60 * 1000; // 5 minutes
+        this.allowedScriptHosts = new Set(['cdn.jsdelivr.net', 'd3js.org']);
 
         // State
         this.currentPath = '';
@@ -23,6 +29,18 @@ class KnowledgeGarden {
 
         // Hidden files/folders
         this.hiddenItems = ['.obsidian', '.stfolder', '.DS_Store', '.gitignore', '.github', 'Myself', 'images'];
+
+        // Featured project priority (most impressive first)
+        // Notes matching these prefixes appear first, in this exact order
+        this.featuredPriority = [
+            'Projects/The Penthouse/',
+            'Projects/Teardown Cafe/',
+            'Projects/Archive/TrueNAS Build Guide.md',
+            'Learning Journals/Privacy Hardening Journey.md',
+            'Systems/Homelab/Prometheus Grafana Stack - Implementation Guide.md',
+            'Learning Journals/3D Printing Optimization Journey.md',
+            'Projects/Archive/Pi-hole Setup Guide - Complete Journey.md'
+        ];
 
         // Icon mapping by folder name
         this.iconMap = {
@@ -37,6 +55,10 @@ class KnowledgeGarden {
 
         // Cached manifest data
         this.manifest = null;
+        this.manifestRevalidatePromise = null;
+        this.vaultSyncTimer = null;
+        this.lastManifestSyncAt = 0;
+        this.lastFocusedElement = null;
 
         // DOM Elements
         this.terminalInput = document.getElementById('terminalInput');
@@ -66,12 +88,16 @@ class KnowledgeGarden {
         document.getElementById('terminalMaximize')?.addEventListener('click', () => this.maximizeTerminal());
 
         // Sidebar toggle (desktop)
-        document.getElementById('sidebarToggle').addEventListener('click', () => {
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        sidebarToggle.addEventListener('click', () => {
             this.sidebar.classList.toggle('collapsed');
             // On mobile, this opens the sidebar
             if (window.innerWidth <= 768) {
                 this.sidebar.classList.add('open');
-                document.getElementById('sidebarOverlay')?.classList.add('visible');
+                sidebarToggle.setAttribute('aria-expanded', 'true');
+                const overlay = document.getElementById('sidebarOverlay');
+                overlay?.classList.add('visible');
+                overlay?.setAttribute('aria-hidden', 'false');
             }
         });
 
@@ -96,13 +122,50 @@ class KnowledgeGarden {
             if (file) this.viewFileByPath(file);
         });
 
+        // Gallery toggle button on welcome page
+        document.addEventListener('click', (e) => {
+            if (e.target?.id === 'welcomeGalleryBtn') {
+                this.loadCardGallery();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            const card = e.target?.closest?.('.note-card');
+            if (!card) return;
+            if (card.tagName === 'BUTTON') return;
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                const file = card.dataset.file;
+                if (file) this.viewFileByPath(file);
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            const graphContainer = document.getElementById('graphContainer');
+            if (!graphContainer || graphContainer.style.display === 'none') return;
+            this.hideGraph();
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) return;
+            this.refreshManifestIfChanged({ silent: true }).catch(() => { });
+        });
+
         // Update time
         this.updateTime();
-        setInterval(() => this.updateTime(), 1000);
+        setInterval(() => this.updateTime(), 30000);
 
         // Load history
         const saved = localStorage.getItem('garden-history');
-        if (saved) this.commandHistory = JSON.parse(saved);
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed)) this.commandHistory = parsed;
+            } catch (error) {
+                localStorage.removeItem('garden-history');
+            }
+        }
 
         // Load file tree from GitHub
         this.statusInfo.textContent = 'Loading vault...';
@@ -111,7 +174,16 @@ class KnowledgeGarden {
         // Load featured projects (published_to_garden=true, sorted by last_published)
         await this.loadFeaturedProjects();
 
+        this.startVaultAutoSync();
+
         this.statusInfo.textContent = 'Ready';
+    }
+
+    startVaultAutoSync() {
+        if (this.vaultSyncTimer) clearInterval(this.vaultSyncTimer);
+        this.vaultSyncTimer = setInterval(() => {
+            this.refreshManifestIfChanged({ silent: true }).catch(() => { });
+        }, this.vaultSyncIntervalMs);
     }
 
     // ============================================
@@ -119,6 +191,7 @@ class KnowledgeGarden {
     // ============================================
 
     async loadFileTree() {
+        this.fileTree.setAttribute('aria-busy', 'true');
         try {
             // Try manifest-based tree first (0 API calls)
             const manifest = await this.fetchManifest();
@@ -133,9 +206,19 @@ class KnowledgeGarden {
                 this.renderTreeItems(items, this.fileTree, 0);
             } catch (fallbackError) {
                 console.error('Failed to load file tree:', fallbackError);
-                this.fileTree.innerHTML = '<div class="tree-error">Failed to load files</div>';
+                this.renderTreeError('Failed to load files');
             }
+        } finally {
+            this.fileTree.removeAttribute('aria-busy');
         }
+    }
+
+    renderTreeError(message) {
+        this.fileTree.innerHTML = '';
+        const error = document.createElement('div');
+        error.className = 'tree-error';
+        error.textContent = message;
+        this.fileTree.appendChild(error);
     }
 
     buildTreeFromManifest(manifest, parentPath) {
@@ -180,15 +263,20 @@ class KnowledgeGarden {
             const displayName = item.name.replace('.md', '');
             const iconKey = this.iconMap[item.name] || (isFolder ? 'default_folder' : 'default_file');
 
-            const itemEl = document.createElement('div');
+            const itemEl = document.createElement('button');
+            itemEl.type = 'button';
             itemEl.className = `tree-item ${isFolder ? 'folder' : 'file'}`;
             itemEl.style.paddingLeft = `${12 + depth * 16}px`;
+            itemEl.setAttribute('role', 'treeitem');
+            itemEl.setAttribute('tabindex', '0');
+            itemEl.setAttribute('aria-selected', 'false');
 
             if (isFolder) {
                 const chevron = document.createElement('span');
                 chevron.className = 'tree-chevron';
                 chevron.textContent = '\u25B6';
                 itemEl.appendChild(chevron);
+                itemEl.setAttribute('aria-expanded', 'false');
             }
 
             const icon = document.createElement('svg');
@@ -206,6 +294,7 @@ class KnowledgeGarden {
             if (isFolder) {
                 const childContainer = document.createElement('div');
                 childContainer.className = 'tree-children collapsed';
+                childContainer.setAttribute('role', 'group');
                 container.appendChild(childContainer);
 
                 let loaded = false;
@@ -218,18 +307,33 @@ class KnowledgeGarden {
                         const children = this.buildTreeFromManifest(this.manifest, item.path);
                         childContainer.classList.remove('collapsed');
                         itemEl.classList.add('expanded');
+                        itemEl.setAttribute('aria-expanded', 'true');
                         this.renderManifestTree(children, childContainer, depth + 1);
                         loaded = true;
                     } else {
                         childContainer.classList.toggle('collapsed');
                         itemEl.classList.toggle('expanded');
+                        itemEl.setAttribute('aria-expanded', childContainer.classList.contains('collapsed') ? 'false' : 'true');
+                    }
+                });
+                itemEl.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowRight' && childContainer.classList.contains('collapsed')) {
+                        e.preventDefault();
+                        itemEl.click();
+                    } else if (e.key === 'ArrowLeft' && !childContainer.classList.contains('collapsed')) {
+                        e.preventDefault();
+                        itemEl.click();
                     }
                 });
             } else {
                 itemEl.addEventListener('click', () => {
                     this.viewFileByPath(item.path);
-                    document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
+                    document.querySelectorAll('.tree-item').forEach(i => {
+                        i.classList.remove('active');
+                        i.setAttribute('aria-selected', 'false');
+                    });
                     itemEl.classList.add('active');
+                    itemEl.setAttribute('aria-selected', 'true');
                     this.closeMobileSidebar();
                 });
             }
@@ -240,14 +344,175 @@ class KnowledgeGarden {
     // FEATURED PROJECTS
     // ============================================
 
-    async fetchManifest() {
-        if (this.manifest) return this.manifest;
+    isManifestStructureValid(manifest) {
+        return !!manifest && typeof manifest === 'object' && Array.isArray(manifest.tree);
+    }
 
-        const url = `${this.rawBase}/garden-manifest.json`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`Manifest fetch failed: HTTP ${res.status}`);
-        this.manifest = await res.json();
-        return this.manifest;
+    buildManifestVersion(manifest) {
+        if (!this.isManifestStructureValid(manifest)) return null;
+        if (manifest.generated_at) return String(manifest.generated_at);
+        const metadataCount = Object.keys(manifest.metadata || {}).length;
+        return `${manifest.tree.length}:${metadataCount}`;
+    }
+
+    getCachedManifest({ allowStale = false } = {}) {
+        try {
+            const raw = localStorage.getItem(this.manifestCacheKey);
+            if (!raw) return null;
+
+            const parsed = JSON.parse(raw);
+            if (!parsed || typeof parsed !== 'object') return null;
+            if (!this.isManifestStructureValid(parsed.manifest)) return null;
+
+            const cachedAt = Number(parsed.cachedAt) || 0;
+            const age = Date.now() - cachedAt;
+            if (!allowStale && age > this.manifestCacheMaxAgeMs) return null;
+
+            return parsed.manifest;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    setCachedManifest(manifest) {
+        try {
+            localStorage.setItem(this.manifestCacheKey, JSON.stringify({
+                cachedAt: Date.now(),
+                manifest
+            }));
+        } catch (error) {
+            // Ignore storage failures (private mode/storage limits)
+        }
+    }
+
+    async fetchManifestFromNetwork({ cacheBust = true } = {}) {
+        const cacheParam = cacheBust ? `?v=${Date.now()}` : '';
+        const url = `${this.rawBase}/garden-manifest.json${cacheParam}`;
+        const manifest = await this.fetchJson(url, {
+            timeoutMs: 12000,
+            retries: 2,
+            dedupeKey: `manifest:${this.vaultOwner}/${this.vaultRepo}/${this.branch}`
+        });
+        if (!this.isManifestStructureValid(manifest)) {
+            throw new Error('Invalid garden manifest');
+        }
+        this.setCachedManifest(manifest);
+        return manifest;
+    }
+
+    async applyFreshManifest(manifest, { rerender = false, statusMessage = '' } = {}) {
+        if (!this.isManifestStructureValid(manifest)) return false;
+
+        const currentVersion = this.buildManifestVersion(this.manifest);
+        const nextVersion = this.buildManifestVersion(manifest);
+        const changed = !currentVersion || currentVersion !== nextVersion;
+
+        this.manifest = manifest;
+        this.setCachedManifest(manifest);
+        this.lastManifestSyncAt = Date.now();
+
+        if (!changed) return false;
+
+        this.treeCache.clear();
+        this.noteCache.clear();
+        this.gitTreeCache = null;
+
+        if (rerender) {
+            await this.loadFileTree();
+            await this.loadFeaturedProjects();
+
+            if (this.currentFile) {
+                const fileStillExists = manifest.tree.some(e => e.path === this.currentFile && e.type === 'file');
+                if (fileStillExists) {
+                    await this.viewFileByPath(this.currentFile);
+                } else {
+                    this.showWelcome();
+                }
+            }
+        }
+
+        if (statusMessage) this.statusInfo.textContent = statusMessage;
+        return true;
+    }
+
+    async revalidateManifest(expectedVersion) {
+        const recentlySynced = Date.now() - this.lastManifestSyncAt < 60000;
+        if (recentlySynced) return null;
+        if (this.manifestRevalidatePromise) return this.manifestRevalidatePromise;
+
+        this.manifestRevalidatePromise = (async () => {
+            try {
+                const freshManifest = await this.fetchManifestFromNetwork();
+                const freshVersion = this.buildManifestVersion(freshManifest);
+                if (!expectedVersion || freshVersion !== expectedVersion) {
+                    await this.applyFreshManifest(freshManifest, {
+                        rerender: true,
+                        statusMessage: 'Vault updated'
+                    });
+                }
+            } catch (error) {
+                // Keep cached manifest if network revalidation fails
+            } finally {
+                this.manifestRevalidatePromise = null;
+            }
+        })();
+
+        return this.manifestRevalidatePromise;
+    }
+
+    async fetchManifest() {
+        if (this.manifest) {
+            const expectedVersion = this.buildManifestVersion(this.manifest);
+            this.revalidateManifest(expectedVersion).catch(() => { });
+            return this.manifest;
+        }
+
+        const cachedManifest = this.getCachedManifest();
+        if (cachedManifest) {
+            this.manifest = cachedManifest;
+            const expectedVersion = this.buildManifestVersion(cachedManifest);
+            this.revalidateManifest(expectedVersion).catch(() => { });
+            return this.manifest;
+        }
+
+        try {
+            this.manifest = await this.fetchManifestFromNetwork();
+            return this.manifest;
+        } catch (error) {
+            const staleManifest = this.getCachedManifest({ allowStale: true });
+            if (staleManifest) {
+                this.manifest = staleManifest;
+                const expectedVersion = this.buildManifestVersion(staleManifest);
+                this.revalidateManifest(expectedVersion).catch(() => { });
+                return this.manifest;
+            }
+            throw error;
+        }
+    }
+
+    async refreshManifestIfChanged({ manual = false, silent = false } = {}) {
+        const previousStatus = this.statusInfo.textContent;
+        if (!silent) this.statusInfo.textContent = 'Syncing vault...';
+
+        try {
+            const freshManifest = await this.fetchManifestFromNetwork();
+            const changed = await this.applyFreshManifest(freshManifest, {
+                rerender: true,
+                statusMessage: silent ? '' : 'Vault synchronized'
+            });
+
+            if (!changed && !silent) this.statusInfo.textContent = 'Vault up to date';
+            if (manual) {
+                const message = changed ? 'Vault synchronized and refreshed.' : 'Vault is already up to date.';
+                this.showOutput(`<span style="color:var(--terminal-green)">${message}</span>`);
+            }
+            if (silent && !changed) this.statusInfo.textContent = previousStatus;
+            return changed;
+        } catch (error) {
+            if (!silent) this.statusInfo.textContent = 'Sync failed';
+            if (manual) this.showOutput(`<span style="color:var(--terminal-red)">Sync failed: ${this.escapeHtml(error.message)}</span>`);
+            return false;
+        }
     }
 
     async loadFeaturedProjects() {
@@ -286,12 +551,29 @@ class KnowledgeGarden {
 
             const title = fm.title || path.split('/').pop().replace(/\.md$/, '');
             const sortDate = this.parseDate(fm.last_published) || this.parseDate(fm.created);
+            const priority = this.getFeaturedPriorityScore(path);
 
-            published.push({ path, title, published_to_garden: true, last_published: fm.last_published, created: fm.created, sortDate });
+            published.push({ path, title, published_to_garden: true, last_published: fm.last_published, created: fm.created, sortDate, priority });
         }
 
-        published.sort((a, b) => (b.sortDate || 0) - (a.sortDate || 0));
-        return published.slice(0, 6);
+        // Sort: priority first (lower = better), then by date descending
+        published.sort((a, b) => {
+            if (a.priority !== b.priority) return a.priority - b.priority;
+            return (b.sortDate || 0) - (a.sortDate || 0);
+        });
+
+        // Deduplicate by project prefix (only show one card per project folder)
+        const seen = new Set();
+        const deduped = [];
+        for (const item of published) {
+            // Use the first two path segments as the project key
+            const projectKey = item.path.split('/').slice(0, 2).join('/');
+            if (seen.has(projectKey) && deduped.length >= 7) continue;
+            if (!seen.has(projectKey)) seen.add(projectKey);
+            deduped.push(item);
+        }
+
+        return deduped.slice(0, 7);
     }
 
     async loadFeaturedProjectsFallback(container) {
@@ -324,9 +606,10 @@ class KnowledgeGarden {
         if (this.gitTreeCache) return this.gitTreeCache;
 
         const url = `https://api.github.com/repos/${this.vaultOwner}/${this.vaultRepo}/git/trees/${this.branch}?recursive=1`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`Tree fetch failed: HTTP ${res.status}`);
-        const data = await res.json();
+        const data = await this.fetchJson(url, {
+            timeoutMs: 12000,
+            retries: 2
+        });
         this.gitTreeCache = data;
         return data;
     }
@@ -344,6 +627,18 @@ class KnowledgeGarden {
             path.startsWith('Learning Journals/') ||
             path.startsWith('IT Projects/')
         );
+    }
+
+    /**
+     * Returns a priority score for a path.
+     * Lower number = higher priority. Returns Infinity if not in priority list.
+     */
+    getFeaturedPriorityScore(path) {
+        for (let i = 0; i < this.featuredPriority.length; i++) {
+            const prefix = this.featuredPriority[i];
+            if (path === prefix || path.startsWith(prefix)) return i;
+        }
+        return Infinity;
     }
 
     async fetchFeaturedMetadata(paths) {
@@ -366,7 +661,10 @@ class KnowledgeGarden {
         try {
             const encodedPath = path.split('/').map(s => encodeURIComponent(s)).join('/');
             const url = `${this.rawBase}/${encodedPath}`;
-            const res = await fetch(url);
+            const res = await this.fetchResponse(url, {}, {
+                timeoutMs: 10000,
+                retries: 1
+            });
             if (!res.ok) return null;
 
             const text = await res.text();
@@ -445,13 +743,33 @@ class KnowledgeGarden {
         const title = this.escapeHtml(meta.title);
         const file = this.escapeHtml(meta.path);
 
+        // Category from path
+        const pathParts = meta.path.split('/');
+        const category = pathParts.length > 1 ? pathParts[1] : pathParts[0];
+        const categoryDisplay = this.escapeHtml(category.replace(/\.md$/, ''));
+
+        // Date display
+        let dateHtml = '';
+        const dateVal = meta.last_published || meta.created;
+        if (dateVal) {
+            const d = this.parseDate(dateVal);
+            if (d) {
+                const formatted = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                dateHtml = `<span class="note-card-date">Updated ${this.escapeHtml(formatted)}</span>`;
+            }
+        }
+
         return `
-            <div class="note-card" data-file="${file}">
+            <button type="button" class="note-card" data-file="${file}" aria-label="Open note: ${title}">
                 <svg class="note-icon">
                     <use href="icons-sprite.svg#icon-${iconKey}"></use>
                 </svg>
-                <span class="note-title">${title}</span>
-            </div>
+                <div class="note-card-info">
+                    <span class="note-title">${title}</span>
+                    <span class="note-card-category">${categoryDisplay}</span>
+                    ${dateHtml}
+                </div>
+            </button>
         `;
     }
 
@@ -461,11 +779,12 @@ class KnowledgeGarden {
             return this.treeCache.get(cacheKey);
         }
 
-        const url = path ? `${this.apiBase}/${encodeURIComponent(path)}` : this.apiBase;
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const items = await response.json();
+        const encodedPath = path ? path.split('/').map(part => encodeURIComponent(part)).join('/') : '';
+        const url = path ? `${this.apiBase}/${encodedPath}` : this.apiBase;
+        const items = await this.fetchJson(url, {
+            timeoutMs: 10000,
+            retries: 2
+        });
 
         // Filter and sort
         const filtered = items.filter(item =>
@@ -491,9 +810,13 @@ class KnowledgeGarden {
             const displayName = item.name.replace('.md', '');
             const iconKey = this.iconMap[item.name] || (isFolder ? 'default_folder' : 'default_file');
 
-            const itemEl = document.createElement('div');
+            const itemEl = document.createElement('button');
+            itemEl.type = 'button';
             itemEl.className = `tree-item ${isFolder ? 'folder' : 'file'}`;
             itemEl.style.paddingLeft = `${12 + depth * 16}px`;
+            itemEl.setAttribute('role', 'treeitem');
+            itemEl.setAttribute('tabindex', '0');
+            itemEl.setAttribute('aria-selected', 'false');
 
             // Chevron for folders
             if (isFolder) {
@@ -501,6 +824,7 @@ class KnowledgeGarden {
                 chevron.className = 'tree-chevron';
                 chevron.textContent = '\u25B6';
                 itemEl.appendChild(chevron);
+                itemEl.setAttribute('aria-expanded', 'false');
             }
 
             // SVG icon
@@ -521,6 +845,7 @@ class KnowledgeGarden {
                 // Create children container
                 const childContainer = document.createElement('div');
                 childContainer.className = 'tree-children collapsed';
+                childContainer.setAttribute('role', 'group');
                 container.appendChild(childContainer);
 
                 let loaded = false;
@@ -538,6 +863,7 @@ class KnowledgeGarden {
                         childContainer.appendChild(loader);
                         childContainer.classList.remove('collapsed');
                         itemEl.classList.add('expanded');
+                        itemEl.setAttribute('aria-expanded', 'true');
 
                         try {
                             const children = await this.fetchDirectory(item.path);
@@ -546,19 +872,34 @@ class KnowledgeGarden {
                             loaded = true;
                         } catch (error) {
                             childContainer.innerHTML = '<div class="tree-error">Failed to load</div>';
+                            itemEl.setAttribute('aria-expanded', 'false');
                         }
                     } else {
                         // Toggle visibility
                         childContainer.classList.toggle('collapsed');
                         itemEl.classList.toggle('expanded');
+                        itemEl.setAttribute('aria-expanded', childContainer.classList.contains('collapsed') ? 'false' : 'true');
+                    }
+                });
+                itemEl.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowRight' && childContainer.classList.contains('collapsed')) {
+                        e.preventDefault();
+                        itemEl.click();
+                    } else if (e.key === 'ArrowLeft' && !childContainer.classList.contains('collapsed')) {
+                        e.preventDefault();
+                        itemEl.click();
                     }
                 });
             } else {
                 // File click
                 itemEl.addEventListener('click', () => {
                     this.viewFileByPath(item.path);
-                    document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
+                    document.querySelectorAll('.tree-item').forEach(i => {
+                        i.classList.remove('active');
+                        i.setAttribute('aria-selected', 'false');
+                    });
                     itemEl.classList.add('active');
+                    itemEl.setAttribute('aria-selected', 'true');
                     // Auto-close sidebar on mobile
                     this.closeMobileSidebar();
                 });
@@ -577,9 +918,30 @@ class KnowledgeGarden {
 
         try {
             const content = await this.fetchNote(githubPath);
+            await this.ensureMarkedLoaded();
             const html = this.renderMarkdown(content);
 
-            this.contentBody.innerHTML = `<div class="markdown-content">${html}</div>`;
+            // Build metadata bar from manifest
+            let metaBarHtml = '';
+            if (this.manifest && this.manifest.metadata) {
+                const fm = this.manifest.metadata[githubPath];
+                if (fm) {
+                    const parts = [];
+                    if (fm.created) {
+                        const d = this.parseDate(fm.created);
+                        if (d) parts.push(`<span class="meta-item">📅 Created: ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>`);
+                    }
+                    if (fm.last_published) {
+                        const d = this.parseDate(fm.last_published);
+                        if (d) parts.push(`<span class="meta-item">🔄 Updated: ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>`);
+                    }
+                    if (parts.length > 0) {
+                        metaBarHtml = `<div class="note-metadata-bar">${parts.join('')}</div>`;
+                    }
+                }
+            }
+
+            this.contentBody.innerHTML = `${metaBarHtml}<div class="markdown-content">${html}</div>`;
             const lineCount = content.split('\n').length;
             this.statusInfo.textContent = `${lineCount} lines`;
         } catch (error) {
@@ -593,38 +955,46 @@ class KnowledgeGarden {
         }
     }
 
-    updateBreadcrumb(path) {
+    appendBreadcrumbButton(label, path) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'breadcrumb-item clickable';
+        button.dataset.path = path;
+        button.textContent = label;
+        button.addEventListener('click', () => {
+            if (!path) {
+                this.showWelcome();
+            } else {
+                this.showFolderContents(path);
+            }
+        });
+        this.breadcrumb.appendChild(button);
+    }
+
+    updateBreadcrumb(path, { folderView = false } = {}) {
         const parts = path.split('/').filter(p => p);
         let cumPath = '';
 
-        // Build clickable breadcrumb
-        let html = '<span class="breadcrumb-item clickable" data-path="">~</span>';
-        parts.forEach((part, i) => {
+        this.breadcrumb.innerHTML = '';
+        this.appendBreadcrumbButton('~', '');
+
+        parts.forEach((part, index) => {
             cumPath += (cumPath ? '/' : '') + part;
             const isFile = part.endsWith('.md');
             const displayName = part.replace('.md', '');
+            const isCurrentFolder = folderView && index === parts.length - 1;
 
-            if (isFile) {
-                html += `<span class="breadcrumb-item current">${displayName}</span>`;
+            if (isFile || isCurrentFolder) {
+                const current = document.createElement('span');
+                current.className = 'breadcrumb-item current';
+                current.textContent = displayName;
+                this.breadcrumb.appendChild(current);
             } else {
-                html += `<span class="breadcrumb-item clickable" data-path="${cumPath}">${displayName}</span>`;
+                this.appendBreadcrumbButton(displayName, cumPath);
             }
         });
 
-        this.breadcrumb.innerHTML = html;
         this.statusPath.textContent = `~/${path}`;
-
-        // Add click handlers
-        this.breadcrumb.querySelectorAll('.breadcrumb-item.clickable').forEach(item => {
-            item.addEventListener('click', () => {
-                const targetPath = item.dataset.path;
-                if (!targetPath) {
-                    this.showWelcome();
-                } else {
-                    this.showFolderContents(targetPath);
-                }
-            });
-        });
     }
 
     async showFolderContents(folderPath) {
@@ -632,60 +1002,54 @@ class KnowledgeGarden {
 
         try {
             const items = await this.fetchDirectory(folderPath);
+            const folderView = document.createElement('div');
+            folderView.className = 'folder-view';
 
-            // Build folder view HTML
-            let html = `<div class="folder-view">
-                <h2>${folderPath.split('/').pop()}</h2>
-                <div class="folder-items">`;
+            const heading = document.createElement('h2');
+            heading.textContent = folderPath.split('/').pop() || 'Root';
+            folderView.appendChild(heading);
+
+            const folderItems = document.createElement('div');
+            folderItems.className = 'folder-items';
 
             items.forEach(item => {
                 const isFolder = item.type === 'dir';
                 const displayName = item.name.replace('.md', '');
                 const icon = isFolder ? 'storage' : 'book';
+                const entry = document.createElement('button');
+                entry.type = 'button';
+                entry.className = `folder-item ${isFolder ? 'folder' : 'file'}`;
+                entry.dataset.path = item.path;
+                entry.dataset.type = item.type;
+                entry.setAttribute('aria-label', `${isFolder ? 'Open folder' : 'Open file'} ${displayName}`);
 
-                html += `<div class="folder-item ${isFolder ? 'folder' : 'file'}" data-path="${item.path}" data-type="${item.type}">
-                    <svg class="folder-item-icon"><use href="icons-sprite.svg#icon-${icon}"></use></svg>
-                    <span class="folder-item-name">${displayName}</span>
-                </div>`;
-            });
+                const iconEl = document.createElement('svg');
+                iconEl.className = 'folder-item-icon';
+                iconEl.setAttribute('aria-hidden', 'true');
+                iconEl.innerHTML = `<use href="icons-sprite.svg#icon-${icon}"></use>`;
 
-            html += `</div></div>`;
-            this.contentBody.innerHTML = html;
+                const label = document.createElement('span');
+                label.className = 'folder-item-name';
+                label.textContent = displayName;
 
-            // Update breadcrumb for folder view
-            const parts = folderPath.split('/');
-            let cumPath = '';
-            let breadcrumbHtml = '<span class="breadcrumb-item clickable" data-path="">~</span>';
-            parts.forEach(part => {
-                cumPath += (cumPath ? '/' : '') + part;
-                breadcrumbHtml += `<span class="breadcrumb-item clickable" data-path="${cumPath}">${part}</span>`;
-            });
-            this.breadcrumb.innerHTML = breadcrumbHtml;
-
-            // Re-attach breadcrumb handlers
-            this.breadcrumb.querySelectorAll('.breadcrumb-item.clickable').forEach(item => {
-                item.addEventListener('click', () => {
-                    const targetPath = item.dataset.path;
-                    if (!targetPath) {
-                        this.showWelcome();
+                entry.appendChild(iconEl);
+                entry.appendChild(label);
+                entry.addEventListener('click', () => {
+                    if (item.type === 'dir') {
+                        this.showFolderContents(item.path);
                     } else {
-                        this.showFolderContents(targetPath);
+                        this.viewFileByPath(item.path);
                     }
                 });
+
+                folderItems.appendChild(entry);
             });
 
-            // Add click handlers to folder items
-            this.contentBody.querySelectorAll('.folder-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const path = item.dataset.path;
-                    const type = item.dataset.type;
-                    if (type === 'dir') {
-                        this.showFolderContents(path);
-                    } else {
-                        this.viewFileByPath(path);
-                    }
-                });
-            });
+            folderView.appendChild(folderItems);
+            this.contentBody.innerHTML = '';
+            this.contentBody.appendChild(folderView);
+
+            this.updateBreadcrumb(folderPath, { folderView: true });
 
             this.statusInfo.textContent = `${items.length} items`;
 
@@ -702,18 +1066,43 @@ class KnowledgeGarden {
 
     showWelcome() {
         this.currentFile = null;
+        this.currentPath = '';
         this.contentBody.innerHTML = `
             <div class="welcome-content">
                 <h1>Knowledge Garden</h1>
-                <p class="muted">Select a file from the sidebar or use the spotlight.</p>
+                <p class="muted">Select a file from the sidebar or use the terminal.</p>
+                <div class="quick-start">
+                    <h2>Quick Start</h2>
+                    <ul>
+                        <li>Click a file in the sidebar to view it</li>
+                        <li>Use <code>cd folder</code> to navigate</li>
+                        <li>Use <code>cat file.md</code> to view files</li>
+                        <li>Use <code>ls</code> to list contents</li>
+                    </ul>
+                    <button type="button" class="gallery-toggle-btn" id="welcomeGalleryBtn" style="margin-top: 12px;">
+                        📚 View All Notes as Cards
+                    </button>
+                </div>
+                <div class="featured-notes">
+                    <h2>Featured Projects</h2>
+                    <div class="note-cards" id="featuredNotes"></div>
+                </div>
             </div>`;
-        this.breadcrumb.innerHTML = '<span class="breadcrumb-item">~</span>';
+        this.breadcrumb.innerHTML = '';
+        const root = document.createElement('span');
+        root.className = 'breadcrumb-item';
+        root.textContent = '~';
+        this.breadcrumb.appendChild(root);
+        this.statusPath.textContent = '~/';
         this.statusInfo.textContent = 'Ready';
     }
 
     closeMobileSidebar() {
         this.sidebar.classList.remove('open');
-        document.getElementById('sidebarOverlay')?.classList.remove('visible');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        sidebarOverlay?.classList.remove('visible');
+        sidebarOverlay?.setAttribute('aria-hidden', 'true');
+        document.getElementById('sidebarToggle')?.setAttribute('aria-expanded', 'false');
     }
 
     async fetchNote(path) {
@@ -724,10 +1113,10 @@ class KnowledgeGarden {
         const encodedPath = path.split('/').map(part => encodeURIComponent(part)).join('/');
         const url = `${this.rawBase}/${encodedPath}`;
 
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const content = await response.text();
+        const content = await this.fetchText(url, {
+            timeoutMs: 10000,
+            retries: 2
+        });
         this.noteCache.set(path, content);
         return content;
     }
@@ -735,8 +1124,65 @@ class KnowledgeGarden {
     renderMarkdown(content) {
         if (typeof marked === 'undefined') return this.escapeHtml(content);
         content = content.replace(/^---\n[\s\S]*?\n---\n/m, ''); // Remove frontmatter
-        marked.setOptions({ breaks: true, gfm: true });
-        return marked.parse(content);
+        marked.setOptions({ breaks: true, gfm: true, headerIds: false, mangle: false });
+        const rawHtml = marked.parse(content);
+        return this.sanitizeRenderedHtml(rawHtml);
+    }
+
+    sanitizeRenderedHtml(html) {
+        const template = document.createElement('template');
+        template.innerHTML = html;
+
+        const blockedTags = ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'textarea', 'select', 'meta', 'link'];
+        template.content.querySelectorAll(blockedTags.join(',')).forEach(el => el.remove());
+
+        const walker = document.createTreeWalker(template.content, NodeFilter.SHOW_ELEMENT);
+        let node = walker.currentNode;
+
+        while (node) {
+            const attrs = Array.from(node.attributes || []);
+            attrs.forEach(attr => {
+                const name = attr.name.toLowerCase();
+                const value = attr.value.trim();
+
+                if (name.startsWith('on')) {
+                    node.removeAttribute(attr.name);
+                    return;
+                }
+
+                if (name === 'style') {
+                    node.removeAttribute(attr.name);
+                    return;
+                }
+
+                if (name === 'href' || name === 'src' || name === 'xlink:href') {
+                    if (!this.isSafeUrl(value)) {
+                        node.removeAttribute(attr.name);
+                    }
+                }
+            });
+
+            if (node.tagName && node.tagName.toLowerCase() === 'a') {
+                const href = node.getAttribute('href');
+                if (href && /^https?:\/\//i.test(href)) {
+                    node.setAttribute('target', '_blank');
+                    node.setAttribute('rel', 'noopener noreferrer');
+                }
+            }
+
+            node = walker.nextNode();
+        }
+
+        return template.innerHTML;
+    }
+
+    isSafeUrl(value) {
+        if (!value) return true;
+        const lower = value.toLowerCase();
+        if (lower.startsWith('javascript:')) return false;
+        if (lower.startsWith('vbscript:')) return false;
+        if (lower.startsWith('data:text/html')) return false;
+        return true;
     }
 
     // ============================================
@@ -791,7 +1237,14 @@ class KnowledgeGarden {
         if (e.key === 'Enter') {
             e.preventDefault();
             const input = this.terminalInput.value.trim();
-            if (input) this.executeCommand(input);
+            if (input) {
+                // Support pipe chaining
+                if (input.includes('|')) {
+                    this.executePipeline(input);
+                } else {
+                    this.executeCommand(input);
+                }
+            }
             this.terminalInput.value = '';
         } else if (e.key === 'Tab') {
             e.preventDefault();
@@ -814,7 +1267,7 @@ class KnowledgeGarden {
         // If only one part, complete commands
         if (parts.length <= 1) {
             const partial = parts[0].toLowerCase();
-            const commands = ['cat', 'cd', 'clear', 'cowsay', 'find', 'grep', 'head', 'help', 'ls', 'man', 'matrix', 'neofetch', 'open', 'pwd', 'sudo', 'theme', 'tree', 'whoami'];
+            const commands = ['cat', 'cd', 'clear', 'cowsay', 'date', 'echo', 'env', 'find', 'gallery', 'grep', 'head', 'help', 'history', 'ls', 'man', 'matrix', 'neofetch', 'open', 'pwd', 'sudo', 'sync', 'theme', 'tree', 'uname', 'wc', 'which', 'whoami'];
             const matches = commands.filter(c => c.startsWith(partial));
             if (matches.length === 1) {
                 this.terminalInput.value = matches[0] + ' ';
@@ -854,7 +1307,10 @@ class KnowledgeGarden {
             this.terminalInput.value = parts.join(' ');
         } else {
             // Show all matches
-            const names = matches.map(m => m.type === 'dir' ? m.name + '/' : m.name);
+            const names = matches.map(m => {
+                const display = m.type === 'dir' ? m.name + '/' : m.name;
+                return this.escapeHtml(display);
+            });
             this.showOutput(names.join('  '));
 
             // Complete common prefix
@@ -995,7 +1451,11 @@ class KnowledgeGarden {
     executeCommand(input) {
         this.commandHistory.push(input);
         this.historyIndex = this.commandHistory.length;
-        localStorage.setItem('garden-history', JSON.stringify(this.commandHistory.slice(-50)));
+        try {
+            localStorage.setItem('garden-history', JSON.stringify(this.commandHistory.slice(-50)));
+        } catch (error) {
+            // Ignore storage quota issues
+        }
 
         const [cmd, ...args] = input.split(/\s+/);
 
@@ -1038,25 +1498,96 @@ class KnowledgeGarden {
                 this.executeTree(args);
                 break;
 
-            case 'help':
-                this.showOutput(`<b>Commands:</b>
-<span style="color:var(--terminal-cyan)">ls</span> [-l] [dir]       List directory contents
-<span style="color:var(--terminal-cyan)">cd</span> [dir]            Change directory
-<span style="color:var(--terminal-cyan)">pwd</span>                 Print working directory
-<span style="color:var(--terminal-cyan)">cat</span> [file]          View a note (alias: open)
-<span style="color:var(--terminal-cyan)">open</span> [file]         View a note (alias: cat)
-<span style="color:var(--terminal-cyan)">head</span> [-n N] [file]  Show first N lines of a note
-<span style="color:var(--terminal-cyan)">find</span> [pattern]      Search file names
-<span style="color:var(--terminal-cyan)">grep</span> [pattern]      Search cached file contents
-<span style="color:var(--terminal-cyan)">tree</span> [dir]          Show directory tree
-<span style="color:var(--terminal-cyan)">man</span> [cmd]           Show manual for command
-<span style="color:var(--terminal-cyan)">theme</span> [dark|light]  Toggle theme
-<span style="color:var(--terminal-cyan)">clear</span>               Clear output
-<span style="color:var(--terminal-cyan)">neofetch</span>            System info
-<span style="color:var(--terminal-cyan)">cowsay</span> [msg]        Moo
-<span style="color:var(--terminal-cyan)">matrix</span>              Enter the matrix
+            case 'echo':
+                this.executeEcho(args);
+                break;
 
-<span class="muted">Tab completion supported for commands and file names.</span>`);
+            case 'date':
+                this.showOutput(`<span style="color:var(--terminal-cyan)">${new Date().toString()}</span>`);
+                break;
+
+            case 'wc':
+                this.executeWc(args);
+                break;
+
+            case 'uname':
+                if (args.includes('-a') || args.includes('--all')) {
+                    this.showOutput('KnowledgeGarden 1.0 knowledge-garden aim WebTerminal');
+                } else {
+                    this.showOutput('KnowledgeGarden');
+                }
+                break;
+
+            case 'env':
+                this.showOutput(`<pre>USER=visitor
+HOME=/home/visitor
+PWD=~/${this.escapeHtml(this.currentPath)}
+SHELL=/bin/garden-sh
+TERM=xterm-256color
+VAULT=${this.vaultOwner}/${this.vaultRepo}
+BRANCH=${this.branch}
+LANG=en_US.UTF-8</pre>`);
+                break;
+
+            case 'history':
+                if (this.commandHistory.length === 0) {
+                    this.showOutput('<span class="muted">No command history.</span>');
+                } else {
+                    const histLines = this.commandHistory.slice(-20).map((c, i) =>
+                        `<span style="color:var(--terminal-cyan)">${String(i + 1).padStart(4)}</span>  ${this.escapeHtml(c)}`
+                    );
+                    this.showOutput('<pre>' + histLines.join('\n') + '</pre>');
+                }
+                break;
+
+            case 'which':
+                this.executeWhich(args);
+                break;
+
+            case 'touch':
+            case 'rm':
+            case 'mkdir':
+            case 'mv':
+            case 'cp':
+            case 'chmod':
+                this.showOutput(`<span style="color:var(--terminal-red)">${this.escapeHtml(cmd)}: Read-only vault. This is a web-based viewer.</span>`);
+                break;
+
+            case 'help':
+                this.showOutput(`<b>Navigation:</b>
+<span style="color:var(--terminal-cyan)">ls</span> [-l] [-a] [dir]   List directory contents
+<span style="color:var(--terminal-cyan)">cd</span> [dir]             Change directory
+<span style="color:var(--terminal-cyan)">pwd</span>                  Print working directory
+<span style="color:var(--terminal-cyan)">tree</span> [dir]           Show directory tree
+
+<b>File Viewing:</b>
+<span style="color:var(--terminal-cyan)">cat</span> [file]           View a note (alias: open)
+<span style="color:var(--terminal-cyan)">head</span> [-n N] [file]   Show first N lines of a note
+<span style="color:var(--terminal-cyan)">wc</span> [file]            Count lines/words/chars
+
+<b>Searching:</b>
+<span style="color:var(--terminal-cyan)">find</span> [pattern]       Search file names
+<span style="color:var(--terminal-cyan)">grep</span> [pattern]       Search file contents
+
+<b>System:</b>
+<span style="color:var(--terminal-cyan)">echo</span> [text]          Print text (supports $PWD, $USER, $HOME)
+<span style="color:var(--terminal-cyan)">date</span>                 Print current date/time
+<span style="color:var(--terminal-cyan)">uname</span> [-a]           System info
+<span style="color:var(--terminal-cyan)">env</span>                  Show environment variables
+<span style="color:var(--terminal-cyan)">history</span>              Show command history
+<span style="color:var(--terminal-cyan)">which</span> [cmd]          Show if command exists
+<span style="color:var(--terminal-cyan)">man</span> [cmd]            Show manual for command
+<span style="color:var(--terminal-cyan)">theme</span> [dark|light]   Toggle theme
+<span style="color:var(--terminal-cyan)">sync</span>                 Force vault refresh
+<span style="color:var(--terminal-cyan)">clear</span>                Clear output
+<span style="color:var(--terminal-cyan)">gallery</span>              Toggle card gallery view
+
+<b>Fun:</b>
+<span style="color:var(--terminal-cyan)">neofetch</span>             System splash
+<span style="color:var(--terminal-cyan)">cowsay</span> [msg]         Moo
+<span style="color:var(--terminal-cyan)">matrix</span>               Enter the matrix
+
+<span class="muted">Tab completion supported. Pipe (|) supported for chaining commands.</span>`);
                 break;
 
             case 'man':
@@ -1067,8 +1598,16 @@ class KnowledgeGarden {
                 this.setTheme(args[0]);
                 break;
 
+            case 'sync':
+                this.refreshManifestIfChanged({ manual: true, silent: false });
+                break;
+
             case 'clear':
                 this.terminalOutput.innerHTML = '';
+                break;
+
+            case 'gallery':
+                this.toggleGalleryView();
                 break;
 
             // Easter eggs
@@ -1088,7 +1627,7 @@ class KnowledgeGarden {
                 this.showOutput('<span style="color:var(--terminal-red)">Nice try!</span>');
                 break;
             default:
-                this.showOutput(`<span style="color:var(--terminal-red)">Unknown: ${this.escapeHtml(cmd)}</span>. Try 'help'`);
+                this.showOutput(`<span style="color:var(--terminal-red)">${this.escapeHtml(cmd)}: command not found</span>`);
         }
     }
 
@@ -1220,7 +1759,7 @@ class KnowledgeGarden {
                 `<span style="color:var(--terminal-cyan)">--- ${this.escapeHtml(displayName)} (first ${numLines} lines) ---</span>\n<pre>${this.escapeHtml(lines.join('\n'))}</pre>`
             );
         } catch (error) {
-            this.showOutput(`<span style="color:var(--terminal-red)">head: cannot read '${this.escapeHtml(filePath)}': ${error.message}</span>`);
+            this.showOutput(`<span style="color:var(--terminal-red)">head: cannot read '${this.escapeHtml(filePath)}': ${this.escapeHtml(error.message)}</span>`);
         }
     }
 
@@ -1361,6 +1900,295 @@ class KnowledgeGarden {
         this.showOutput('<pre>' + lines.join('\n') + '</pre>');
     }
 
+    executeEcho(args) {
+        // Simple env var expansion
+        const envVars = {
+            '$PWD': '~/' + this.currentPath,
+            '$HOME': '~',
+            '$USER': 'visitor',
+            '$SHELL': '/bin/garden-sh',
+            '$HOSTNAME': 'knowledge-garden'
+        };
+
+        let text = args.join(' ');
+        for (const [key, val] of Object.entries(envVars)) {
+            text = text.replaceAll(key, val);
+        }
+        this.showOutput(this.escapeHtml(text));
+    }
+
+    async executeWc(args) {
+        if (args.length === 0) {
+            this.showOutput('Usage: wc [filename]');
+            return;
+        }
+
+        const filePath = this.resolveFilePath(args.join(' '));
+
+        try {
+            const content = await this.fetchNote(filePath);
+            let body = content;
+            if (body.startsWith('---')) {
+                const end = body.indexOf('\n---', 3);
+                if (end !== -1) body = body.slice(end + 4);
+            }
+
+            const lines = body.split('\n').length;
+            const words = body.trim().split(/\s+/).filter(w => w.length > 0).length;
+            const chars = body.length;
+            const displayName = filePath.split('/').pop();
+
+            this.showOutput(`<pre>  ${String(lines).padStart(6)}  ${String(words).padStart(6)}  ${String(chars).padStart(6)} ${this.escapeHtml(displayName)}</pre>`);
+        } catch (error) {
+            this.showOutput(`<span style="color:var(--terminal-red)">wc: ${this.escapeHtml(filePath)}: No such file</span>`);
+        }
+    }
+
+    executeWhich(args) {
+        const knownCommands = ['ls', 'cd', 'pwd', 'cat', 'open', 'head', 'find', 'grep', 'tree', 'echo', 'date', 'wc', 'uname', 'env', 'history', 'which', 'man', 'theme', 'sync', 'clear', 'gallery', 'neofetch', 'cowsay', 'matrix', 'whoami', 'help'];
+
+        if (args.length === 0) {
+            this.showOutput('Usage: which [command]');
+            return;
+        }
+
+        const cmd = args[0].toLowerCase();
+        if (knownCommands.includes(cmd)) {
+            this.showOutput(`<span style="color:var(--terminal-green)">/usr/local/bin/${this.escapeHtml(cmd)}</span>`);
+        } else {
+            this.showOutput(`<span style="color:var(--terminal-red)">${this.escapeHtml(cmd)} not found</span>`);
+        }
+    }
+
+    executePipeline(input) {
+        // Add to command history
+        this.commandHistory.push(input);
+        this.historyIndex = this.commandHistory.length;
+        try {
+            localStorage.setItem('garden-history', JSON.stringify(this.commandHistory.slice(-50)));
+        } catch (error) { }
+
+        const stages = input.split('|').map(s => s.trim()).filter(s => s.length > 0);
+
+        if (stages.length < 2) {
+            this.executeCommand(input);
+            return;
+        }
+
+        // Execute first command and capture its output
+        const originalShowOutput = this.showOutput.bind(this);
+        let capturedOutput = '';
+
+        this.showOutput = (html) => {
+            // Strip HTML tags to get plain text for piping
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            capturedOutput = temp.textContent || temp.innerText || '';
+        };
+
+        // Execute all but the last command
+        for (let i = 0; i < stages.length - 1; i++) {
+            capturedOutput = '';
+            const [cmd, ...args] = stages[i].split(/\s+/);
+
+            switch (cmd.toLowerCase()) {
+                case 'ls': this.executeLs(args); break;
+                case 'cat':
+                    if (args[0]) {
+                        const filePath = this.resolveFilePath(args.join(' '));
+                        if (this.noteCache.has(filePath)) {
+                            capturedOutput = this.noteCache.get(filePath);
+                        }
+                    }
+                    break;
+                case 'echo': capturedOutput = args.join(' '); break;
+                case 'find': this.executeFind(args); break;
+                case 'grep': this.executeGrep(args); break;
+                case 'history':
+                    capturedOutput = this.commandHistory.slice(-20).map((c, idx) => `${idx + 1}  ${c}`).join('\n');
+                    break;
+                default:
+                    this.showOutput = originalShowOutput;
+                    this.showOutput(`<span style="color:var(--terminal-red)">Pipe error: cannot pipe '${this.escapeHtml(cmd)}'</span>`);
+                    return;
+            }
+        }
+
+        // Restore showOutput for the final command
+        this.showOutput = originalShowOutput;
+
+        // Execute last command with piped input
+        const [lastCmd, ...lastArgs] = stages[stages.length - 1].split(/\s+/);
+
+        switch (lastCmd.toLowerCase()) {
+            case 'wc': {
+                const lines = capturedOutput.split('\n').length;
+                const words = capturedOutput.trim().split(/\s+/).filter(w => w.length > 0).length;
+                const chars = capturedOutput.length;
+                this.showOutput(`<pre>  ${String(lines).padStart(6)}  ${String(words).padStart(6)}  ${String(chars).padStart(6)}</pre>`);
+                break;
+            }
+            case 'head': {
+                let n = 10;
+                const headArgs = [...lastArgs];
+                if (headArgs[0] === '-n' && headArgs[1]) {
+                    n = parseInt(headArgs[1]) || 10;
+                }
+                const headLines = capturedOutput.split('\n').slice(0, n);
+                this.showOutput('<pre>' + this.escapeHtml(headLines.join('\n')) + '</pre>');
+                break;
+            }
+            case 'grep': {
+                const pattern = lastArgs.join(' ').toLowerCase();
+                const matchedLines = capturedOutput.split('\n').filter(l => l.toLowerCase().includes(pattern));
+                if (matchedLines.length === 0) {
+                    this.showOutput(`<span class="muted">No matches for '${this.escapeHtml(pattern)}'</span>`);
+                } else {
+                    this.showOutput('<pre>' + this.escapeHtml(matchedLines.join('\n')) + '</pre>');
+                }
+                break;
+            }
+            default:
+                this.showOutput(`<span style="color:var(--terminal-red)">Pipe error: cannot pipe into '${this.escapeHtml(lastCmd)}'</span>`);
+        }
+    }
+
+    // ============================================
+    // CARD GALLERY VIEW
+    // ============================================
+
+    toggleGalleryView() {
+        const isGalleryActive = document.querySelector('.gallery-view');
+        if (isGalleryActive) {
+            // Switch back to welcome/file view
+            this.showWelcome();
+            this.loadFeaturedProjects();
+            this.showOutput('<span style="color:var(--terminal-green)">Switched to file browser view.</span>');
+        } else {
+            this.loadCardGallery();
+            this.showOutput('<span style="color:var(--terminal-green)">Switched to gallery view.</span>');
+        }
+    }
+
+    async loadCardGallery() {
+        if (!this.manifest || !this.manifest.metadata) {
+            this.contentBody.innerHTML = '<div class="muted">Loading gallery...</div>';
+            return;
+        }
+
+        const metadata = this.manifest.metadata;
+        const published = [];
+
+        for (const [path, fm] of Object.entries(metadata)) {
+            if (fm.published_to_garden !== true) continue;
+            const parts = path.split('/');
+            if (parts.some(p => this.hiddenItems.includes(p) || p.startsWith('.'))) continue;
+
+            const title = fm.title || path.split('/').pop().replace(/\.md$/, '');
+            const sortDate = this.parseDate(fm.last_published) || this.parseDate(fm.created);
+            const priority = this.getFeaturedPriorityScore(path);
+
+            published.push({ path, title, last_published: fm.last_published, created: fm.created, sortDate, priority });
+        }
+
+        // Sort by priority then date
+        published.sort((a, b) => {
+            if (a.priority !== b.priority) return a.priority - b.priority;
+            return (b.sortDate || 0) - (a.sortDate || 0);
+        });
+
+        // Fetch description snippets for top cards (max 3 concurrent)
+        const withSnippets = [];
+        const batchSize = 6;
+        for (let i = 0; i < published.length; i += batchSize) {
+            const batch = published.slice(i, i + batchSize);
+            const results = await Promise.all(batch.map(async (item) => {
+                try {
+                    const content = await this.fetchNote(item.path);
+                    let body = content;
+                    if (body.startsWith('---')) {
+                        const end = body.indexOf('\n---', 3);
+                        if (end !== -1) body = body.slice(end + 4);
+                    }
+                    // Remove markdown headers and get first meaningful text
+                    body = body.replace(/^#+\s+.*$/gm, '').trim();
+                    const snippet = body.slice(0, 150).replace(/\n/g, ' ').trim();
+                    return { ...item, snippet: snippet ? snippet + '...' : '' };
+                } catch (e) {
+                    return { ...item, snippet: '' };
+                }
+            }));
+            withSnippets.push(...results);
+        }
+
+        const cardsHtml = withSnippets.map(meta => this.renderGalleryCard(meta)).join('');
+
+        this.contentBody.innerHTML = `
+            <div class="gallery-view">
+                <div class="gallery-header">
+                    <h1>📚 Published Notes</h1>
+                    <p class="muted">All published notes from the knowledge garden, sorted by importance.</p>
+                    <button type="button" class="gallery-toggle-btn" id="galleryBackBtn">
+                        ← Back to File Browser
+                    </button>
+                </div>
+                <div class="gallery-grid">
+                    ${cardsHtml}
+                </div>
+            </div>
+        `;
+
+        // Wire up back button
+        document.getElementById('galleryBackBtn')?.addEventListener('click', () => {
+            this.showWelcome();
+            this.loadFeaturedProjects();
+        });
+
+        this.updateBreadcrumb('', { folderView: false });
+        this.statusInfo.textContent = `${withSnippets.length} published notes`;
+    }
+
+    renderGalleryCard(meta) {
+        const pathParts = meta.path.split('/');
+        const topFolder = pathParts[0];
+        const category = pathParts.length > 1 ? pathParts[1] : pathParts[0];
+        const categoryDisplay = this.escapeHtml(category.replace(/\.md$/, ''));
+        const title = this.escapeHtml(meta.title);
+        const file = this.escapeHtml(meta.path);
+        const snippet = meta.snippet ? this.escapeHtml(meta.snippet) : '';
+
+        // Category-specific accent colors
+        const categoryColors = {
+            'Projects': 'var(--terminal-blue)',
+            'Systems': 'var(--terminal-green)',
+            'Learning Journals': 'var(--terminal-yellow)',
+            'IT Projects': 'var(--terminal-cyan)',
+            'Programming Concepts': 'var(--terminal-magenta, #f5c2e7)'
+        };
+        const accentColor = categoryColors[topFolder] || 'var(--md-sys-color-primary)';
+
+        let dateHtml = '';
+        const dateVal = meta.last_published || meta.created;
+        if (dateVal) {
+            const d = this.parseDate(dateVal);
+            if (d) {
+                const formatted = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                dateHtml = `<span class="gallery-card-date">Updated ${this.escapeHtml(formatted)}</span>`;
+            }
+        }
+
+        return `
+            <button type="button" class="gallery-card note-card" data-file="${file}" aria-label="Open note: ${title}" style="--card-accent: ${accentColor}">
+                <div class="gallery-card-header">
+                    <span class="gallery-card-category" style="background: ${accentColor}20; color: ${accentColor}">${categoryDisplay}</span>
+                    ${dateHtml}
+                </div>
+                <h3 class="gallery-card-title">${title}</h3>
+                ${snippet ? `<p class="gallery-card-desc">${snippet}</p>` : ''}
+            </button>
+        `;
+    }
+
     showManPage(cmd) {
         const manPages = {
             open: `<b>open</b> [filename]
@@ -1412,6 +2240,8 @@ class KnowledgeGarden {
             theme: `<b>theme</b> [dark|light]
   Switches the color scheme.
   Example: theme dark`,
+            sync: `<b>sync</b>
+  Forces a vault sync and refreshes files/projects if changed.`,
             help: `<b>help</b>
   Shows available commands.`,
             clear: `<b>clear</b>
@@ -1456,11 +2286,12 @@ class KnowledgeGarden {
     }
 
     showCowsay(msg) {
+        const safeMsg = this.escapeHtml(msg);
         const len = msg.length;
         const border = '_'.repeat(len + 2);
         this.showOutput(`<pre style="color:var(--terminal-yellow)">
  ${border}
-< ${msg} >
+< ${safeMsg} >
  ${'-'.repeat(len + 2)}
         \\   ^__^
          \\  (oo)\\_______
@@ -1491,23 +2322,111 @@ class KnowledgeGarden {
     // GRAPH VIEW
     // ============================================
 
-    showGraph() {
-        document.getElementById('graphContainer').style.display = 'flex';
+    async showGraph() {
+        const graphContainer = document.getElementById('graphContainer');
+        const graphCanvas = document.getElementById('graphCanvas');
+        const closeButton = document.getElementById('closeGraphBtn');
+
+        this.lastFocusedElement = document.activeElement;
+        graphContainer.style.display = 'flex';
+        graphContainer.setAttribute('aria-hidden', 'false');
+
+        const d3Ready = await this.ensureD3Loaded();
+        if (!d3Ready) {
+            graphCanvas.innerHTML = '<div class="tree-error" style="padding: 20px;">Failed to load graph dependencies.</div>';
+            return;
+        }
+
         if (!window.graph) {
             window.graph = new KnowledgeGardenGraph();
-            window.graph.init('graphCanvas');
+            await window.graph.init('graphCanvas');
         }
         window.graph.show();
+        closeButton?.focus();
     }
 
     hideGraph() {
-        document.getElementById('graphContainer').style.display = 'none';
+        const graphContainer = document.getElementById('graphContainer');
+        graphContainer.style.display = 'none';
+        graphContainer.setAttribute('aria-hidden', 'true');
         window.graph?.hide();
+        if (this.lastFocusedElement && this.lastFocusedElement.focus) {
+            this.lastFocusedElement.focus();
+        } else {
+            document.getElementById('graphBtn')?.focus();
+        }
     }
 
     // ============================================
     // UTILITIES
     // ============================================
+
+    async ensureMarkedLoaded() {
+        if (typeof window.marked !== 'undefined') return true;
+        try {
+            await this.loadExternalScript(this.markedScriptUrl);
+            return typeof window.marked !== 'undefined';
+        } catch (error) {
+            console.error('Failed to load markdown parser:', error);
+            return false;
+        }
+    }
+
+    async ensureD3Loaded() {
+        if (typeof window.d3 !== 'undefined') return true;
+        try {
+            await this.loadExternalScript(this.d3ScriptUrl);
+            return typeof window.d3 !== 'undefined';
+        } catch (error) {
+            console.error('Failed to load D3:', error);
+            return false;
+        }
+    }
+
+    async loadExternalScript(src) {
+        const url = new URL(src, window.location.href);
+        if (!this.allowedScriptHosts.has(url.hostname)) {
+            throw new Error(`Blocked external script host: ${url.hostname}`);
+        }
+
+        if (window.netUtils?.loadScriptOnce) {
+            return window.netUtils.loadScriptOnce(src, { crossOrigin: 'anonymous' });
+        }
+
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = src;
+            script.async = true;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+            document.head.appendChild(script);
+        });
+    }
+
+    async fetchResponse(url, options = {}, policy = {}) {
+        if (window.netUtils?.fetchWithRetry) {
+            return window.netUtils.fetchWithRetry(url, options, policy);
+        }
+        return fetch(url, options);
+    }
+
+    async fetchJson(url, policy = {}) {
+        if (window.netUtils?.fetchJson) {
+            return window.netUtils.fetchJson(url, {}, policy);
+        }
+        const response = await this.fetchResponse(url, {}, policy);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    }
+
+    async fetchText(url, policy = {}) {
+        if (window.netUtils?.fetchText) {
+            return window.netUtils.fetchText(url, {}, policy);
+        }
+        const response = await this.fetchResponse(url, {}, policy);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.text();
+    }
 
     updateTime() {
         this.statusTime.textContent = new Date().toLocaleTimeString('en-US', {
@@ -1517,7 +2436,7 @@ class KnowledgeGarden {
     }
 
     getFriendlyError(error, type = 'file') {
-        const msg = error.message.toLowerCase();
+        const msg = String(error?.message || error || '').toLowerCase();
 
         if (msg.includes('404')) {
             return type === 'folder'
@@ -1535,7 +2454,7 @@ class KnowledgeGarden {
 
     escapeHtml(text) {
         const div = document.createElement('div');
-        div.textContent = text;
+        div.textContent = String(text ?? '');
         return div.innerHTML;
     }
 }

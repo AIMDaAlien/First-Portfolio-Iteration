@@ -19,6 +19,8 @@
 </head>
 
 <body>
+    <a class="skip-link" href="#contentViewer">Skip to main content</a>
+
     <!-- Background blobs -->
     <div class="blob-container" aria-hidden="true">
         <div class="blob blob-1"></div>
@@ -29,7 +31,7 @@
     <div class="app-container">
 
         <!-- Floating Terminal Window -->
-        <div class="floating-terminal" id="floatingTerminal">
+        <aside class="floating-terminal" id="floatingTerminal" role="complementary" aria-label="Terminal console">
             <div class="terminal-progress" aria-hidden="true">
                 <div class="terminal-progress-bar" id="terminalProgress"></div>
             </div>
@@ -55,7 +57,7 @@
                 </div>
                 <div class="terminal-output" id="terminalOutput" role="log" aria-live="polite"></div>
             </div>
-        </div>
+        </aside>
 
         <!-- Mobile overlay backdrop -->
         <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
@@ -67,7 +69,7 @@
             <aside class="sidebar" id="sidebar" aria-label="File navigation">
                 <div class="sidebar-header">
                     <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar"
-                        aria-label="Toggle sidebar">
+                        aria-label="Toggle sidebar" aria-controls="sidebar" aria-expanded="false">
                         <span aria-hidden="true">☰</span>
                     </button>
                     <span class="sidebar-title">Files</span>
@@ -83,7 +85,7 @@
             </aside>
 
             <!-- Content Viewer -->
-            <main class="content-viewer" id="contentViewer">
+            <main class="content-viewer" id="contentViewer" tabindex="-1">
                 <!-- Breadcrumb -->
                 <div class="content-breadcrumb" id="breadcrumb">
                     <span class="breadcrumb-item">~</span>
@@ -103,18 +105,23 @@
                                 <li>Use <code>cat file.md</code> to view files</li>
                                 <li>Use <code>ls</code> to list contents</li>
                             </ul>
+                            <button type="button" class="gallery-toggle-btn" id="welcomeGalleryBtn" style="margin-top: 12px;">
+                                📚 View All Notes as Cards
+                            </button>
                         </div>
 
                         <div class="featured-notes">
                             <h2>Featured Projects</h2>
                             <div class="note-cards" id="featuredNotes">
                                 <!-- Fallback content if JS fails -->
-                                <div class="note-card" data-file="Systems/Homelab/Prometheus Grafana Stack - Implementation Guide.md">
+                                <button type="button" class="note-card"
+                                    data-file="Systems/Homelab/Prometheus Grafana Stack - Implementation Guide.md"
+                                    aria-label="Open note: Prometheus Guide">
                                     <svg class="note-icon">
                                         <use href="icons-sprite.svg#icon-science"></use>
                                     </svg>
                                     <span class="note-title">Prometheus Guide</span>
-                                </div>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -123,7 +130,7 @@
         </div>
 
         <!-- Status Bar -->
-        <div class="status-bar">
+        <footer class="status-bar" role="contentinfo" aria-label="Garden status">
             <div class="status-left">
                 <span class="status-item">⎇ main</span>
                 <span class="status-item" id="statusPath">~/knowledge-garden</span>
@@ -132,13 +139,14 @@
                 <span class="status-item" id="statusInfo">Ready</span>
                 <span class="status-item" id="statusTime"></span>
             </div>
-        </div>
+        </footer>
     </div>
 
     <!-- Graph View Container (hidden by default) -->
-    <div class="graph-container" id="graphContainer" style="display: none;">
+    <div class="graph-container" id="graphContainer" style="display: none;" role="dialog" aria-modal="true"
+        aria-labelledby="graphTitle" aria-hidden="true" tabindex="-1">
         <div class="graph-header">
-            <h2 class="graph-title">Graph View</h2>
+            <h2 class="graph-title" id="graphTitle">Graph View</h2>
             <div class="graph-controls">
                 <button class="graph-control-btn" id="animateBtn">⟳ Animate</button>
                 <button class="graph-control-btn" id="closeGraphBtn">✕ Close</button>
@@ -148,8 +156,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="net-utils.js"></script>
     <script src="garden-terminal.js"></script>
     <script src="garden-graph.js"></script>
 </body>
