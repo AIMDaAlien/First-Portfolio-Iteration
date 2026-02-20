@@ -567,13 +567,18 @@ class KnowledgeGarden {
         const deduped = [];
         for (const item of published) {
             // Use the first two path segments as the project key
-            const projectKey = item.path.split('/').slice(0, 2).join('/');
-            if (seen.has(projectKey) && deduped.length >= 7) continue;
-            if (!seen.has(projectKey)) seen.add(projectKey);
+            const Math_min_len = Math.min(item.path.split('/').length, 2);
+            const projectKey = item.path.split('/').slice(0, Math_min_len).join('/');
+            
+            if (seen.has(projectKey)) continue;
+            
+            seen.add(projectKey);
             deduped.push(item);
+            
+            if (deduped.length >= 7) break;
         }
 
-        return deduped.slice(0, 7);
+        return deduped;
     }
 
     async loadFeaturedProjectsFallback(container) {
@@ -587,9 +592,31 @@ class KnowledgeGarden {
 
             const metas = await this.fetchFeaturedMetadata(candidatePaths.slice(0, 120));
             const published = metas.filter(m => m.published_to_garden === true);
-            published.sort((a, b) => (b.sortDate || 0) - (a.sortDate || 0));
+            
+            // Apply priority
+            published.forEach(meta => {
+                meta.priority = this.getFeaturedPriorityScore(meta.path);
+            });
+            
+            published.sort((a, b) => {
+                if (a.priority !== b.priority) return a.priority - b.priority;
+                return (b.sortDate || 0) - (a.sortDate || 0);
+            });
 
-            const featured = published.slice(0, 6);
+            // Deduplicate by project prefix
+            const seen = new Set();
+            const featured = [];
+            for (const item of published) {
+                const Math_min_len = Math.min(item.path.split('/').length, 2);
+                const projectKey = item.path.split('/').slice(0, Math_min_len).join('/');
+                
+                if (seen.has(projectKey)) continue;
+                
+                seen.add(projectKey);
+                featured.push(item);
+                
+                if (featured.length >= 7) break;
+            }
 
             if (featured.length === 0) {
                 container.innerHTML = '<div class="muted">No featured projects found.</div>';
