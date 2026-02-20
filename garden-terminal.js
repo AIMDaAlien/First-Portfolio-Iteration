@@ -641,6 +641,34 @@ class KnowledgeGarden {
         return Infinity;
     }
 
+    /**
+     * Determines a consistent accent color for a project/note based on its path.
+     */
+    getProjectColor(path) {
+        const topFolder = path.split('/')[0];
+        
+        // Check for specific sub-projects first
+        if (path.includes('Teardown Cafe')) return 'var(--terminal-blue)';
+        if (path.includes('The Penthouse')) return 'var(--terminal-magenta, #f5c2e7)';
+        if (path.includes('TrueNAS')) return 'var(--terminal-green)';
+        if (path.includes('Privacy Hardening')) return 'var(--terminal-yellow)';
+        if (path.includes('Prometheus') || path.includes('Grafana')) return 'var(--terminal-cyan)';
+        if (path.includes('3D Printing')) return 'var(--terminal-yellow)';
+        if (path.includes('Pi-hole')) return 'var(--terminal-cyan)';
+        if (path.includes('Router Configuration')) return 'var(--terminal-cyan)';
+        
+        // Fallback to top-level folder colors
+        const categoryColors = {
+            'Projects': 'var(--terminal-blue)',
+            'Systems': 'var(--terminal-green)',
+            'Learning Journals': 'var(--terminal-yellow)',
+            'IT Projects': 'var(--terminal-cyan)',
+            'Programming Concepts': 'var(--terminal-magenta, #f5c2e7)'
+        };
+        
+        return categoryColors[topFolder] || 'var(--md-sys-color-primary)';
+    }
+
     async fetchFeaturedMetadata(paths) {
         const metas = [];
 
@@ -759,14 +787,16 @@ class KnowledgeGarden {
             }
         }
 
+        const accentColor = this.getProjectColor(meta.path);
+
         return `
-            <button type="button" class="note-card" data-file="${file}" aria-label="Open note: ${title}">
-                <svg class="note-icon">
+            <button type="button" class="note-card" data-file="${file}" aria-label="Open note: ${title}" style="--card-accent: ${accentColor}">
+                <svg class="note-icon" style="fill: ${accentColor}">
                     <use href="icons-sprite.svg#icon-${iconKey}"></use>
                 </svg>
                 <div class="note-card-info">
-                    <span class="note-title">${title}</span>
-                    <span class="note-card-category">${categoryDisplay}</span>
+                    <span class="note-title" style="color: ${accentColor}">${title}</span>
+                    <span class="note-card-category" style="color: ${accentColor}; opacity: 0.8">${categoryDisplay}</span>
                     ${dateHtml}
                 </div>
             </button>
@@ -964,6 +994,7 @@ class KnowledgeGarden {
         button.addEventListener('click', () => {
             if (!path) {
                 this.showWelcome();
+                this.loadFeaturedProjects();
             } else {
                 this.showFolderContents(path);
             }
@@ -2150,22 +2181,13 @@ LANG=en_US.UTF-8</pre>`);
 
     renderGalleryCard(meta) {
         const pathParts = meta.path.split('/');
-        const topFolder = pathParts[0];
         const category = pathParts.length > 1 ? pathParts[1] : pathParts[0];
         const categoryDisplay = this.escapeHtml(category.replace(/\.md$/, ''));
         const title = this.escapeHtml(meta.title);
         const file = this.escapeHtml(meta.path);
         const snippet = meta.snippet ? this.escapeHtml(meta.snippet) : '';
 
-        // Category-specific accent colors
-        const categoryColors = {
-            'Projects': 'var(--terminal-blue)',
-            'Systems': 'var(--terminal-green)',
-            'Learning Journals': 'var(--terminal-yellow)',
-            'IT Projects': 'var(--terminal-cyan)',
-            'Programming Concepts': 'var(--terminal-magenta, #f5c2e7)'
-        };
-        const accentColor = categoryColors[topFolder] || 'var(--md-sys-color-primary)';
+        const accentColor = this.getProjectColor(meta.path);
 
         let dateHtml = '';
         const dateVal = meta.last_published || meta.created;
@@ -2183,7 +2205,7 @@ LANG=en_US.UTF-8</pre>`);
                     <span class="gallery-card-category" style="background: ${accentColor}20; color: ${accentColor}">${categoryDisplay}</span>
                     ${dateHtml}
                 </div>
-                <h3 class="gallery-card-title">${title}</h3>
+                <h3 class="gallery-card-title" style="color: ${accentColor}">${title}</h3>
                 ${snippet ? `<p class="gallery-card-desc">${snippet}</p>` : ''}
             </button>
         `;
