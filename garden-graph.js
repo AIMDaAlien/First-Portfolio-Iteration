@@ -80,11 +80,10 @@ class KnowledgeGardenGraph {
     async fetchGraphData() {
         try {
             // Get full tree
-            const treeRes = await fetch(
-                `https://api.github.com/repos/${this.vaultOwner}/${this.vaultRepo}/git/trees/main?recursive=1`
+            const treeData = await this.fetchJson(
+                `https://api.github.com/repos/${this.vaultOwner}/${this.vaultRepo}/git/trees/main?recursive=1`,
+                { timeoutMs: 12000, retries: 2 }
             );
-            if (!treeRes.ok) throw new Error('API failed');
-            const treeData = await treeRes.json();
 
             // Collect all markdown files
             const mdFiles = (treeData.tree || []).filter(item => {
@@ -136,11 +135,25 @@ class KnowledgeGardenGraph {
                 await Promise.all(batch.map(file => this.parseFileLinks(file.path, linkSet)));
             }
 
-            // Update connection counts
+            // Build a degree map in one pass (O(links))
+            const degreeMap = new Map();
+            const bump = (nodeId) => {
+                degreeMap.set(nodeId, (degreeMap.get(nodeId) || 0) + 1);
+            };
+
+            this.links.forEach(link => {
+                const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+                const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+                bump(sourceId);
+                bump(targetId);
+            });
+
             this.nodes.forEach(node => {
-                node.connections = this.links.filter(l =>
-                    l.source === node.id || l.target === node.id
-                ).length;
+                if (node.isSun) {
+                    node.connections = Math.max(node.connections || 0, degreeMap.get(node.id) || 0);
+                } else {
+                    node.connections = degreeMap.get(node.id) || 0;
+                }
             });
 
 
@@ -157,7 +170,7 @@ class KnowledgeGardenGraph {
             const encodedPath = filePath.split('/').map(s => encodeURIComponent(s)).join('/');
             const url = `https://raw.githubusercontent.com/${this.vaultOwner}/${this.vaultRepo}/main/${encodedPath}`;
 
-            const res = await fetch(url);
+            const res = await this.fetchResponse(url, {}, { timeoutMs: 10000, retries: 1 });
             if (!res.ok) return;
 
             const content = await res.text();
@@ -184,6 +197,22 @@ class KnowledgeGardenGraph {
         } catch (e) {
             // Skip errors silently
         }
+    }
+
+    async fetchResponse(url, options = {}, policy = {}) {
+        if (window.netUtils?.fetchWithRetry) {
+            return window.netUtils.fetchWithRetry(url, options, policy);
+        }
+        return fetch(url, options);
+    }
+
+    async fetchJson(url, policy = {}) {
+        if (window.netUtils?.fetchJson) {
+            return window.netUtils.fetchJson(url, {}, policy);
+        }
+        const res = await this.fetchResponse(url, {}, policy);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
     }
 
     getNodeColor(node) {
@@ -231,16 +260,34 @@ class KnowledgeGardenGraph {
         const folders = [...new Set(this.nodes.map(n => n.folder))].filter(f => f !== 'root');
         const legend = document.createElement('div');
         legend.className = 'graph-legend';
-        legend.innerHTML = `
-            <div class="legend-title">Folders</div>
-            ${folders.map(folder => `
-                <div class="legend-item">
-                    <span class="legend-color" style="background:${this.folderColors[folder] || '#A78BFA'}"></span>
-                    <span class="legend-label">${folder}</span>
-                </div>
-            `).join('')}
-            <div class="legend-stats">${this.nodes.length} notes • ${this.links.length} links</div>
-        `;
+
+        const title = document.createElement('div');
+        title.className = 'legend-title';
+        title.textContent = 'Folders';
+        legend.appendChild(title);
+
+        folders.forEach(folder => {
+            const item = document.createElement('div');
+            item.className = 'legend-item';
+
+            const color = document.createElement('span');
+            color.className = 'legend-color';
+            color.style.background = this.folderColors[folder] || '#A78BFA';
+
+            const label = document.createElement('span');
+            label.className = 'legend-label';
+            label.textContent = folder;
+
+            item.appendChild(color);
+            item.appendChild(label);
+            legend.appendChild(item);
+        });
+
+        const stats = document.createElement('div');
+        stats.className = 'legend-stats';
+        stats.textContent = `${this.nodes.length} notes • ${this.links.length} links`;
+        legend.appendChild(stats);
+
         this.container.appendChild(legend);
     }
 
@@ -347,8 +394,12 @@ class KnowledgeGardenGraph {
     }
 
     showTooltip(event, node) {
+        this.tooltip.html('');
+        this.tooltip.append('strong').text(node.name);
+        this.tooltip.append('div').text(node.folder);
+        this.tooltip.append('div').text(`${node.connections} links`);
+
         this.tooltip
-            .html(`<strong>${node.name}</strong><br>${node.folder}<br>${node.connections} links`)
             .style('left', (event.pageX + 10) + 'px')
             .style('top', (event.pageY - 10) + 'px')
             .style('opacity', 1);

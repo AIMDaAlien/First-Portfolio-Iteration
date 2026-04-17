@@ -31,8 +31,25 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Add hover handlers
         document.querySelectorAll('#contact .redacted').forEach(element => {
+            element.setAttribute('tabindex', '0');
+            element.setAttribute('role', 'button');
+            element.setAttribute('aria-expanded', 'false');
+            element.setAttribute('aria-label', 'Reveal redacted contact information');
             element.addEventListener('mouseenter', revealOnHover);
             element.addEventListener('mouseleave', hideOnLeave);
+            element.addEventListener('focus', revealOnHover);
+            element.addEventListener('blur', hideOnLeave);
+            element.addEventListener('click', revealOnHover);
+            element.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    if (element.classList.contains('revealed')) {
+                        hideOnLeave({ target: element });
+                    } else {
+                        revealOnHover({ target: element });
+                    }
+                }
+            });
         });
     }
     
@@ -40,14 +57,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const element = e.target;
         const originalContent = element.getAttribute('data-content');
         
-        if (originalContent && !element.classList.contains('revealed')) {
+        if (originalContent && !element.classList.contains('revealed') && !element.classList.contains('revealing')) {
             element.classList.add('revealing');
+            element.setAttribute('aria-expanded', 'true');
             
             // Matrix decode effect
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@.-_';
             const contentLength = originalContent.length;
             let iterations = 0;
             const maxIterations = 20;
+
+            if (element._decodeInterval) {
+                clearInterval(element._decodeInterval);
+            }
             
             const interval = setInterval(() => {
                 element.textContent = originalContent
@@ -64,25 +86,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (iterations >= contentLength) {
                     clearInterval(interval);
+                    element._decodeInterval = null;
                     element.textContent = originalContent;
                     element.classList.remove('revealing');
                     element.classList.add('revealed');
-                    element.setAttribute('title', '🔓 DECLASSIFIED - Hover away to re-secure');
+                    element.setAttribute('title', 'Revealed. Move focus away to hide.');
                 }
             }, 50);
+            element._decodeInterval = interval;
         }
     }
     
     function hideOnLeave(e) {
         const element = e.target;
+
+        if (element._decodeInterval) {
+            clearInterval(element._decodeInterval);
+            element._decodeInterval = null;
+        }
         
         if (element.classList.contains('revealed')) {
             element.style.transition = 'all 0.3s ease-out';
             element.style.opacity = '0.5';
+            element.setAttribute('aria-expanded', 'false');
             
             setTimeout(() => {
                 element.classList.remove('revealed');
                 const content = element.getAttribute('data-content');
+                if (!content) return;
                 element.textContent = content.includes('@') ? 
                     '[REDACTED EMAIL]' : 
                     content.match(/\d{3}[-.]?\d{3}[-.]?\d{4}/) ? 
@@ -91,6 +122,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 element.style.opacity = '1';
                 element.removeAttribute('title');
             }, 300);
+        } else if (element.classList.contains('revealing')) {
+            element.classList.remove('revealing');
+            element.setAttribute('aria-expanded', 'false');
+            const content = element.getAttribute('data-content');
+            if (!content) return;
+            element.textContent = content.includes('@') ?
+                '[REDACTED EMAIL]' :
+                content.match(/\d{3}[-.]?\d{3}[-.]?\d{4}/) ?
+                '[REDACTED PHONE]' :
+                '[REDACTED]';
         }
     }
 });
