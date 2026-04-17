@@ -23,6 +23,8 @@
 </head>
 
 <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+
     <div class="particles-container" id="particles-container"></div>
 
     <!-- Load SVG Sprites -->
@@ -30,13 +32,13 @@
         <object data="icons-sprite.svg" type="image/svg+xml" id="svg-sprite"></object>
     </div>
 
-    <div id="loader">
+    <div id="loader" aria-hidden="true">
         <p>Your system does not seem to be efficient enough if you are able to read this whole sentence. (>_<) </p>
                 loading...
     </div>
 
     <!-- BIOS Boot Screen -->
-    <div id="bios-screen">
+    <div id="bios-screen" aria-hidden="true">
         <div class="bios-content">
             <p class="bios-line" data-delay="0">AMI BIOS v4.20.69</p>
             <p class="bios-line" data-delay="150">Copyright (C) 2024 American Megatrends, Inc.</p>
@@ -51,23 +53,24 @@
         </div>
     </div>
 
-    <div id="startup-intro">
+    <div id="startup-intro" aria-hidden="true">
         <p id="startup-quote">"Aim at nothing, and you'll hit it every time"</p>
         <p id="startup-quoter">- Zig Ziglar</p>
     </div>
 
 
 
-    <div id="main-content" style="display: none;">
+    <main id="main-content" style="display: none;" tabindex="-1">
 
-        <nav id="main-nav">
+        <nav id="main-nav" aria-label="Primary">
             <div class="nav-logo">Aim</div>
-            <button class="hamburger-menu" aria-label="Toggle navigation menu" aria-expanded="false">
+            <button class="hamburger-menu" aria-label="Toggle navigation menu" aria-expanded="false"
+                aria-controls="primary-navigation">
                 <span></span>
                 <span></span>
                 <span></span>
             </button>
-            <ul>
+            <ul id="primary-navigation">
                 <li><a href="#hero" class="nav-link">Home</a></li>
                 <li><a href="#about" class="nav-link">About</a></li>
                 <li><a href="#skills" class="nav-link">Skills</a></li>
@@ -150,7 +153,6 @@
             </div>
         </section>
 
-        <!-- M3 BALANCED SKILLS SECTION -->
         <section id="skills" class="content-section">
             <h2 class="section-title">Skills & Expertise</h2>
             <div class="skills-grid">
@@ -165,7 +167,7 @@
                             <h3>Hardware & Software</h3>
                         </div>
                     </div>
-                    <p>PC building, laptop repair, component troubleshooting, performance optimization, diagnostics</p>
+                    <p>PC building, laptop repair, component diagnostics, performance optimization, enterprise storage, NAS configuration</p>
                 </div>
                 <div class="skill-category skill-primary animate-on-scroll stagger">
                     <div class="skill-header">
@@ -175,23 +177,10 @@
                             </svg>
                         </div>
                         <div>
-                            <h3>Operating Systems</h3>
+                            <h3>Self-Hosted Infrastructure</h3>
                         </div>
                     </div>
-                    <p>Windows optimization, Linux distributions, Virtual machines</p>
-                </div>
-                <div class="skill-category animate-on-scroll stagger">
-                    <div class="skill-header">
-                        <div class="skill-icon-wrapper">
-                            <svg>
-                                <use href="icons-sprite.svg#icon-groups"></use>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3>Professional Experience</h3>
-                        </div>
-                    </div>
-                    <p>Team management, inventory control, technical support, process improvement</p>
+                    <p>TrueNAS, Docker Compose, Caddy reverse proxy, GitHub Actions CI/CD, Linux server management, DDNS and remote access</p>
                 </div>
                 <div class="skill-category animate-on-scroll stagger">
                     <div class="skill-header">
@@ -201,10 +190,23 @@
                             </svg>
                         </div>
                         <div>
-                            <h3>Emerging Tech</h3>
+                            <h3>AI Orchestration</h3>
                         </div>
                     </div>
-                    <p>Homelab setup, NAS configuration, server management, 3D printing</p>
+                    <p>Multi-model delegation workflows: assigning tasks to specialized agents by domain, gated handoffs with evidence and review stages, structured planning and closeout documentation</p>
+                </div>
+                <div class="skill-category animate-on-scroll stagger">
+                    <div class="skill-header">
+                        <div class="skill-icon-wrapper">
+                            <svg>
+                                <use href="icons-sprite.svg#icon-groups"></use>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3>Operations & Management</h3>
+                        </div>
+                    </div>
+                    <p>Team leadership, inventory control, process improvement, technical support, quality assurance</p>
                 </div>
             </div>
         </section>
@@ -264,15 +266,17 @@
                     </div>
 
                     <p class="experience-description">
-                        Complete data labeling tasks for machine learning and AI training projects. Execute precise
-                        annotation work across multiple platforms while maintaining high quality standards.
+                        Multi-modal LLM evaluation and data annotation across text, image, audio, and video pipelines.
+                        Work includes preference labeling, ELO/H2H comparative ranking, and quality assurance for AI
+                        training datasets across platforms including Prolific, Mindrift, and Alignerr.
                     </p>
 
                     <div class="experience-tags">
-                        <span class="experience-tag">Data Labeling</span>
-                        <span class="experience-tag">Quality Assurance</span>
-                        <span class="experience-tag">Attention to Detail</span>
-                        <span class="experience-tag">AI Training</span>
+                        <span class="experience-tag">LLM Evaluation</span>
+                        <span class="experience-tag">Multi-modal Annotation</span>
+                        <span class="experience-tag">Preference Labeling</span>
+                        <span class="experience-tag">RLHF</span>
+                        <span class="experience-tag">AI Training Pipelines</span>
                     </div>
                 </div>
             </div>
@@ -281,38 +285,83 @@
         <section id="projects" class="content-section">
             <h2 class="section-title">Technical Projects</h2>
             <div class="projects-grid">
+
                 <div class="project-card animate-on-scroll stagger">
                     <div class="project-header">
                         <div class="project-icon"><svg aria-hidden="true">
-                                <use href="icons-sprite.svg#icon-shield"></use>
+                                <use href="icons-sprite.svg#icon-code"></use>
                             </svg></div>
                         <div class="project-info">
-                            <h3>Pi-hole Network Security</h3>
+                            <h3>The Penthouse</h3>
+                            <div class="project-status">
+                                <div class="status-indicator active"></div>
+                                <span>Live</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="project-description">Privacy-first social app built through 3 full iterations, now live
+                        as a Progressive Web App. Orchestrated across multiple specialized AI agents — backend,
+                        frontend, and release gate each owned by a dedicated model with gated handoff protocols.
+                        Deployed on a self-hosted TrueNAS stack with Caddy, Docker Compose, and nightly automated
+                        backups.</p>
+
+                    <div class="tech-stack">
+                        <span class="tech-tag">Progressive Web App</span>
+                        <span class="tech-tag">Fastify + PostgreSQL</span>
+                        <span class="tech-tag">Socket.IO</span>
+                        <span class="tech-tag">TrueNAS</span>
+                        <span class="tech-tag">Docker Compose</span>
+                        <span class="tech-tag">AI Orchestration</span>
+                    </div>
+
+                    <div class="project-achievements">
+                        <h4>Key Achievements:</h4>
+                        <ul>
+                            <li>Live production at penthouse.blog with HTTPS, realtime chat, and Android push notifications</li>
+                            <li>Multi-agent delegation: specialized models own distinct concerns with evidence-gated handoffs</li>
+                            <li>Invite-only auth, admin moderation suite, media uploads, and PWA install flow</li>
+                            <li>3 iterations — native Android APK to PWA reduces install footprint by ~50x</li>
+                        </ul>
+                    </div>
+
+                    <div class="complexity-meter">
+                        <div class="complexity-fill expert"></div>
+                    </div>
+                    <div class="complexity-label">Complexity: Expert</div>
+                    <a href="https://penthouse.blog" target="_blank" rel="noopener noreferrer" class="project-link">Visit penthouse.blog →</a>
+                </div>
+
+                <div class="project-card animate-on-scroll stagger">
+                    <div class="project-header">
+                        <div class="project-icon"><svg aria-hidden="true">
+                                <use href="icons-sprite.svg#icon-science"></use>
+                            </svg></div>
+                        <div class="project-info">
+                            <h3>Aim's 3D Print Shoppe</h3>
                             <div class="project-status">
                                 <div class="status-indicator active"></div>
                                 <span>Active</span>
                             </div>
                         </div>
                     </div>
-                    <p class="project-description">Deployed DNS-level ad blocking using Raspberry Pi 3B+ with Unbound
-                        recursive DNS resolver. Integrated with WireGuard VPN for complete network privacy protection.
-                    </p>
+                    <p class="project-description">Small print-on-demand business running commission orders and
+                        MakerWorld listings. Includes a custom Astro 5 storefront with a periwinkle/lavender brand
+                        identity, a local Nextdoor presence, and a lightweight quote-to-delivery workflow.</p>
 
                     <div class="tech-stack">
-                        <span class="tech-tag">Raspberry Pi</span>
-                        <span class="tech-tag">Pi-hole</span>
-                        <span class="tech-tag">Unbound DNS</span>
-                        <span class="tech-tag">WireGuard VPN</span>
-                        <span class="tech-tag">Linux</span>
+                        <span class="tech-tag">Astro 5</span>
+                        <span class="tech-tag">Bambu Lab P1S</span>
+                        <span class="tech-tag">MakerWorld</span>
+                        <span class="tech-tag">Business Operations</span>
                     </div>
 
                     <div class="project-achievements">
                         <h4>Key Achievements:</h4>
                         <ul>
-                            <li>Blocked 40,000+ DNS queries daily with 15% block rate</li>
-                            <li>Zero-logging privacy configuration</li>
-                            <li>VPN integration for remote protection</li>
-                            <li>Custom blocklist optimization</li>
+                            <li>Custom storefront with documented commission workflow from quote to delivery</li>
+                            <li>Active MakerWorld listings for gardening accessories and decorative items</li>
+                            <li>Local customer acquisition via Nextdoor with real orders fulfilled</li>
+                            <li>End-to-end ownership: design, print, quality check, and delivery</li>
                         </ul>
                     </div>
 
@@ -320,8 +369,7 @@
                         <div class="complexity-fill intermediate"></div>
                     </div>
                     <div class="complexity-label">Complexity: Intermediate</div>
-                    <a href="https://teardown.cafe" target="_blank" rel="noopener noreferrer" class="project-link">View
-                        on Teardown Café →</a>
+                    <a href="https://aim3dprints.com" target="_blank" rel="noopener noreferrer" class="project-link">Visit aim3dprints.com →</a>
                 </div>
 
                 <div class="project-card animate-on-scroll stagger">
@@ -370,6 +418,49 @@
                 <div class="project-card animate-on-scroll stagger">
                     <div class="project-header">
                         <div class="project-icon"><svg aria-hidden="true">
+                                <use href="icons-sprite.svg#icon-shield"></use>
+                            </svg></div>
+                        <div class="project-info">
+                            <h3>Pi-hole Network Security</h3>
+                            <div class="project-status">
+                                <div class="status-indicator active"></div>
+                                <span>Active</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="project-description">Deployed DNS-level ad blocking using Raspberry Pi 3B+ with Unbound
+                        recursive DNS resolver. Integrated with WireGuard VPN for complete network privacy protection.
+                    </p>
+
+                    <div class="tech-stack">
+                        <span class="tech-tag">Raspberry Pi</span>
+                        <span class="tech-tag">Pi-hole</span>
+                        <span class="tech-tag">Unbound DNS</span>
+                        <span class="tech-tag">WireGuard VPN</span>
+                        <span class="tech-tag">Linux</span>
+                    </div>
+
+                    <div class="project-achievements">
+                        <h4>Key Achievements:</h4>
+                        <ul>
+                            <li>Blocked 40,000+ DNS queries daily with 15% block rate</li>
+                            <li>Zero-logging privacy configuration</li>
+                            <li>VPN integration for remote protection</li>
+                            <li>Custom blocklist optimization</li>
+                        </ul>
+                    </div>
+
+                    <div class="complexity-meter">
+                        <div class="complexity-fill intermediate"></div>
+                    </div>
+                    <div class="complexity-label">Complexity: Intermediate</div>
+                    <a href="https://teardown.cafe" target="_blank" rel="noopener noreferrer" class="project-link">View
+                        on Teardown Café →</a>
+                </div>
+
+                <div class="project-card animate-on-scroll stagger">
+                    <div class="project-header">
+                        <div class="project-icon"><svg aria-hidden="true">
                                 <use href="icons-sprite.svg#icon-phone-android"></use>
                             </svg></div>
                         <div class="project-info">
@@ -410,48 +501,6 @@
                         on Teardown Café →</a>
                 </div>
 
-                <div class="project-card animate-on-scroll stagger">
-                    <div class="project-header">
-                        <div class="project-icon"><svg aria-hidden="true">
-                                <use href="icons-sprite.svg#icon-router"></use>
-                            </svg></div>
-                        <div class="project-info">
-                            <h3>Router Optimization & Hardening</h3>
-                            <div class="project-status">
-                                <div class="status-indicator active"></div>
-                                <span>Active</span>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="project-description">Comprehensive TP-Link router optimization for performance and
-                        privacy. Systematic configuration of DNS, wireless settings, ALG management, and security
-                        hardening with documented methodology.</p>
-
-                    <div class="tech-stack">
-                        <span class="tech-tag">TP-Link</span>
-                        <span class="tech-tag">DNS Privacy</span>
-                        <span class="tech-tag">QoS</span>
-                        <span class="tech-tag">MU-MIMO</span>
-                        <span class="tech-tag">Network Security</span>
-                    </div>
-
-                    <div class="project-achievements">
-                        <h4>Optimization Results:</h4>
-                        <ul>
-                            <li>Privacy-focused DNS configuration with custom servers</li>
-                            <li>Wireless performance optimization (Airtime Fairness, Beamforming)</li>
-                            <li>Disabled unnecessary ALG settings for cleaner NAT traversal</li>
-                            <li>Comprehensive security hardening with cloud service isolation</li>
-                        </ul>
-                    </div>
-
-                    <div class="complexity-meter">
-                        <div class="complexity-fill intermediate"></div>
-                    </div>
-                    <div class="complexity-label">Complexity: Intermediate</div>
-                    <a href="https://teardown.cafe" target="_blank" rel="noopener noreferrer" class="project-link">View
-                        on Teardown Café →</a>
-                </div>
             </div>
         </section>
 
@@ -463,18 +512,28 @@
             <div class="knowledge-garden-container">
                 <div class="knowledge-garden-content">
                     <h3>Explore the Knowledge Garden</h3>
-                    <p class="garden-description">A comprehensive collection of technical documentation, project guides,
-                        and system configurations. Over 70+ curated notes covering homelab implementations, privacy
-                        configurations, and infrastructure optimizations.</p>
+                    <p class="garden-description">Technical documentation, project build journals, and operational
+                        runbooks covering the complete arc from hardware homelab to live app deployment. Includes
+                        self-hosting ops guides, AI orchestration workflows, and a step-by-step build history for
+                        The Penthouse.</p>
 
                     <div class="garden-highlights">
                         <div class="garden-highlight-item">
                             <span class="highlight-icon"><svg aria-hidden="true">
-                                    <use href="icons-sprite.svg#icon-homelab"></use>
+                                    <use href="icons-sprite.svg#icon-code"></use>
                                 </svg></span>
                             <div>
-                                <h4>Homelab Projects</h4>
-                                <p>Detailed guides on Pi-hole, TrueNAS, and enterprise storage configurations</p>
+                                <h4>App Development</h4>
+                                <p>The Penthouse build journal — 3 iterations, architecture decisions, AI orchestration workflow, and production deployment</p>
+                            </div>
+                        </div>
+                        <div class="garden-highlight-item">
+                            <span class="highlight-icon"><svg aria-hidden="true">
+                                    <use href="icons-sprite.svg#icon-storage"></use>
+                                </svg></span>
+                            <div>
+                                <h4>Self-Hosted Infrastructure</h4>
+                                <p>TrueNAS deployment runbooks, Docker Compose ops, DDNS, SSH hardening, and disk management</p>
                             </div>
                         </div>
                         <div class="garden-highlight-item">
@@ -482,17 +541,8 @@
                                     <use href="icons-sprite.svg#icon-shield"></use>
                                 </svg></span>
                             <div>
-                                <h4>Privacy & Security</h4>
-                                <p>GrapheneOS migration, router hardening, and network optimization documentation</p>
-                            </div>
-                        </div>
-                        <div class="garden-highlight-item">
-                            <span class="highlight-icon"><svg aria-hidden="true">
-                                    <use href="icons-sprite.svg#icon-code"></use>
-                                </svg></span>
-                            <div>
-                                <h4>Programming & Systems</h4>
-                                <p>Python fundamentals, C programming, and computer science concepts</p>
+                                <h4>Privacy & Homelab</h4>
+                                <p>GrapheneOS migration, Pi-hole setup, router hardening, and WireGuard VPN configuration</p>
                             </div>
                         </div>
                     </div>
@@ -531,7 +581,6 @@
             <h2 class="section-title">Want to Chat?</h2>
             <div class="contact-info">
                 <p>Email: <a href="mailto:amasud.tech@gmail.com">amasud.tech@gmail.com</a></p>
-                <p>Phone: <a href="tel:571-866-3024">571-866-3024</a></p>
             </div>
             <a href="Abdullah_Masud_Resume.pdf" download class="resume-download-btn">
                 <svg aria-hidden="true">
@@ -565,10 +614,11 @@
             </div>
         </footer>
 
-    </div>
+    </main>
 
     <div id="cursor-aura"></div>
 
+    <script src="net-utils.js" defer></script>
     <script src="script.js" defer></script>
     <script src="terminal.js" defer></script>
 </body>

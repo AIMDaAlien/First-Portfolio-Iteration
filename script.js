@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (heroSubtitle) {
                             heroSubtitle.style.opacity = '1';
                             heroSubtitle.style.transform = 'translateY(0) scale(1)';
-                            typeSubtitle('Aspiring IT Professional • Systems Optimization');
+                            typeSubtitle('Builder • Systems & AI Orchestration');
                         }
                         if (scrollIndicator) {
                             scrollIndicator.style.opacity = '1';
@@ -160,6 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (hamburgerMenu && mobileNavUl && hamburgerMenu.classList.contains('active')) {
                 hamburgerMenu.classList.remove('active');
                 mobileNavUl.classList.remove('active');
+                hamburgerMenu.setAttribute('aria-expanded', 'false');
             }
         });
     });
@@ -222,7 +223,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Optimized Cursor Aura ---
-    if (cursorAura) {
+    const canUseCustomCursor = window.matchMedia('(pointer: fine)').matches &&
+        !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (cursorAura && canUseCustomCursor) {
         cursorAura.style.background = 'rgba(187,195,255,0.7)';
         cursorAura.style.boxShadow = '0 0 16px 4px rgba(187,195,255,0.5)';
         document.body.style.cursor = 'none';
@@ -278,6 +282,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('mouseenter', () => {
             cursorAura.style.opacity = '0.9';
         });
+    } else if (cursorAura) {
+        cursorAura.style.display = 'none';
+        document.body.style.removeProperty('cursor');
     }
 
     // --- Throttled Card Interactions (Ripple + Tilt) ---
@@ -383,97 +390,186 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// --- Dynamic Knowledge Garden Stats from GitHub API ---
-async function updateGardenStats() {
-    const VAULT_OWNER = 'AIMDaAlien';
-    const VAULT_REPO = 'Obsidian-Vault';
-    const HIDDEN = ['.obsidian', '.stfolder', '.DS_Store', '.gitignore', 'Myself', 'Business', 'images'];
-
-    // Update "Last Updated" with relative date
-    const lastUpdatedEl = document.getElementById('gardenLastUpdated');
-    if (lastUpdatedEl && lastUpdatedEl.dataset.updated) {
-        const updatedDate = new Date(lastUpdatedEl.dataset.updated);
-        const now = new Date();
-        const diffMs = now - updatedDate;
-        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-
-        let relativeText;
-        if (diffDays === 0) {
-            if (diffHours < 1) {
-                relativeText = 'Updated just now';
-            } else if (diffHours === 1) {
-                relativeText = 'Updated 1 hour ago';
-            } else {
-                relativeText = `Updated ${diffHours} hours ago`;
-            }
-        } else if (diffDays === 1) {
-            relativeText = 'Updated yesterday';
-        } else if (diffDays < 7) {
-            relativeText = `Updated ${diffDays} days ago`;
-        } else if (diffDays < 30) {
-            const weeks = Math.floor(diffDays / 7);
-            relativeText = weeks === 1 ? 'Updated 1 week ago' : `Updated ${weeks} weeks ago`;
-        } else {
-            relativeText = `Updated ${updatedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-        }
-        lastUpdatedEl.textContent = relativeText;
+async function fetchJsonWithPolicy(url, policy = {}) {
+    if (window.netUtils?.fetchJson) {
+        return window.netUtils.fetchJson(url, {}, policy);
     }
 
-    // Fetch stats from GitHub API
-    try {
-        const response = await fetch(`https://api.github.com/repos/${VAULT_OWNER}/${VAULT_REPO}/git/trees/main?recursive=1`);
-        if (!response.ok) throw new Error('Failed to fetch');
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
+}
 
-        const data = await response.json();
-        const tree = data.tree || [];
+let gardenStatsInFlight = null;
 
-        // Count .md files (excluding hidden folders)
-        let noteCount = 0;
-        const topFolders = new Set();
+// --- Dynamic Knowledge Garden Stats from GitHub API ---
+async function updateGardenStats() {
+    if (gardenStatsInFlight) return gardenStatsInFlight;
 
-        tree.forEach(item => {
-            const pathParts = item.path.split('/');
-            const isHidden = pathParts.some(part => HIDDEN.includes(part) || part.startsWith('.'));
+    gardenStatsInFlight = (async () => {
+        const VAULT_OWNER = 'AIMDaAlien';
+        const VAULT_REPO = 'Obsidian-Vault';
+        const HIDDEN = ['.obsidian', '.stfolder', '.DS_Store', '.gitignore', 'Myself', 'Business', 'images'];
+        const noteCountEl = document.getElementById('noteCount');
+        const folderCountEl = document.getElementById('folderCount');
+        const projectCountEl = document.getElementById('projectCount');
+        const featuredProjectCountEl = document.getElementById('featuredProjectCount');
+        const lastUpdatedEl = document.getElementById('gardenLastUpdated');
 
-            if (!isHidden) {
-                if (item.type === 'blob' && item.path.endsWith('.md')) {
-                    noteCount++;
+        const isHiddenPath = (path) => path.split('/').some(part => HIDDEN.includes(part) || part.startsWith('.'));
+        const isCandidateFeaturedPath = (path) => (
+            path.startsWith('Projects/') ||
+            path.startsWith('Systems/Homelab/') ||
+            path.startsWith('Systems/Router Configuration/') ||
+            path.startsWith('Learning Journals/') ||
+            path.startsWith('IT Projects/')
+        );
+        const setLastUpdatedLabel = (rawDate) => {
+            if (!lastUpdatedEl || !rawDate) return;
+            const updatedDate = new Date(rawDate);
+            if (isNaN(updatedDate.getTime())) return;
+
+            const now = new Date();
+            const diffMs = now - updatedDate;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+            if (diffDays === 0) {
+                if (diffHours < 1) {
+                    lastUpdatedEl.textContent = 'Updated just now';
+                } else if (diffHours === 1) {
+                    lastUpdatedEl.textContent = 'Updated 1 hour ago';
+                } else {
+                    lastUpdatedEl.textContent = `Updated ${diffHours} hours ago`;
                 }
-                // Count top-level folders
-                if (item.type === 'tree' && !item.path.includes('/')) {
-                    topFolders.add(item.path);
+            } else if (diffDays === 1) {
+                lastUpdatedEl.textContent = 'Updated yesterday';
+            } else if (diffDays < 7) {
+                lastUpdatedEl.textContent = `Updated ${diffDays} days ago`;
+            } else if (diffDays < 30) {
+                const weeks = Math.floor(diffDays / 7);
+                lastUpdatedEl.textContent = weeks === 1 ? 'Updated 1 week ago' : `Updated ${weeks} weeks ago`;
+            } else {
+                lastUpdatedEl.textContent = `Updated ${updatedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+            }
+        };
+
+        let noteCount = null;
+        let folderCount = null;
+        let featuredCount = null;
+
+        try {
+            const manifest = await fetchJsonWithPolicy(
+                `https://raw.githubusercontent.com/${VAULT_OWNER}/${VAULT_REPO}/main/garden-manifest.json?v=${Date.now()}`,
+                { timeoutMs: 12000, retries: 2, dedupeKey: `garden-manifest:${VAULT_OWNER}/${VAULT_REPO}` }
+            );
+
+            if (manifest && Array.isArray(manifest.tree)) {
+                const metadata = manifest.metadata || {};
+                const topFolders = new Set();
+                let mdCount = 0;
+
+                manifest.tree.forEach(entry => {
+                    if (!entry?.path || isHiddenPath(entry.path)) return;
+
+                    if (entry.type === 'file' && entry.path.endsWith('.md')) {
+                        mdCount++;
+                    }
+
+                    const topFolder = entry.path.includes('/') ? entry.path.split('/')[0] : null;
+                    if (topFolder && !topFolder.startsWith('.') && !HIDDEN.includes(topFolder)) {
+                        topFolders.add(topFolder);
+                    }
+                });
+
+                noteCount = mdCount;
+                folderCount = topFolders.size;
+
+                featuredCount = Object.entries(metadata).filter(([path, meta]) => {
+                    if (!meta || meta.published_to_garden !== true) return false;
+                    if (isHiddenPath(path)) return false;
+                    return isCandidateFeaturedPath(path);
+                }).length;
+
+                if (manifest.generated_at && lastUpdatedEl) {
+                    lastUpdatedEl.dataset.updated = manifest.generated_at;
+                    setLastUpdatedLabel(manifest.generated_at);
                 }
             }
-        });
+        } catch (error) {
+            console.error('Failed to fetch garden manifest:', error);
+        }
 
-        // Update DOM
-        const noteCountEl = document.getElementById('noteCount');
-        if (noteCountEl) noteCountEl.textContent = noteCount + '+';
+        if (noteCount === null || folderCount === null) {
+            try {
+                const data = await fetchJsonWithPolicy(
+                    `https://api.github.com/repos/${VAULT_OWNER}/${VAULT_REPO}/git/trees/main?recursive=1`,
+                    { timeoutMs: 12000, retries: 2 }
+                );
+                const tree = data.tree || [];
+                const topFolders = new Set();
+                let mdCount = 0;
 
-        const folderCountEl = document.getElementById('folderCount');
-        if (folderCountEl) folderCountEl.textContent = topFolders.size;
+                tree.forEach(item => {
+                    if (!item?.path || isHiddenPath(item.path)) return;
+                    if (item.type === 'blob' && item.path.endsWith('.md')) mdCount++;
 
-    } catch (error) {
-        console.error('Failed to fetch garden stats:', error);
-        // Show fallback values
-        const noteCountEl = document.getElementById('noteCount');
-        if (noteCountEl) noteCountEl.textContent = '50+';
-        const folderCountEl = document.getElementById('folderCount');
-        if (folderCountEl) folderCountEl.textContent = '8';
+                    const topFolder = item.path.includes('/') ? item.path.split('/')[0] : null;
+                    if (topFolder && !topFolder.startsWith('.') && !HIDDEN.includes(topFolder)) {
+                        topFolders.add(topFolder);
+                    }
+                });
+
+                noteCount = mdCount;
+                folderCount = topFolders.size;
+            } catch (error) {
+                console.error('Failed to fetch garden stats:', error);
+                noteCount = 50;
+                folderCount = 8;
+            }
+        }
+
+        if (lastUpdatedEl && lastUpdatedEl.dataset.updated) {
+            setLastUpdatedLabel(lastUpdatedEl.dataset.updated);
+        }
+
+        if (noteCountEl) noteCountEl.textContent = `${noteCount}+`;
+        if (folderCountEl) folderCountEl.textContent = String(folderCount);
+
+        if (featuredCount !== null) {
+            const clipped = Math.min(featuredCount, 6);
+            if (projectCountEl) projectCountEl.textContent = String(clipped);
+            if (featuredProjectCountEl) featuredProjectCountEl.textContent = String(clipped);
+        }
+    })();
+
+    try {
+        await gardenStatsInFlight;
+    } finally {
+        gardenStatsInFlight = null;
     }
 }
 // Defer garden stats fetch until section is visible
 document.addEventListener('DOMContentLoaded', () => {
     const gardenSection = document.getElementById('knowledge-garden-showcase');
     if (!gardenSection) return;
+    let statsIntervalId = null;
     const gardenObserver = new IntersectionObserver((entries, obs) => {
         if (entries[0].isIntersecting) {
             updateGardenStats();
+            if (!statsIntervalId) {
+                statsIntervalId = setInterval(() => {
+                    if (!document.hidden) updateGardenStats();
+                }, 10 * 60 * 1000);
+            }
             obs.disconnect();
         }
     }, { rootMargin: '200px', threshold: 0 });
     gardenObserver.observe(gardenSection);
+
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) updateGardenStats();
+    });
 });
 
 // --- Floating Particles ---
