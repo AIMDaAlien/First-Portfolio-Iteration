@@ -11,7 +11,7 @@ class KnowledgeGarden {
         this.branch = 'main';
         this.apiBase = `https://api.github.com/repos/${this.vaultOwner}/${this.vaultRepo}/contents`;
         this.rawBase = `https://raw.githubusercontent.com/${this.vaultOwner}/${this.vaultRepo}/${this.branch}`;
-        this.markedScriptUrl = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+        this.markedScriptUrl = 'https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js';
         this.d3ScriptUrl = 'https://d3js.org/d3.v7.min.js';
         this.manifestCacheKey = `garden-manifest-cache:${this.vaultOwner}/${this.vaultRepo}/${this.branch}`;
         this.manifestCacheMaxAgeMs = 5 * 60 * 1000; // 5 minutes
@@ -22,19 +22,23 @@ class KnowledgeGarden {
         this.currentPath = '';
         this.currentFile = null;
         this.noteCache = new Map();
+        this.noteCacheMaxSize = 50;
+        this.noteCacheOrder = []; // LRU eviction order
         this.treeCache = new Map();
-        this.gitTreeCache = null; // cached result of git/trees?recursive=1
+        this.gitTreeCache = null;
+        this.manifestParentIndex = null; // built once on manifest load
         this.commandHistory = [];
         this.historyIndex = -1;
 
         // Hidden files/folders
         this.hiddenItems = ['.obsidian', '.stfolder', '.DS_Store', '.gitignore', '.github', 'Myself', 'images'];
 
-        // Featured project priority (most impressive first)
-        // Notes matching these prefixes appear first, in this exact order
+        // Featured project priority
         this.featuredPriority = [
             'Projects/The Penthouse/',
+            'Projects/The Penthouse Self-Hosting/',
             'Projects/Teardown Cafe/',
+            'Projects/3D Print Shoppe/',
             'Projects/Archive/TrueNAS Build Guide.md',
             'Learning Journals/Privacy Hardening Journey.md',
             'Systems/Homelab/Prometheus Grafana Stack - Implementation Guide.md',
@@ -221,39 +225,49 @@ class KnowledgeGarden {
         this.fileTree.appendChild(error);
     }
 
-    buildTreeFromManifest(manifest, parentPath) {
-        const tree = manifest.tree || [];
-        const items = [];
-
-        for (const entry of tree) {
+    _buildParentIndex() {
+        if (!this.manifest || !this.manifest.tree) return;
+        const index = new Map();
+        const hidden = this.hiddenItems;
+        for (const entry of this.manifest.tree) {
             const parts = entry.path.split('/');
-
-            // Determine the parent of this entry
-            const entryParent = parts.length > 1 ? parts.slice(0, -1).join('/') : '';
-            if (entryParent !== parentPath) continue;
-
             const name = parts[parts.length - 1];
-
-            // Filter hidden items
-            if (this.hiddenItems.includes(name) || name.startsWith('.')) continue;
-
-            // Only show .md files (skip .base and other types)
+            if (hidden.includes(name) || name.startsWith('.')) continue;
             if (entry.type === 'file' && !name.endsWith('.md')) continue;
-
-            items.push({
-                name: name,
-                path: entry.path,
-                type: entry.type === 'dir' ? 'dir' : 'file'
+            const parent = parts.length > 1 ? parts.slice(0, -1).join('/') : '';
+            if (!index.has(parent)) index.set(parent, []);
+            index.get(parent).push({ name, path: entry.path, type: entry.type === 'dir' ? 'dir' : 'file' });
+        }
+        for (const children of index.values()) {
+            children.sort((a, b) => {
+                if (a.type === 'dir' && b.type !== 'dir') return -1;
+                if (a.type !== 'dir' && b.type === 'dir') return 1;
+                return a.name.localeCompare(b.name);
             });
         }
+        this.manifestParentIndex = index;
+    }
 
-        // Sort: folders first, then files, alphabetically
+    buildTreeFromManifest(manifest, parentPath) {
+        if (this.manifestParentIndex) {
+            return this.manifestParentIndex.get(parentPath) || [];
+        }
+        const tree = manifest.tree || [];
+        const items = [];
+        for (const entry of tree) {
+            const parts = entry.path.split('/');
+            const entryParent = parts.length > 1 ? parts.slice(0, -1).join('/') : '';
+            if (entryParent !== parentPath) continue;
+            const name = parts[parts.length - 1];
+            if (this.hiddenItems.includes(name) || name.startsWith('.')) continue;
+            if (entry.type === 'file' && !name.endsWith('.md')) continue;
+            items.push({ name, path: entry.path, type: entry.type === 'dir' ? 'dir' : 'file' });
+        }
         items.sort((a, b) => {
             if (a.type === 'dir' && b.type !== 'dir') return -1;
             if (a.type !== 'dir' && b.type === 'dir') return 1;
             return a.name.localeCompare(b.name);
         });
-
         return items;
     }
 
@@ -328,12 +342,13 @@ class KnowledgeGarden {
             } else {
                 itemEl.addEventListener('click', () => {
                     this.viewFileByPath(item.path);
-                    document.querySelectorAll('.tree-item').forEach(i => {
-                        i.classList.remove('active');
-                        i.setAttribute('aria-selected', 'false');
-                    });
+                    if (this._activeTreeItem) {
+                        this._activeTreeItem.classList.remove('active');
+                        this._activeTreeItem.setAttribute('aria-selected', 'false');
+                    }
                     itemEl.classList.add('active');
                     itemEl.setAttribute('aria-selected', 'true');
+                    this._activeTreeItem = itemEl;
                     this.closeMobileSidebar();
                 });
             }
@@ -415,7 +430,10 @@ class KnowledgeGarden {
 
         this.treeCache.clear();
         this.noteCache.clear();
+        this.noteCacheOrder = [];
         this.gitTreeCache = null;
+        this.manifestParentIndex = null;
+        this._buildParentIndex();
 
         if (rerender) {
             await this.loadFileTree();
@@ -470,6 +488,7 @@ class KnowledgeGarden {
         const cachedManifest = this.getCachedManifest();
         if (cachedManifest) {
             this.manifest = cachedManifest;
+            this._buildParentIndex();
             const expectedVersion = this.buildManifestVersion(cachedManifest);
             this.revalidateManifest(expectedVersion).catch(() => { });
             return this.manifest;
@@ -477,6 +496,7 @@ class KnowledgeGarden {
 
         try {
             this.manifest = await this.fetchManifestFromNetwork();
+            this._buildParentIndex();
             return this.manifest;
         } catch (error) {
             const staleManifest = this.getCachedManifest({ allowStale: true });
@@ -1175,14 +1195,23 @@ class KnowledgeGarden {
             timeoutMs: 10000,
             retries: 2
         });
+
+        if (this.noteCache.size >= this.noteCacheMaxSize) {
+            const oldest = this.noteCacheOrder.shift();
+            if (oldest) this.noteCache.delete(oldest);
+        }
         this.noteCache.set(path, content);
+        this.noteCacheOrder.push(path);
         return content;
     }
 
     renderMarkdown(content) {
         if (typeof marked === 'undefined') return this.escapeHtml(content);
-        content = content.replace(/^---\n[\s\S]*?\n---\n/m, ''); // Remove frontmatter
-        marked.setOptions({ breaks: true, gfm: true, headerIds: false, mangle: false });
+        content = content.replace(/^---\n[\s\S]*?\n---\n/m, '');
+        if (!this._markedConfigured) {
+            marked.setOptions({ breaks: true, gfm: true, headerIds: false, mangle: false });
+            this._markedConfigured = true;
+        }
         const rawHtml = marked.parse(content);
         return this.sanitizeRenderedHtml(rawHtml);
     }
@@ -1467,38 +1496,25 @@ class KnowledgeGarden {
      * Returns array of {name, path, type} sorted folders-first then alphabetically.
      */
     getManifestEntries(dirPath) {
+        if (this.manifestParentIndex) {
+            return this.manifestParentIndex.get(dirPath) || [];
+        }
         if (!this.manifest || !this.manifest.tree) return [];
-
         const entries = [];
-
         for (const entry of this.manifest.tree) {
             const parts = entry.path.split('/');
             const entryParent = parts.length > 1 ? parts.slice(0, -1).join('/') : '';
-
             if (entryParent !== dirPath) continue;
-
             const name = parts[parts.length - 1];
-
-            // Filter hidden items
             if (this.hiddenItems.includes(name) || name.startsWith('.')) continue;
-
-            // Only show .md files for blob/file types
             if (entry.type === 'file' && !name.endsWith('.md')) continue;
-
-            entries.push({
-                name: name,
-                path: entry.path,
-                type: entry.type === 'dir' ? 'dir' : 'file'
-            });
+            entries.push({ name, path: entry.path, type: entry.type === 'dir' ? 'dir' : 'file' });
         }
-
-        // Sort: folders first, then files, alphabetically
         entries.sort((a, b) => {
             if (a.type === 'dir' && b.type !== 'dir') return -1;
             if (a.type !== 'dir' && b.type === 'dir') return 1;
             return a.name.localeCompare(b.name);
         });
-
         return entries;
     }
 
@@ -2146,48 +2162,23 @@ LANG=en_US.UTF-8</pre>`);
             const sortDate = this.parseDate(fm.last_published) || this.parseDate(fm.created);
             const priority = this.getFeaturedPriorityScore(path);
 
-            published.push({ path, title, last_published: fm.last_published, created: fm.created, sortDate, priority });
+            published.push({ path, title, last_published: fm.last_published, created: fm.created, sortDate, priority, snippet: '' });
         }
 
-        // Sort by priority then date
         published.sort((a, b) => {
             if (a.priority !== b.priority) return a.priority - b.priority;
             return (b.sortDate || 0) - (a.sortDate || 0);
         });
 
-        // Fetch description snippets for top cards (max 3 concurrent)
-        const withSnippets = [];
-        const batchSize = 6;
-        for (let i = 0; i < published.length; i += batchSize) {
-            const batch = published.slice(i, i + batchSize);
-            const results = await Promise.all(batch.map(async (item) => {
-                try {
-                    const content = await this.fetchNote(item.path);
-                    let body = content;
-                    if (body.startsWith('---')) {
-                        const end = body.indexOf('\n---', 3);
-                        if (end !== -1) body = body.slice(end + 4);
-                    }
-                    // Remove markdown headers and get first meaningful text
-                    body = body.replace(/^#+\s+.*$/gm, '').trim();
-                    const snippet = body.slice(0, 150).replace(/\n/g, ' ').trim();
-                    return { ...item, snippet: snippet ? snippet + '...' : '' };
-                } catch (e) {
-                    return { ...item, snippet: '' };
-                }
-            }));
-            withSnippets.push(...results);
-        }
-
-        const cardsHtml = withSnippets.map(meta => this.renderGalleryCard(meta)).join('');
+        const cardsHtml = published.map(meta => this.renderGalleryCard(meta)).join('');
 
         this.contentBody.innerHTML = `
             <div class="gallery-view">
                 <div class="gallery-header">
-                    <h1>📚 Published Notes</h1>
+                    <h1>Published Notes</h1>
                     <p class="muted">All published notes from the knowledge garden, sorted by importance.</p>
                     <button type="button" class="gallery-toggle-btn" id="galleryBackBtn">
-                        ← Back to File Browser
+                        Back to file browser
                     </button>
                 </div>
                 <div class="gallery-grid">
@@ -2196,14 +2187,13 @@ LANG=en_US.UTF-8</pre>`);
             </div>
         `;
 
-        // Wire up back button
         document.getElementById('galleryBackBtn')?.addEventListener('click', () => {
             this.showWelcome();
             this.loadFeaturedProjects();
         });
 
         this.updateBreadcrumb('', { folderView: false });
-        this.statusInfo.textContent = `${withSnippets.length} published notes`;
+        this.statusInfo.textContent = `${published.length} published notes`;
     }
 
     renderGalleryCard(meta) {

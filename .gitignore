@@ -37,3 +37,10 @@ Myself/**
 # Environment files
 .env
 .env.local
+
+# Agent configuration and internal docs
+AGENTS.md
+
+# Old/sensitive resume versions
+Abdullah_Masud_Resume_NOC.docx
+*.docx
