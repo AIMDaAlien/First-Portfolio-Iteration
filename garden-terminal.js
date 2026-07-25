@@ -33,10 +33,17 @@ class KnowledgeGarden {
         // Hidden files/folders
         this.hiddenItems = ['.obsidian', '.stfolder', '.DS_Store', '.gitignore', '.github', 'Myself', 'images'];
 
-        // Featured project priority
+        // Featured project priority — most recent / highest-impact work first
         this.featuredPriority = [
+            'Projects/The Penthouse/22 - v4.3 Collaboration Wave.md',
+            'Projects/The Penthouse/21 - v4.2 Privacy Terms and Operator Trust.md',
+            'Projects/The Penthouse/20 - V5 Redesign.md',
+            'Projects/The Penthouse/19 - v4 Clean-Room Rebuild.md',
+            'Projects/The Penthouse/00 - Knowledge Hub.md',
+            'Projects/The Penthouse/01 - Rebuild Timeline.md',
             'Projects/The Penthouse/',
-            'Projects/The Penthouse Self-Hosting/',
+            'IT Projects/Home Lab/01 - Services Dashboard.md',
+            'IT Projects/Home Lab/02 - Network Map.md',
             'Projects/Teardown Cafe/',
             'Projects/3D Print Shoppe/',
             'Projects/Archive/TrueNAS Build Guide.md',
@@ -53,6 +60,8 @@ class KnowledgeGarden {
             'Programming Concepts': 'code',
             'Projects': 'build',
             'Systems': 'computer',
+            'Home Lab': 'homelab',
+            'Session Notes': 'label',
             'default_folder': 'storage',
             'default_file': 'book'
         };
