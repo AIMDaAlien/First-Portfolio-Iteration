@@ -35,6 +35,10 @@ class KnowledgeGarden {
 
         // Featured project priority — most recent / highest-impact work first
         this.featuredPriority = [
+            'Projects/Sovereign AI Stack/Unraid Qwen3.6 Terminal Agent - July 2026.md',
+            'Projects/Sovereign AI Stack/Project Overview - Sovereign AI Stack.md',
+            'IT Projects/Home Lab/00 - Server Inventory.md',
+            'Projects/Sovereign AI Stack/',
             'Projects/The Penthouse/22 - v4.3 Collaboration Wave.md',
             'Projects/The Penthouse/21 - v4.2 Privacy Terms and Operator Trust.md',
             'Projects/The Penthouse/20 - V5 Redesign.md',
@@ -186,6 +190,14 @@ class KnowledgeGarden {
 
         // Load featured projects (published_to_garden=true, sorted by last_published)
         await this.loadFeaturedProjects();
+
+        // Deep-linking: open a specific note if ?note= is provided
+        const params = new URLSearchParams(window.location.search);
+        const deepNote = params.get('note');
+        if (deepNote) {
+            // Small delay to let the UI settle before loading
+            setTimeout(() => this.viewFileByPath(deepNote), 100);
+        }
 
         this.startVaultAutoSync();
 

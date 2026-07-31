@@ -8,15 +8,11 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- TODO: Replace this empty placeholder with a custom favicon once the final AIM.EXE mark is approved. -->
+    <link rel="icon" href="data:,">
     <meta name="description"
         content="Abdullah Masud — builder with a background in self-hosted infrastructure, AI orchestration, and LLM evaluation. Runs a live social app on bare metal TrueNAS. Based in Northern Virginia.">
-
-    <!-- Material Symbols for icons -->
-    <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-        rel="stylesheet">
 
     <link rel="stylesheet" href="m3e-tokens.css">
     <link rel="stylesheet" href="style.css">
@@ -25,12 +21,125 @@
 <body>
     <a class="skip-link" href="#main-content">Skip to main content</a>
 
+    <div id="crt-overlay" aria-hidden="true"></div>
+    <div id="vignette" aria-hidden="true"></div>
+    <div id="ambient-glow" aria-hidden="true"></div>
+
     <div class="particles-container" id="particles-container"></div>
 
-    <!-- Load SVG Sprites -->
-    <div style="display: none;">
-        <object data="icons-sprite.svg" type="image/svg+xml" id="svg-sprite"></object>
-    </div>
+    <!-- Inline SVG Sprite -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;" aria-hidden="true">
+        <symbol id="icon-school" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 9.2L12 4 2 9.2l10 5.2 10-5.2z"/>
+            <path d="M6 11.6v4.2c0 1.6 2.7 2.9 6 2.9s6-1.3 6-2.9v-4.2"/>
+            <path d="M22 9.2V15"/>
+        </symbol>
+        <symbol id="icon-build" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+        </symbol>
+        <symbol id="icon-terminal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3.5" y="4.5" width="17" height="15" rx="2"/>
+            <path d="M7 9.5l3.2 2.7L7 14.9"/>
+            <path d="M12.2 15h4.8"/>
+        </symbol>
+        <symbol id="icon-computer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="2.5" width="12" height="19" rx="2"/>
+            <path d="M9.5 7h5"/>
+            <path d="M9.5 10.5h5"/>
+            <circle cx="9.8" cy="16.8" r="1.1" fill="currentColor" stroke="none"/>
+            <circle cx="14.5" cy="16.8" r="1.6"/>
+        </symbol>
+        <symbol id="icon-memory" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6.5" y="6.5" width="11" height="11" rx="1.5"/>
+            <rect x="10" y="10" width="4" height="4" rx="0.5"/>
+            <path d="M9.5 2.5v4M14.5 2.5v4M9.5 17.5v4M14.5 17.5v4"/>
+            <path d="M2.5 9.5h4M2.5 14.5h4M17.5 9.5h4M17.5 14.5h4"/>
+        </symbol>
+        <symbol id="icon-science" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/>
+            <ellipse cx="12" cy="12" rx="9.2" ry="3.6"/>
+            <ellipse cx="12" cy="12" rx="9.2" ry="3.6" transform="rotate(60 12 12)"/>
+            <ellipse cx="12" cy="12" rx="9.2" ry="3.6" transform="rotate(120 12 12)"/>
+        </symbol>
+        <symbol id="icon-groups" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="7.5" r="3.5"/>
+            <path d="M2.5 20v-1.5a5 5 0 0 1 5-5h3a5 5 0 0 1 5 5V20"/>
+            <path d="M16 4.3a3.5 3.5 0 0 1 0 6.4"/>
+            <path d="M17.8 13.9a5 5 0 0 1 3.7 4.8V20"/>
+        </symbol>
+        <symbol id="icon-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="9" r="5.5"/>
+            <circle cx="12" cy="9" r="2"/>
+            <path d="M8.7 13.6L7 21l5-2.7 5 2.7-1.7-7.4"/>
+        </symbol>
+        <symbol id="icon-label" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12.6 2.9l8.5 8.5a1.4 1.4 0 0 1 0 2l-7.7 7.7a1.4 1.4 0 0 1-2 0L2.9 12.6a1.4 1.4 0 0 1-.4-1V4.3a1.4 1.4 0 0 1 1.4-1.4h7.3a1.4 1.4 0 0 1 1.4.4z"/>
+            <circle cx="7.5" cy="7.5" r="1.4" fill="currentColor" stroke="none"/>
+        </symbol>
+        <symbol id="icon-code" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 6.5L2.5 12 8 17.5"/>
+            <path d="M16 6.5L21.5 12 16 17.5"/>
+            <path d="M13.8 4.5l-3.6 15"/>
+        </symbol>
+        <symbol id="icon-storage" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3.5" y="3.5" width="17" height="5" rx="1"/>
+            <rect x="3.5" y="9.5" width="17" height="5" rx="1"/>
+            <rect x="3.5" y="15.5" width="17" height="5" rx="1"/>
+            <path d="M10.5 6h6.5M10.5 12h6.5M10.5 18h6.5"/>
+            <circle cx="6.8" cy="6" r="1" fill="currentColor" stroke="none"/>
+            <circle cx="6.8" cy="12" r="1" fill="currentColor" stroke="none"/>
+            <circle cx="6.8" cy="18" r="1" fill="currentColor" stroke="none"/>
+        </symbol>
+        <symbol id="icon-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2.5l7.5 2.8v5.4c0 5-3.2 8.9-7.5 10.8-4.3-1.9-7.5-5.8-7.5-10.8V5.3L12 2.5z"/>
+            <path d="M8.8 11.8l2.3 2.3 4.2-4.6"/>
+        </symbol>
+        <symbol id="icon-phone-android" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="7" y="2.5" width="10" height="19" rx="2.5"/>
+            <path d="M10.8 5.2h2.4"/>
+            <circle cx="12" cy="18.3" r="1" fill="currentColor" stroke="none"/>
+        </symbol>
+        <symbol id="icon-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3.5V15"/>
+            <path d="M6.8 10.2L12 15.4l5.2-5.2"/>
+            <path d="M4.5 20.5h15"/>
+        </symbol>
+        <symbol id="icon-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2.5 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3h-7V4z"/>
+            <path d="M21.5 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7V4z"/>
+        </symbol>
+        <symbol id="icon-arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 4.5v15"/>
+            <path d="M5.5 12.8L12 19.3l6.5-6.5"/>
+        </symbol>
+        <symbol id="icon-router" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3.5" y="13" width="17" height="6.5" rx="1.5"/>
+            <path d="M12 13V8"/>
+            <path d="M9 5.4a4.2 4.2 0 0 1 6 0"/>
+            <path d="M6.7 3a7.5 7.5 0 0 1 10.6 0"/>
+            <circle cx="7" cy="16.2" r="1" fill="currentColor" stroke="none"/>
+            <circle cx="10" cy="16.2" r="1" fill="currentColor" stroke="none"/>
+            <path d="M14 16.2h3.5"/>
+        </symbol>
+        <symbol id="icon-privacy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="10.5" width="14" height="10" rx="2"/>
+            <path d="M8.5 10.5V7a3.5 3.5 0 0 1 7 0v3.5"/>
+            <circle cx="12" cy="14.8" r="1.2" fill="currentColor" stroke="none"/>
+            <path d="M12 16v1.8"/>
+        </symbol>
+        <symbol id="icon-homelab" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 10.5L12 3.5l8 7"/>
+            <path d="M6 9v11h12V9"/>
+            <path d="M9 12.8h6"/>
+            <path d="M9 15.6h6"/>
+            <path d="M9 18.4h4"/>
+            <circle cx="15" cy="18.4" r="1" fill="currentColor" stroke="none"/>
+        </symbol>
+        <symbol id="icon-arrow-forward" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4.5 12h15"/>
+            <path d="M13 5.5l6.5 6.5-6.5 6.5"/>
+        </symbol>
+    </svg>
 
     <div id="loader" aria-hidden="true">
         <p>Your system does not seem to be efficient enough if you are able to read this whole sentence. (>_<) </p>
@@ -63,7 +172,7 @@
     <main id="main-content" style="display: none;" tabindex="-1">
 
         <nav id="main-nav" aria-label="Primary">
-            <div class="nav-logo">Aim</div>
+            <div class="nav-logo">AIM.EXE</div>
             <button class="hamburger-menu" aria-label="Toggle navigation menu" aria-expanded="false"
                 aria-controls="primary-navigation">
                 <span></span>
@@ -77,7 +186,7 @@
                 <li><a href="#experience" class="nav-link">Experience</a></li>
                 <li><a href="#projects" class="nav-link">Projects</a></li>
                 <li><a href="garden-terminal.html" class="nav-link"><svg class="nav-icon" aria-hidden="true">
-                            <use href="icons-sprite.svg#icon-book"></use>
+                            <use href="#icon-book"></use>
                         </svg> Knowledge Garden</a></li>
                 <li><a href="#contact" class="nav-link">Contact</a></li>
             </ul>
@@ -90,13 +199,23 @@
                 <div class="blob blob-3"></div>
                 <div class="scanline-overlay"></div>
             </div>
-            <h1 class="hero-title">Aim</h1>
-            <p class="hero-subtitle">
-                <span id="typed-subtitle"></span><span class="typing-cursor"></span>
-            </p>
+            <div class="hero-card">
+                <div class="hero-label">SYSTEM ONLINE</div>
+                <h1 class="hero-title">Aim</h1>
+                <div class="hero-rule"></div>
+                <p class="hero-subtitle">
+                    <span id="typed-subtitle"></span><span class="typing-cursor"></span>
+                </p>
+                <div class="status-strip">
+                    <span id="strip-uptime">[uptime: ...]</span>
+                    <span id="strip-notes">[garden: ...]</span>
+                    <span>[penthouse: live]</span>
+                    <span>[status: OK]</span>
+                </div>
+            </div>
             <div class="scroll-indicator">
                 <svg class="scroll-arrow" viewBox="0 0 24 24" aria-hidden="true">
-                    <use href="icons-sprite.svg#icon-arrow-down"></use>
+                    <use href="#icon-arrow-down"></use>
                 </svg>
             </div>
         </section>
@@ -115,65 +234,183 @@
                 unexpected places, while mountain biking keeps me sharp (just a cool excuse to touch grass).</p>
             <div class="stats-cards">
                 <div class="stat-card animate-on-scroll stagger">
+                    <div class="card-led">ONLINE</div>
                     <div class="card-icon">
                         <svg>
-                            <use href="icons-sprite.svg#icon-school"></use>
+                            <use href="#icon-school"></use>
                         </svg>
                     </div>
                     <h3>George Mason University</h3>
                     <p>B.S. Information Technology<br>(Expected 2028)</p>
+                    <div class="node-id">node_edu</div>
                 </div>
                 <div class="stat-card animate-on-scroll stagger">
+                    <div class="card-led">ONLINE</div>
                     <div class="card-icon">
                         <svg>
-                            <use href="icons-sprite.svg#icon-build"></use>
+                            <use href="#icon-build"></use>
                         </svg>
                     </div>
                     <h3>6+ Years Experience</h3>
                     <p>Technical troubleshooting & team management</p>
+                    <div class="node-id">node_exp</div>
                 </div>
                 <div class="stat-card animate-on-scroll stagger">
+                    <div class="card-led">ONLINE</div>
                     <div class="card-icon">
                         <svg>
-                            <use href="icons-sprite.svg#icon-terminal"></use>
+                            <use href="#icon-terminal"></use>
                         </svg>
                     </div>
                     <h3>Linux Enthusiast</h3>
                     <p>Since age 13</p>
+                    <div class="node-id">node_linux</div>
                 </div>
                 <div class="stat-card stat-card-studying animate-on-scroll stagger">
+                    <div class="card-led" style="color:var(--rt-led)">ACTIVE</div>
                     <div class="card-icon">
                         <svg>
-                            <use href="icons-sprite.svg#icon-school"></use>
+                            <use href="#icon-school"></use>
                         </svg>
                     </div>
                     <h3>Currently Studying</h3>
                     <p>CompTIA A+ • AWS Cloud & AI Practitioner</p>
+                    <div class="node-id" style="color:var(--rt-led)">node_study</div>
                 </div>
             </div>
         </section>
+
+        <div class="pcb-divider" aria-hidden="true">
+            <svg viewBox="0 0 1200 28" preserveAspectRatio="none">
+                <path class="pcb-trace" pathLength="1200" d="M0 14 H420 L436 4 H760 L776 14 H1200" />
+                <path class="pcb-trace pcb-trace--2" pathLength="1200" d="M0 22 H300 L312 26 H900 L912 22 H1200" />
+                <circle class="pcb-via" cx="436" cy="4" r="2.5" />
+                <circle class="pcb-via" cx="776" cy="14" r="2.5" />
+                <path class="pcb-pulse" pathLength="1200" d="M0 14 H420 L436 4 H760 L776 14 H1200" />
+            </svg>
+        </div>
+
+        <section id="machine-spec" class="content-section">
+            <h2 class="section-title">Machine Spec</h2>
+            <div class="spec-layout">
+                <div class="spec-sheet">
+                    <div class="spec-unit spec-unraid animate-on-scroll stagger">
+                        <div class="card-led">UNRAID-01</div>
+                        <h3>Unraid server · fleet flagship</h3>
+                        <p class="spec-line">i5-12600KF &middot; 128GB DDR4-3200 &middot; RTX 3060 12GB</p>
+                        <p class="spec-line">Unraid 7.2.4 &middot; 21.8TB raw array + 14.6TB parity</p>
+                        <p class="spec-line">dual ZFS NVMe pools &middot; LSI SAS2308 HBA</p>
+                        <div class="spec-telemetry" id="unraidTelemetry"
+                            data-endpoint="https://penthouse.blog/unraid-metrics.json" data-interval="300000">
+                            <div class="telemetry-header">
+                                <span class="telemetry-status-dot telemetry-status-dot--pending" id="telemetryDot"
+                                    aria-hidden="true"></span>
+                                <span class="telemetry-title">Live telemetry</span>
+                                <span class="telemetry-updated" id="telemetryUpdated" role="status"
+                                    aria-live="polite">endpoint pending</span>
+                            </div>
+                            <div class="telemetry-grid">
+                                <div class="telemetry-gauge">
+                                    <div class="telemetry-bar" id="gaugeCpu" role="progressbar" aria-label="CPU usage"
+                                        aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                                        <span class="telemetry-fill"></span>
+                                    </div>
+                                    <div class="telemetry-label"><span>CPU</span><span class="telemetry-value"
+                                            id="cpuValue">--</span></div>
+                                </div>
+                                <div class="telemetry-gauge">
+                                    <div class="telemetry-bar" id="gaugeRam" role="progressbar" aria-label="Memory usage"
+                                        aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                                        <span class="telemetry-fill"></span>
+                                    </div>
+                                    <div class="telemetry-label"><span>RAM</span><span class="telemetry-value"
+                                            id="ramValue">--</span></div>
+                                </div>
+                                <div class="telemetry-gauge">
+                                    <div class="telemetry-bar" id="gaugeArray" role="progressbar" aria-label="Array usage"
+                                        aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                                        <span class="telemetry-fill"></span>
+                                    </div>
+                                    <div class="telemetry-label"><span>Array</span><span class="telemetry-value"
+                                            id="arrayValue">--</span></div>
+                                </div>
+                            </div>
+                            <div class="telemetry-chips">
+                                <span class="telemetry-chip">Docker <strong id="dockerCt">--</strong></span>
+                                <span class="telemetry-chip">Up <strong id="unraidUptime">--</strong></span>
+                                <span class="telemetry-chip">Temp <strong id="tempValue">--</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="spec-unit spec-daily animate-on-scroll stagger">
+                        <div class="card-led">MBP-DAILY</div>
+                        <h3>Daily driver</h3>
+                        <p class="spec-line">MacBook Pro (M5 Pro) &middot; 48GB unified memory</p>
+                        <p class="spec-line">primary machine for roughly 90% of day-to-day work</p>
+                        <p class="spec-line">local AI experimentation + work &middot; currently Qwen3.6 27B Q6</p>
+                        <p class="spec-line">3D-printing shenanigans</p>
+                        <p class="spec-line">Syncthing &rarr; Unraid for Documents + Downloads</p>
+                    </div>
+                    <div class="spec-unit spec-windows animate-on-scroll stagger">
+                        <div class="card-led">WIN-WORK</div>
+                        <h3>Windows Workstation</h3>
+                        <p class="spec-line">i5-13600K &middot; MSI PRO Z690-A WiFi &middot; 32GB DDR4-3600</p>
+                        <p class="spec-line">RX 9600 XT 16GB</p>
+                        <p class="spec-line">1x 1TB SATA SSD &middot; 1x 2TB SATA SSD &middot; 1x 1TB PCIe Gen4 NVMe</p>
+                        <p class="spec-line">CoolerMaster LAN HAF Box &middot; Thermalright Phantom Spirit 120SE</p>
+                        <p class="spec-line spec-role">gaming &middot; Windows and hardware-only workflows</p>
+                    </div>
+                    <div class="spec-unit spec-pi5 animate-on-scroll stagger">
+                        <div class="card-led">PI5-DNS</div>
+                        <h3>network DNS</h3>
+                        <p class="spec-line">Raspberry Pi 5 &middot; Pi-hole + Unbound recursive DNS</p>
+                        <p class="spec-line">network-wide ad &amp; tracker blocking</p>
+                    </div>
+                    <div class="spec-unit spec-m80q animate-on-scroll stagger">
+                        <div class="card-led">M80Q-STBY</div>
+                        <h3>standby node</h3>
+                        <p class="spec-line">ThinkCentre M80q Tiny &middot; i5-12500T &middot; 16GB</p>
+                        <p class="spec-line">planned Uptime Kuma + fallback services</p>
+                    </div>
+                </div>
+                <div class="incident-sign">
+                    <div class="incident-sign-band"><span>SAFETY RECORD</span></div>
+                    <div class="incident-sign-days" id="incidentDays">--</div>
+                    <div class="incident-sign-caption">DAYS SINCE LAST HOMELAB INCIDENT</div>
+                    <div class="incident-sign-sub" id="incidentDate">last reset: —</div>
+                    <div class="incident-details">
+                        <div class="incident-detail">
+                            <span>Last event</span>
+                            <strong id="incidentSummary">Hardware upgrade</strong>
+                        </div>
+                        <div class="incident-detail">
+                            <span>Next window</span>
+                            <strong id="incidentNext">Hard-drive maintenance · configure staggered SAS drive startup</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="pcb-divider" aria-hidden="true">
+            <svg viewBox="0 0 1200 28" preserveAspectRatio="none">
+                <path class="pcb-trace" pathLength="1200" d="M0 14 H420 L436 4 H760 L776 14 H1200" />
+                <path class="pcb-trace pcb-trace--2" pathLength="1200" d="M0 22 H300 L312 26 H900 L912 22 H1200" />
+                <circle class="pcb-via" cx="436" cy="4" r="2.5" />
+                <circle class="pcb-via" cx="776" cy="14" r="2.5" />
+                <path class="pcb-pulse" pathLength="1200" d="M0 14 H420 L436 4 H760 L776 14 H1200" />
+            </svg>
+        </div>
 
         <section id="skills" class="content-section">
             <h2 class="section-title">Skills & Expertise</h2>
             <div class="skills-grid">
                 <div class="skill-category skill-primary animate-on-scroll stagger">
+                    <div class="card-led">ONLINE</div>
                     <div class="skill-header">
                         <div class="skill-icon-wrapper">
                             <svg>
-                                <use href="icons-sprite.svg#icon-memory"></use>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3>Hardware & Software</h3>
-                        </div>
-                    </div>
-                    <p>PC building, laptop repair, component diagnostics, performance optimization, enterprise storage, NAS configuration</p>
-                </div>
-                <div class="skill-category skill-primary animate-on-scroll stagger">
-                    <div class="skill-header">
-                        <div class="skill-icon-wrapper">
-                            <svg>
-                                <use href="icons-sprite.svg#icon-computer"></use>
+                                <use href="#icon-computer"></use>
                             </svg>
                         </div>
                         <div>
@@ -181,12 +418,64 @@
                         </div>
                     </div>
                     <p>TrueNAS, Docker Compose, Caddy reverse proxy, GitHub Actions CI/CD, Linux server management, DDNS and remote access</p>
+                    <div class="chip-row">
+                        <span class="chip">TrueNAS</span>
+                        <span class="chip">Docker</span>
+                        <span class="chip">Caddy</span>
+                        <span class="chip">Linux</span>
+                    </div>
+                    <div class="vu-meter" data-level="0.95" aria-hidden="true">
+                        <svg viewBox="0 0 120 70">
+                            <path class="vu-arc" d="M 14 62 A 48 48 0 0 1 106 62" />
+                            <g class="vu-ticks">
+                                <line x1="30.9" y1="37.6" x2="26.3" y2="33.7"/>
+                                <line x1="43.9" y1="27.6" x2="41.4" y2="22.1"/>
+                                <line x1="60" y1="24" x2="60" y2="18"/>
+                                <line x1="76.1" y1="27.6" x2="78.6" y2="22.1"/>
+                                <line x1="89.1" y1="37.6" x2="93.7" y2="33.7"/>
+                            </g>
+                            <line class="vu-needle" x1="60" y1="62" x2="60" y2="20" />
+                            <circle class="vu-pivot" cx="60" cy="62" r="3.5" />
+                        </svg>
+                    </div>
+                    <div class="stat-big">06+</div>
+                    <div class="module-id">years_hands_on</div>
                 </div>
                 <div class="skill-category animate-on-scroll stagger">
+                    <div class="card-led">ONLINE</div>
                     <div class="skill-header">
                         <div class="skill-icon-wrapper">
                             <svg>
-                                <use href="icons-sprite.svg#icon-science"></use>
+                                <use href="#icon-memory"></use>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3>Hardware & Software</h3>
+                        </div>
+                    </div>
+                    <p>PC building, laptop repair, component diagnostics, performance optimization, enterprise storage, NAS configuration</p>
+                    <div class="vu-meter" data-level="0.85" aria-hidden="true">
+                        <svg viewBox="0 0 120 70">
+                            <path class="vu-arc" d="M 14 62 A 48 48 0 0 1 106 62" />
+                            <g class="vu-ticks">
+                                <line x1="30.9" y1="37.6" x2="26.3" y2="33.7"/>
+                                <line x1="43.9" y1="27.6" x2="41.4" y2="22.1"/>
+                                <line x1="60" y1="24" x2="60" y2="18"/>
+                                <line x1="76.1" y1="27.6" x2="78.6" y2="22.1"/>
+                                <line x1="89.1" y1="37.6" x2="93.7" y2="33.7"/>
+                            </g>
+                            <line class="vu-needle" x1="60" y1="62" x2="60" y2="20" />
+                            <circle class="vu-pivot" cx="60" cy="62" r="3.5" />
+                        </svg>
+                    </div>
+                    <div class="module-id">module_hardware</div>
+                </div>
+                <div class="skill-category animate-on-scroll stagger">
+                    <div class="card-led">ONLINE</div>
+                    <div class="skill-header">
+                        <div class="skill-icon-wrapper">
+                            <svg>
+                                <use href="#icon-science"></use>
                             </svg>
                         </div>
                         <div>
@@ -194,12 +483,28 @@
                         </div>
                     </div>
                     <p>Multi-model delegation workflows: assigning tasks to specialized agents by domain, gated handoffs with evidence and review stages, structured planning and closeout documentation</p>
+                    <div class="vu-meter" data-level="0.9" aria-hidden="true">
+                        <svg viewBox="0 0 120 70">
+                            <path class="vu-arc" d="M 14 62 A 48 48 0 0 1 106 62" />
+                            <g class="vu-ticks">
+                                <line x1="30.9" y1="37.6" x2="26.3" y2="33.7"/>
+                                <line x1="43.9" y1="27.6" x2="41.4" y2="22.1"/>
+                                <line x1="60" y1="24" x2="60" y2="18"/>
+                                <line x1="76.1" y1="27.6" x2="78.6" y2="22.1"/>
+                                <line x1="89.1" y1="37.6" x2="93.7" y2="33.7"/>
+                            </g>
+                            <line class="vu-needle" x1="60" y1="62" x2="60" y2="20" />
+                            <circle class="vu-pivot" cx="60" cy="62" r="3.5" />
+                        </svg>
+                    </div>
+                    <div class="module-id">module_agents</div>
                 </div>
                 <div class="skill-category animate-on-scroll stagger">
+                    <div class="card-led">ONLINE</div>
                     <div class="skill-header">
                         <div class="skill-icon-wrapper">
                             <svg>
-                                <use href="icons-sprite.svg#icon-groups"></use>
+                                <use href="#icon-groups"></use>
                             </svg>
                         </div>
                         <div>
@@ -207,9 +512,34 @@
                         </div>
                     </div>
                     <p>Team leadership, inventory control, process improvement, technical support, quality assurance</p>
+                    <div class="vu-meter" data-level="0.8" aria-hidden="true">
+                        <svg viewBox="0 0 120 70">
+                            <path class="vu-arc" d="M 14 62 A 48 48 0 0 1 106 62" />
+                            <g class="vu-ticks">
+                                <line x1="30.9" y1="37.6" x2="26.3" y2="33.7"/>
+                                <line x1="43.9" y1="27.6" x2="41.4" y2="22.1"/>
+                                <line x1="60" y1="24" x2="60" y2="18"/>
+                                <line x1="76.1" y1="27.6" x2="78.6" y2="22.1"/>
+                                <line x1="89.1" y1="37.6" x2="93.7" y2="33.7"/>
+                            </g>
+                            <line class="vu-needle" x1="60" y1="62" x2="60" y2="20" />
+                            <circle class="vu-pivot" cx="60" cy="62" r="3.5" />
+                        </svg>
+                    </div>
+                    <div class="module-id">module_people</div>
                 </div>
             </div>
         </section>
+
+        <div class="pcb-divider" aria-hidden="true">
+            <svg viewBox="0 0 1200 28" preserveAspectRatio="none">
+                <path class="pcb-trace" pathLength="1200" d="M0 14 H420 L436 4 H760 L776 14 H1200" />
+                <path class="pcb-trace pcb-trace--2" pathLength="1200" d="M0 22 H300 L312 26 H900 L912 22 H1200" />
+                <circle class="pcb-via" cx="436" cy="4" r="2.5" />
+                <circle class="pcb-via" cx="776" cy="14" r="2.5" />
+                <path class="pcb-pulse" pathLength="1200" d="M0 14 H420 L436 4 H760 L776 14 H1200" />
+            </svg>
+        </div>
 
         <!-- M3 BALANCED EXPERIENCE SECTION -->
         <section id="experience" class="content-section">
@@ -220,7 +550,7 @@
                     <div class="experience-header">
                         <div class="experience-icon">
                             <svg>
-                                <use href="icons-sprite.svg#icon-badge"></use>
+                                <use href="#icon-badge"></use>
                             </svg>
                         </div>
                         <div class="experience-info">
@@ -252,7 +582,7 @@
                     <div class="experience-header">
                         <div class="experience-icon">
                             <svg>
-                                <use href="icons-sprite.svg#icon-label"></use>
+                                <use href="#icon-label"></use>
                             </svg>
                         </div>
                         <div class="experience-info">
@@ -282,6 +612,16 @@
             </div>
         </section>
 
+        <div class="pcb-divider" aria-hidden="true">
+            <svg viewBox="0 0 1200 28" preserveAspectRatio="none">
+                <path class="pcb-trace" pathLength="1200" d="M0 14 H420 L436 4 H760 L776 14 H1200" />
+                <path class="pcb-trace pcb-trace--2" pathLength="1200" d="M0 22 H300 L312 26 H900 L912 22 H1200" />
+                <circle class="pcb-via" cx="436" cy="4" r="2.5" />
+                <circle class="pcb-via" cx="776" cy="14" r="2.5" />
+                <path class="pcb-pulse" pathLength="1200" d="M0 14 H420 L436 4 H760 L776 14 H1200" />
+            </svg>
+        </div>
+
         <section id="projects" class="content-section">
             <h2 class="section-title">Technical Projects</h2>
             <div class="projects-grid">
@@ -289,7 +629,7 @@
                 <div class="project-card animate-on-scroll stagger">
                     <div class="project-header">
                         <div class="project-icon"><svg aria-hidden="true">
-                                <use href="icons-sprite.svg#icon-code"></use>
+                                <use href="#icon-code"></use>
                             </svg></div>
                         <div class="project-info">
                             <h3>The Penthouse</h3>
@@ -299,42 +639,58 @@
                             </div>
                         </div>
                     </div>
-                    <p class="project-description">Privacy-first social app built through 3 full iterations, now live
-                        as a Progressive Web App. Orchestrated across multiple specialized AI agents — backend,
-                        frontend, and release gate each owned by a dedicated model with gated handoff protocols.
-                        Deployed on a self-hosted TrueNAS stack with Caddy, Docker Compose, and nightly automated
-                        backups.</p>
+                    <div class="project-body">
+                        <div class="project-body-main">
+                            <p class="project-description">Privacy-first social app built through 3 full iterations,
+                                now live as a Progressive Web App. Orchestrated across multiple specialized AI agents —
+                                backend, frontend, and release gate each owned by a dedicated model with gated handoff
+                                protocols. Deployed on a self-hosted TrueNAS stack with Caddy, Docker Compose, and
+                                nightly automated backups.</p>
+                            <p class="project-description">The app runs on a Fastify + PostgreSQL backend, Svelte
+                                frontend, and Socket.IO for realtime messaging. Push notifications reach Android via
+                                FCM, while media uploads flow through a custom compression and storage pipeline.</p>
 
-                    <div class="tech-stack">
-                        <span class="tech-tag">Progressive Web App</span>
-                        <span class="tech-tag">Fastify + PostgreSQL</span>
-                        <span class="tech-tag">Socket.IO</span>
-                        <span class="tech-tag">TrueNAS</span>
-                        <span class="tech-tag">Docker Compose</span>
-                        <span class="tech-tag">AI Orchestration</span>
-                    </div>
+                            <div class="project-achievements">
+                                <h4>Key Achievements:</h4>
+                                <ul>
+                                    <li>Live production at penthouse.blog with HTTPS, realtime chat, and Android push notifications</li>
+                                    <li>Multi-agent delegation: specialized models own distinct concerns with evidence-gated handoffs</li>
+                                    <li>Invite-only auth, admin moderation suite, media uploads, and PWA install flow</li>
+                                    <li>Self-hosted CI/CD with GitHub Actions and automated nightly backups to TrueNAS</li>
+                                    <li>3 iterations — native Android APK to PWA reduces install footprint by ~50x</li>
+                                </ul>
+                            </div>
+                        </div>
 
-                    <div class="project-achievements">
-                        <h4>Key Achievements:</h4>
-                        <ul>
-                            <li>Live production at penthouse.blog with HTTPS, realtime chat, and Android push notifications</li>
-                            <li>Multi-agent delegation: specialized models own distinct concerns with evidence-gated handoffs</li>
-                            <li>Invite-only auth, admin moderation suite, media uploads, and PWA install flow</li>
-                            <li>3 iterations — native Android APK to PWA reduces install footprint by ~50x</li>
-                        </ul>
-                    </div>
+                        <div class="project-body-meta">
+                            <div class="tech-stack">
+                                <span class="tech-tag">Progressive Web App</span>
+                                <span class="tech-tag">Fastify + PostgreSQL</span>
+                                <span class="tech-tag">Svelte</span>
+                                <span class="tech-tag">Socket.IO</span>
+                                <span class="tech-tag">FCM Push</span>
+                                <span class="tech-tag">TrueNAS</span>
+                                <span class="tech-tag">Docker Compose</span>
+                                <span class="tech-tag">AI Orchestration</span>
+                            </div>
 
-                    <div class="complexity-meter">
-                        <div class="complexity-fill expert"></div>
+                            <div class="complexity-meter">
+                                <div class="complexity-fill lit"></div>
+                                <div class="complexity-fill lit"></div>
+                                <div class="complexity-fill lit"></div>
+                                <div class="complexity-fill lit"></div>
+                                <div class="complexity-fill lit"></div>
+                            </div>
+                            <div class="complexity-label">Complexity: Expert</div>
+                            <a href="https://penthouse.blog" target="_blank" rel="noopener noreferrer" class="project-link">[ visit: penthouse.blog ]</a>
+                        </div>
                     </div>
-                    <div class="complexity-label">Complexity: Expert</div>
-                    <a href="https://penthouse.blog" target="_blank" rel="noopener noreferrer" class="project-link">Visit penthouse.blog →</a>
                 </div>
 
                 <div class="project-card animate-on-scroll stagger">
                     <div class="project-header">
                         <div class="project-icon"><svg aria-hidden="true">
-                                <use href="icons-sprite.svg#icon-science"></use>
+                                <use href="#icon-science"></use>
                             </svg></div>
                         <div class="project-info">
                             <h3>Aim's 3D Print Shoppe</h3>
@@ -366,16 +722,20 @@
                     </div>
 
                     <div class="complexity-meter">
-                        <div class="complexity-fill intermediate"></div>
+                        <div class="complexity-fill lit"></div>
+                        <div class="complexity-fill lit"></div>
+                        <div class="complexity-fill lit"></div>
+                        <div class="complexity-fill"></div>
+                        <div class="complexity-fill"></div>
                     </div>
                     <div class="complexity-label">Complexity: Intermediate</div>
-                    <a href="https://aim3dprints.com" target="_blank" rel="noopener noreferrer" class="project-link">Visit aim3dprints.com →</a>
+                    <a href="https://aim3dprints.com" target="_blank" rel="noopener noreferrer" class="project-link">[ visit: aim3dprints.com ]</a>
                 </div>
 
                 <div class="project-card animate-on-scroll stagger">
                     <div class="project-header">
                         <div class="project-icon"><svg aria-hidden="true">
-                                <use href="icons-sprite.svg#icon-storage"></use>
+                                <use href="#icon-storage"></use>
                             </svg></div>
                         <div class="project-info">
                             <h3>Enterprise SAS NAS Build</h3>
@@ -408,17 +768,20 @@
                     </div>
 
                     <div class="complexity-meter">
-                        <div class="complexity-fill expert"></div>
+                        <div class="complexity-fill lit"></div>
+                        <div class="complexity-fill lit"></div>
+                        <div class="complexity-fill lit"></div>
+                        <div class="complexity-fill lit"></div>
+                        <div class="complexity-fill lit"></div>
                     </div>
                     <div class="complexity-label">Complexity: Expert</div>
-                    <a href="https://teardown.cafe" target="_blank" rel="noopener noreferrer" class="project-link">View
-                        on Teardown Café →</a>
+                    <a href="https://teardown.cafe" target="_blank" rel="noopener noreferrer" class="project-link">[ view: teardown.cafe ]</a>
                 </div>
 
                 <div class="project-card animate-on-scroll stagger">
                     <div class="project-header">
                         <div class="project-icon"><svg aria-hidden="true">
-                                <use href="icons-sprite.svg#icon-shield"></use>
+                                <use href="#icon-shield"></use>
                             </svg></div>
                         <div class="project-info">
                             <h3>Pi-hole Network Security</h3>
@@ -451,17 +814,20 @@
                     </div>
 
                     <div class="complexity-meter">
-                        <div class="complexity-fill intermediate"></div>
+                        <div class="complexity-fill lit"></div>
+                        <div class="complexity-fill lit"></div>
+                        <div class="complexity-fill lit"></div>
+                        <div class="complexity-fill"></div>
+                        <div class="complexity-fill"></div>
                     </div>
                     <div class="complexity-label">Complexity: Intermediate</div>
-                    <a href="https://teardown.cafe" target="_blank" rel="noopener noreferrer" class="project-link">View
-                        on Teardown Café →</a>
+                    <a href="https://teardown.cafe" target="_blank" rel="noopener noreferrer" class="project-link">[ view: teardown.cafe ]</a>
                 </div>
 
                 <div class="project-card animate-on-scroll stagger">
                     <div class="project-header">
                         <div class="project-icon"><svg aria-hidden="true">
-                                <use href="icons-sprite.svg#icon-phone-android"></use>
+                                <use href="#icon-phone-android"></use>
                             </svg></div>
                         <div class="project-info">
                             <h3>GrapheneOS Migration</h3>
@@ -494,20 +860,33 @@
                     </div>
 
                     <div class="complexity-meter">
-                        <div class="complexity-fill advanced"></div>
+                        <div class="complexity-fill lit"></div>
+                        <div class="complexity-fill lit"></div>
+                        <div class="complexity-fill lit"></div>
+                        <div class="complexity-fill lit"></div>
+                        <div class="complexity-fill"></div>
                     </div>
                     <div class="complexity-label">Complexity: Advanced</div>
-                    <a href="https://teardown.cafe" target="_blank" rel="noopener noreferrer" class="project-link">View
-                        on Teardown Café →</a>
+                    <a href="https://teardown.cafe" target="_blank" rel="noopener noreferrer" class="project-link">[ view: teardown.cafe ]</a>
                 </div>
 
             </div>
         </section>
 
+        <div class="pcb-divider" aria-hidden="true">
+            <svg viewBox="0 0 1200 28" preserveAspectRatio="none">
+                <path class="pcb-trace" pathLength="1200" d="M0 14 H420 L436 4 H760 L776 14 H1200" />
+                <path class="pcb-trace pcb-trace--2" pathLength="1200" d="M0 22 H300 L312 26 H900 L912 22 H1200" />
+                <circle class="pcb-via" cx="436" cy="4" r="2.5" />
+                <circle class="pcb-via" cx="776" cy="14" r="2.5" />
+                <path class="pcb-pulse" pathLength="1200" d="M0 14 H420 L436 4 H760 L776 14 H1200" />
+            </svg>
+        </div>
+
         <!-- KNOWLEDGE GARDEN SHOWCASE SECTION -->
         <section id="knowledge-garden-showcase" class="content-section">
             <h2 class="section-title"><svg class="section-title-icon" aria-hidden="true">
-                    <use href="icons-sprite.svg#icon-book"></use>
+                    <use href="#icon-book"></use>
                 </svg> Technical Documentation</h2>
             <div class="knowledge-garden-container">
                 <div class="knowledge-garden-content">
@@ -520,7 +899,7 @@
                     <div class="garden-highlights">
                         <div class="garden-highlight-item">
                             <span class="highlight-icon"><svg aria-hidden="true">
-                                    <use href="icons-sprite.svg#icon-code"></use>
+                                    <use href="#icon-code"></use>
                                 </svg></span>
                             <div>
                                 <h4>App Development</h4>
@@ -529,7 +908,7 @@
                         </div>
                         <div class="garden-highlight-item">
                             <span class="highlight-icon"><svg aria-hidden="true">
-                                    <use href="icons-sprite.svg#icon-storage"></use>
+                                    <use href="#icon-storage"></use>
                                 </svg></span>
                             <div>
                                 <h4>Self-Hosted Infrastructure</h4>
@@ -538,7 +917,7 @@
                         </div>
                         <div class="garden-highlight-item">
                             <span class="highlight-icon"><svg aria-hidden="true">
-                                    <use href="icons-sprite.svg#icon-shield"></use>
+                                    <use href="#icon-shield"></use>
                                 </svg></span>
                             <div>
                                 <h4>Privacy & Homelab</h4>
@@ -550,7 +929,9 @@
                     <div class="garden-cta">
                         <a href="garden-terminal.html" class="garden-button">
                             <span>Explore Knowledge Garden</span>
-                            <span class="material-symbols-outlined">arrow_forward</span>
+                            <svg class="garden-button-arrow" aria-hidden="true">
+                                <use href="#icon-arrow-forward"></use>
+                            </svg>
                         </a>
                         <p class="garden-note">Interactive visualization with <span id="featuredProjectCount">6</span>
                             featured projects • Live documentation • <span id="gardenLastUpdated"
@@ -573,25 +954,52 @@
                             <div class="stat-label">Featured Projects</div>
                         </div>
                     </div>
+                    <div class="recent-notes">
+                        <div class="recent-notes-header">LATEST TRANSMISSIONS</div>
+                        <ul class="recent-notes-list" id="recentNotesList">
+                            <li class="recent-notes-empty">tuning receiver&hellip;</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </section>
+
+        <div class="pcb-divider" aria-hidden="true">
+            <svg viewBox="0 0 1200 28" preserveAspectRatio="none">
+                <path class="pcb-trace" pathLength="1200" d="M0 14 H420 L436 4 H760 L776 14 H1200" />
+                <path class="pcb-trace pcb-trace--2" pathLength="1200" d="M0 22 H300 L312 26 H900 L912 22 H1200" />
+                <circle class="pcb-via" cx="436" cy="4" r="2.5" />
+                <circle class="pcb-via" cx="776" cy="14" r="2.5" />
+                <path class="pcb-pulse" pathLength="1200" d="M0 14 H420 L436 4 H760 L776 14 H1200" />
+            </svg>
+        </div>
 
         <section id="contact" class="content-section">
             <h2 class="section-title">Want to Chat?</h2>
             <div class="contact-info">
                 <p>Email: <a href="mailto:amasud.tech@gmail.com">amasud.tech@gmail.com</a></p>
             </div>
-            <a href="Abdullah_Masud_Resume.pdf" download class="resume-download-btn">
-                <svg aria-hidden="true">
-                    <use href="icons-sprite.svg#icon-download"></use>
-                </svg>
-                Download Resume
-            </a>
+            <div class="resume-actions">
+                <a href="Abdullah_Masud_Resume.pdf" target="_blank" rel="noopener noreferrer" class="resume-download-btn">
+                    <svg aria-hidden="true">
+                        <use href="#icon-arrow-forward"></use>
+                    </svg>
+                    View Resume (PDF)
+                </a>
+                <a href="Abdullah_Masud_Resume.docx" download class="resume-download-btn resume-download-btn--secondary">
+                    <svg aria-hidden="true">
+                        <use href="#icon-download"></use>
+                    </svg>
+                    Download DOCX
+                </a>
+            </div>
         </section>
 
         <footer>
             <canvas id="matrix-rain" aria-hidden="true"></canvas>
+            <div class="vault-ticker" id="vaultTicker" hidden>
+                <div class="vault-ticker-track" id="vaultTickerTrack"></div>
+            </div>
             <div class="footer-content">
                 <div class="footer-links">
                     <a href="https://github.com/AIMDaAlien" target="_blank" rel="noopener noreferrer">GitHub</a>

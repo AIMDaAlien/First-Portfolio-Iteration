@@ -154,6 +154,20 @@
     --border-radius-md: var(--md-sys-shape-corner-medium);
     --border-radius-lg: var(--md-sys-shape-corner-large);
     --spacing-unit: 8px;
+
+    /* === RETRO-TECH OPERATOR PALETTE === */
+    --rt-bg: #0A0E1A;
+    --rt-panel: #0D0E15;
+    --rt-panel-glass: rgba(13, 14, 21, 0.72);
+    --rt-text: #E0DEED;
+    --rt-muted: #7A7890;
+    --rt-peri: #8E99F3;
+    --rt-lavender: #B8B9F3;
+    --rt-led: #8E99F3;
+    --rt-border: rgba(184, 185, 243, 0.22);
+    --rt-glow: rgba(142, 153, 243, 0.35);
+    --rt-mono: 'JetBrains Mono', monospace;
+    --rt-radius: 8px;
 }
 
 /* === REDUCED MOTION FALLBACKS === */

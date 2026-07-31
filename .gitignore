@@ -44,3 +44,4 @@ AGENTS.md
 # Old/sensitive resume versions
 Abdullah_Masud_Resume_NOC.docx
 *.docx
+!Abdullah_Masud_Resume.docx

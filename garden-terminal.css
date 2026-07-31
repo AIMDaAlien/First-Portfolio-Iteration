@@ -774,7 +774,8 @@ body {
 .note-icon {
     width: 24px;
     height: 24px;
-    fill: var(--md-sys-color-primary);
+    fill: none;
+    stroke: var(--md-sys-color-primary);
     flex-shrink: 0;
     margin-top: 2px;
 }

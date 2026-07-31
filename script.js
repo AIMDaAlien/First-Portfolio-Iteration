@@ -15,7 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const cursorAura = document.getElementById('cursor-aura');
     const animatedElements = Array.from(document.querySelectorAll('.animate-on-scroll'));
     const pageSections = Array.from(document.querySelectorAll('section[id]'));
-    const heroParallaxElements = Array.from(document.querySelectorAll('#hero .hero-title, #hero .hero-subtitle'));
     const interactiveElements = Array.from(document.querySelectorAll(
         'a, button, .stat-card, .skill-category, .project-card, .timeline-item, .section-title, .nav-link, .hamburger-menu'
     ));
@@ -111,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (heroSubtitle) {
                             heroSubtitle.style.opacity = '1';
                             heroSubtitle.style.transform = 'translateY(0) scale(1)';
-                            typeSubtitle('Builder • Systems & AI Orchestration');
+                            typeSubtitle('Builder working across self-hosted infrastructure, AI orchestration, and live app deployment.');
                         }
                         if (scrollIndicator) {
                             scrollIndicator.style.opacity = '1';
@@ -222,13 +221,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- Optimized Cursor Aura ---
+    // --- Optimized Cursor Aura + Dot ---
     const canUseCustomCursor = window.matchMedia('(pointer: fine)').matches &&
         !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (cursorAura && canUseCustomCursor) {
-        cursorAura.style.background = 'rgba(187,195,255,0.7)';
-        cursorAura.style.boxShadow = '0 0 16px 4px rgba(187,195,255,0.5)';
+        // Create the exact-position dot if it doesn't exist.
+        let cursorDot = document.getElementById('cursor-dot');
+        if (!cursorDot) {
+            cursorDot = document.createElement('div');
+            cursorDot.id = 'cursor-dot';
+            document.body.appendChild(cursorDot);
+        }
+
         document.body.style.cursor = 'none';
 
         let auraX = window.innerWidth / 2;
@@ -238,6 +243,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let pointerLocked = false;
         let auraIdle = false;
         let lastMove = Date.now();
+
+        // Lower lerp = softer, more liquid follow; the dot itself is still exact.
+        const AURA_LERP = 0.22;
 
         document.addEventListener('mousemove', (e) => {
             lastMove = Date.now();
@@ -252,42 +260,59 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (auraIdle) {
                 auraIdle = false;
-                requestAnimationFrame(animateAura);
+                requestAnimationFrame(animateCursor);
             }
         });
 
-        function animateAura() {
+        function animateCursor() {
             if (Date.now() - lastMove > 2000) {
                 auraIdle = true;
                 return;
             }
-            auraX += (targetX - auraX) * 0.25;
-            auraY += (targetY - auraY) * 0.25;
-            cursorAura.style.transform = `translate3d(${auraX}px, ${auraY}px, 0)`;
-            requestAnimationFrame(animateAura);
-        }
-        animateAura();
 
+            // Dot snaps to the pointer exactly.
+            cursorDot.style.transform = `translate3d(calc(${targetX}px - 50%), calc(${targetY}px - 50%), 0)`;
+
+            // Aura trails behind smoothly.
+            auraX += (targetX - auraX) * AURA_LERP;
+            auraY += (targetY - auraY) * AURA_LERP;
+            cursorAura.style.transform = `translate3d(calc(${auraX}px - 50%), calc(${auraY}px - 50%), 0)`;
+
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+
+        cursorDot.style.opacity = '1';
         cursorAura.style.opacity = '0.9';
 
         interactiveElements.forEach(el => {
             el.classList.add('interactive-hover-target');
-            el.addEventListener('mouseenter', () => cursorAura.classList.add('hovering'));
-            el.addEventListener('mouseleave', () => cursorAura.classList.remove('hovering'));
+            el.addEventListener('mouseenter', () => {
+                cursorAura.classList.add('hovering');
+                cursorDot.classList.add('hovering');
+            });
+            el.addEventListener('mouseleave', () => {
+                cursorAura.classList.remove('hovering');
+                cursorDot.classList.remove('hovering');
+            });
         });
 
         document.addEventListener('mouseleave', () => {
+            cursorDot.style.opacity = '0';
             cursorAura.style.opacity = '0';
         });
         document.addEventListener('mouseenter', () => {
+            cursorDot.style.opacity = '1';
             cursorAura.style.opacity = '0.9';
         });
-    } else if (cursorAura) {
-        cursorAura.style.display = 'none';
+    } else {
+        if (cursorAura) cursorAura.style.display = 'none';
+        const existingDot = document.getElementById('cursor-dot');
+        if (existingDot) existingDot.style.display = 'none';
         document.body.style.removeProperty('cursor');
     }
 
-    // --- Throttled Card Interactions (Ripple + Tilt) ---
+    // --- Card click ripple ---
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     cards.forEach(card => {
@@ -313,56 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => ripple.remove(), 600);
         });
 
-        // Tilt effect - only if user doesn't prefer reduced motion
-        if (!prefersReducedMotion) {
-            let tiltX = 0;
-            let tiltY = 0;
-            let rafId = null;
-
-            function updateTiltTransform() {
-                card.style.transform = `perspective(1000px) rotateX(${tiltY}deg) rotateY(${tiltX}deg) translateY(-5px) scale(1.03)`;
-                rafId = null;
-            }
-
-            card.addEventListener('mousemove', function (e) {
-                const rect = this.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                tiltX = (centerX - x) / 20;
-                tiltY = (y - centerY) / 20;
-
-                if (!rafId) {
-                    rafId = requestAnimationFrame(updateTiltTransform);
-                }
-            });
-
-            card.addEventListener('mouseleave', function () {
-                this.style.transform = '';
-                cancelAnimationFrame(rafId);
-                rafId = null;
-            });
-        }
     });
-
-    // --- Parallax effect for hero section ---
-    let ticking = false;
-    function updateParallax() {
-        const scrolled = window.scrollY;
-        heroParallaxElements.forEach((el, index) => {
-            const speed = Math.min(0.5, 0.3 + (index * 0.05));
-            el.style.transform = `translateY(${scrolled * speed}px)`;
-        });
-        ticking = false;
-    }
-
-    function requestTick() {
-        if (!ticking) {
-            window.requestAnimationFrame(updateParallax);
-            ticking = true;
-        }
-    }
 
     // --- Scroll & Resize Listeners ---
     let navTicking = false;
@@ -374,9 +350,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             navTicking = true;
         }
-        if (window.scrollY < window.innerHeight) {
-            requestTick();
-        }
     }, { passive: true });
 
     window.addEventListener('resize', () => {
@@ -385,9 +358,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     updateActiveNavLink();
-    if (window.scrollY > 0 && window.scrollY < window.innerHeight) {
-        requestTick();
-    }
 });
 
 async function fetchJsonWithPolicy(url, policy = {}) {
@@ -415,6 +385,7 @@ async function updateGardenStats() {
         const projectCountEl = document.getElementById('projectCount');
         const featuredProjectCountEl = document.getElementById('featuredProjectCount');
         const lastUpdatedEl = document.getElementById('gardenLastUpdated');
+        const stripNotesEl = document.getElementById('strip-notes');
 
         const isHiddenPath = (path) => path.split('/').some(part => HIDDEN.includes(part) || part.startsWith('.'));
         const isCandidateFeaturedPath = (path) => (
@@ -533,8 +504,9 @@ async function updateGardenStats() {
             setLastUpdatedLabel(lastUpdatedEl.dataset.updated);
         }
 
-        if (noteCountEl) noteCountEl.textContent = `${noteCount}+`;
+        if (noteCountEl) noteCountEl.textContent = String(noteCount);
         if (folderCountEl) folderCountEl.textContent = String(folderCount);
+        if (stripNotesEl) stripNotesEl.textContent = `[garden: ${noteCount}]`;
 
         if (featuredCount !== null) {
             const clipped = Math.min(featuredCount, 6);
@@ -705,13 +677,307 @@ function initUptimeCounter() {
         const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
         uptimeEl.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+
+        const stripUptime = document.getElementById('strip-uptime');
+        if (stripUptime) stripUptime.textContent = `[uptime: ${days}d ${hours}h]`;
     }
 
     updateUptime();
     setInterval(updateUptime, 1000);
 }
 
+// --- VU Meter Gauges (skill cards) ---
+function initVuMeters() {
+    const meters = document.querySelectorAll('.vu-meter');
+    if (!meters.length) return;
+
+    const observer = new IntersectionObserver((entries, obs) => {
+        entries.forEach(entry => {
+            if (!entry.isIntersecting) return;
+            const meter = entry.target;
+            const level = parseFloat(meter.dataset.level) || 0;
+            const clamped = Math.max(0, Math.min(1, level));
+            const deg = -50 + clamped * 100;
+            meter.style.setProperty('--vu-angle', `${deg}deg`);
+            meter.classList.add('vu-live');
+            obs.unobserve(meter);
+        });
+    }, { threshold: 0.1 });
+
+    meters.forEach(meter => observer.observe(meter));
+}
+
+// --- Unraid Telemetry ---
+function initUnraidTelemetry() {
+    const container = document.getElementById('unraidTelemetry');
+    if (!container) return;
+
+    const endpoint = container.dataset.endpoint.trim();
+    const pollInterval = Math.max(10000, Number.parseInt(container.dataset.interval, 10) || 30000);
+    const staleAfter = Math.max(90000, pollInterval * 1.5);
+    const offlineAfter = Math.max(300000, pollInterval * 3);
+    const dot = document.getElementById('telemetryDot');
+    const updated = document.getElementById('telemetryUpdated');
+    let pollId = null;
+    let requestInFlight = false;
+    let lastPayloadTime = 0;
+
+    const setStatus = (state, label) => {
+        if (dot) {
+            dot.classList.remove(
+                'telemetry-status-dot--pending',
+                'telemetry-status-dot--stale',
+                'telemetry-status-dot--offline'
+            );
+            if (state !== 'online') dot.classList.add(`telemetry-status-dot--${state}`);
+        }
+        if (updated) updated.textContent = label;
+    };
+
+    const formatAge = (timestamp) => {
+        const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+        if (seconds < 60) return `${seconds}s ago`;
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes}m ago`;
+        return `${Math.floor(minutes / 60)}h ago`;
+    };
+
+    const refreshFreshness = () => {
+        if (!lastPayloadTime) {
+            setStatus('offline', 'signal unavailable');
+            return;
+        }
+
+        const age = Date.now() - lastPayloadTime;
+        if (age > offlineAfter) setStatus('offline', `offline · ${formatAge(lastPayloadTime)}`);
+        else if (age > staleAfter) setStatus('stale', `stale · ${formatAge(lastPayloadTime)}`);
+        else setStatus('online', `updated ${formatAge(lastPayloadTime)}`);
+    };
+
+    const finiteNumber = (value) => {
+        const number = Number(value);
+        return Number.isFinite(number) ? number : null;
+    };
+
+    const updateGauge = (barId, valueId, percentage, valueLabel, warningAt) => {
+        const bar = document.getElementById(barId);
+        const value = document.getElementById(valueId);
+        if (!bar || !value || percentage === null) return;
+
+        const level = Math.max(0, Math.min(100, percentage));
+        bar.style.setProperty('--telemetry-level', `${level}%`);
+        bar.setAttribute('aria-valuenow', String(Math.round(level)));
+        bar.setAttribute('aria-valuetext', valueLabel);
+        bar.classList.toggle('is-warning', level >= warningAt && level < 95);
+        bar.classList.toggle('is-critical', level >= 95);
+        value.textContent = valueLabel;
+    };
+
+    const updateText = (id, value) => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value;
+    };
+
+    const renderTelemetry = (payload) => {
+        const cpu = finiteNumber(payload.cpu_pct);
+        const ramUsed = finiteNumber(payload.ram_used_gb);
+        const ramTotal = finiteNumber(payload.ram_total_gb);
+        const arrayUsed = finiteNumber(payload.array_used_tb);
+        const arrayTotal = finiteNumber(payload.array_total_tb);
+        const uptimeDays = finiteNumber(payload.uptime_days);
+        const temperature = finiteNumber(payload.temp_c);
+        const dockerCount = finiteNumber(payload.docker_ct);
+
+        updateGauge('gaugeCpu', 'cpuValue', cpu, cpu === null ? '--' : `${cpu.toFixed(1)}%`, 80);
+        updateGauge(
+            'gaugeRam',
+            'ramValue',
+            ramUsed !== null && ramTotal > 0 ? (ramUsed / ramTotal) * 100 : null,
+            ramUsed !== null && ramTotal > 0 ? `${ramUsed.toFixed(1)}/${ramTotal.toFixed(0)} GB` : '--',
+            80
+        );
+        updateGauge(
+            'gaugeArray',
+            'arrayValue',
+            arrayUsed !== null && arrayTotal > 0 ? (arrayUsed / arrayTotal) * 100 : null,
+            arrayUsed !== null && arrayTotal > 0 ? `${arrayUsed.toFixed(1)}/${arrayTotal.toFixed(1)} TB` : '--',
+            85
+        );
+
+        updateText('dockerCt', dockerCount === null ? '--' : String(Math.max(0, Math.round(dockerCount))));
+        updateText('unraidUptime', uptimeDays === null ? '--' : `${Math.max(0, Math.floor(uptimeDays))}d`);
+        updateText('tempValue', temperature === null ? '--' : `${temperature.toFixed(0)}°C`);
+
+        const payloadDate = new Date(payload.ts);
+        lastPayloadTime = Number.isNaN(payloadDate.getTime()) ? Date.now() : payloadDate.getTime();
+        refreshFreshness();
+    };
+
+    const fetchTelemetry = async () => {
+        if (requestInFlight) return;
+        requestInFlight = true;
+        try {
+            const payload = await fetchJsonWithPolicy(endpoint, {
+                timeoutMs: 8000,
+                retries: 0,
+                dedupeKey: `unraid-telemetry:${endpoint}`
+            });
+            if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+                throw new Error('Invalid telemetry payload');
+            }
+            renderTelemetry(payload);
+        } catch (_error) {
+            refreshFreshness();
+        } finally {
+            requestInFlight = false;
+        }
+    };
+
+    const stopPolling = () => {
+        if (pollId !== null) clearInterval(pollId);
+        pollId = null;
+    };
+
+    const startPolling = () => {
+        if (pollId !== null) return;
+        fetchTelemetry();
+        pollId = setInterval(fetchTelemetry, pollInterval);
+    };
+
+    if (!endpoint) {
+        setStatus('pending', 'endpoint pending');
+        return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) startPolling();
+            else stopPolling();
+        });
+    }, { threshold: 0.1 });
+
+    observer.observe(container);
+}
+
+// --- Relative date label ("2d ago", "3w ago") in the style of setLastUpdatedLabel ---
+function relativeDateLabel(rawDate) {
+    const date = rawDate instanceof Date ? rawDate : new Date(rawDate);
+    if (isNaN(date.getTime())) return '';
+
+    // Clamp at 0: manifest timestamps carry no timezone, so a just-published
+    // note can look slightly "future" depending on the viewer's clock.
+    const diffMs = Math.max(0, Date.now() - date.getTime());
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+    if (diffDays === 0) {
+        if (diffHours < 1) return 'just now';
+        return `${diffHours}h ago`;
+    }
+    if (diffDays === 1) return '1d ago';
+    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffDays < 30) {
+        const weeks = Math.floor(diffDays / 7);
+        return `${weeks}w ago`;
+    }
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// --- Vault Activity: recent notes widget, footer ticker, incident sign (one shared fetch) ---
+async function initVaultActivity() {
+    const VAULT_OWNER = 'AIMDaAlien';
+    const VAULT_REPO = 'Obsidian-Vault';
+    const listEl = document.getElementById('recentNotesList');
+    const tickerEl = document.getElementById('vaultTicker');
+    const tickerTrackEl = document.getElementById('vaultTickerTrack');
+    const incidentDaysEl = document.getElementById('incidentDays');
+    const incidentDateEl = document.getElementById('incidentDate');
+    const incidentSummaryEl = document.getElementById('incidentSummary');
+    const incidentNextEl = document.getElementById('incidentNext');
+
+    let manifest = null;
+    try {
+        manifest = await fetchJsonWithPolicy(
+            `https://raw.githubusercontent.com/${VAULT_OWNER}/${VAULT_REPO}/main/garden-manifest.json?v=${Date.now()}`,
+            { timeoutMs: 12000, retries: 2, dedupeKey: `garden-manifest:${VAULT_OWNER}/${VAULT_REPO}` }
+        );
+    } catch (error) {
+        console.error('Failed to fetch vault activity manifest:', error);
+    }
+
+    const metadata = (manifest && manifest.metadata) || {};
+
+    const recent = Object.entries(metadata)
+        .map(([path, meta]) => ({ path, meta, date: new Date(meta && meta.last_published || '') }))
+        .filter(item => item.meta && !isNaN(item.date.getTime()))
+        .sort((a, b) => b.date - a.date);
+
+    const noteTitle = ({ path, meta }) =>
+        meta.title || path.split('/').pop().replace(/\.md$/, '');
+
+    // Feature: "Latest transmissions" recent-notes widget
+    if (listEl) {
+        if (!recent.length) {
+            listEl.innerHTML = '<li class="recent-notes-empty">signal unavailable &mdash; check the garden directly</li>';
+        } else {
+            listEl.innerHTML = '';
+            recent.slice(0, 5).forEach(item => {
+                const li = document.createElement('li');
+                const link = document.createElement('a');
+                link.href = 'garden-terminal.html';
+
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'recent-notes-title';
+                titleSpan.textContent = noteTitle(item);
+
+                const dateSpan = document.createElement('span');
+                dateSpan.className = 'recent-notes-date';
+                dateSpan.textContent = relativeDateLabel(item.date);
+
+                link.append(titleSpan, dateSpan);
+                li.appendChild(link);
+                listEl.appendChild(li);
+            });
+        }
+    }
+
+    // Feature: vault activity ticker in the footer
+    if (tickerEl && tickerTrackEl && recent.length) {
+        const items = recent.slice(0, 8).map(item =>
+            `\u25B8 published: ${noteTitle(item)} \u2014 ${relativeDateLabel(item.date)}`
+        );
+        const sequence = items.join('\u2003\u2003\u00B7\u2003\u2003') + '\u2003\u2003\u00B7\u2003\u2003';
+        // Render the sequence twice so translateX(-50%) loops seamlessly.
+        tickerTrackEl.textContent = sequence + sequence;
+        tickerEl.hidden = false;
+    }
+
+    // Feature: incident sign ("days since last homelab incident")
+    const incidentEntry = Object.values(metadata)
+        .filter(meta => meta && meta.last_incident)
+        .sort((a, b) => new Date(b.last_published || 0) - new Date(a.last_published || 0))[0];
+    const incidentDate = new Date(incidentEntry ? incidentEntry.last_incident : '2026-06-27');
+    if (!isNaN(incidentDate.getTime())) {
+        const days = Math.max(0, Math.floor((Date.now() - incidentDate.getTime()) / (1000 * 60 * 60 * 24)));
+        if (incidentDaysEl) incidentDaysEl.textContent = String(days);
+        if (incidentDateEl) {
+            // Date-only values parse as UTC midnight; format in UTC so the
+            // label shows the intended calendar date in any timezone.
+            incidentDateEl.textContent = `last reset: ${incidentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}`;
+        }
+    }
+    if (incidentSummaryEl && incidentEntry?.incident_summary) {
+        incidentSummaryEl.textContent = incidentEntry.incident_summary;
+    }
+    if (incidentNextEl && incidentEntry?.next_maintenance) {
+        incidentNextEl.textContent = incidentEntry.next_maintenance;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initMatrixRain();
     initUptimeCounter();
+    initVuMeters();
+    initUnraidTelemetry();
+    initVaultActivity();
 });
