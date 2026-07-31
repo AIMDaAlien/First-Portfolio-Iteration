@@ -984,4 +984,5 @@ document.addEventListener('DOMContentLoaded', () => {
     initVuMeters();
     initUnraidTelemetry();
     initVaultActivity();
+    setInterval(initVaultActivity, 5 * 60 * 1000);
 });
