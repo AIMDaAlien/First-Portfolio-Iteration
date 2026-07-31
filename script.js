@@ -908,7 +908,11 @@ async function initVaultActivity() {
     const metadata = (manifest && manifest.metadata) || {};
 
     const recent = Object.entries(metadata)
-        .map(([path, meta]) => ({ path, meta, date: new Date(meta && meta.last_published || '') }))
+        .map(([path, meta]) => ({
+            path,
+            meta,
+            date: new Date(meta && (meta.last_published || meta.updated || meta.created) || '')
+        }))
         .filter(item => item.meta && !isNaN(item.date.getTime()))
         .sort((a, b) => b.date - a.date);
 
@@ -944,7 +948,7 @@ async function initVaultActivity() {
     // Feature: vault activity ticker in the footer
     if (tickerEl && tickerTrackEl && recent.length) {
         const items = recent.slice(0, 8).map(item =>
-            `\u25B8 published: ${noteTitle(item)} \u2014 ${relativeDateLabel(item.date)}`
+            `\u25B8 vault update: ${noteTitle(item)} \u2014 ${relativeDateLabel(item.date)}`
         );
         const sequence = items.join('\u2003\u2003\u00B7\u2003\u2003') + '\u2003\u2003\u00B7\u2003\u2003';
         // Render the sequence twice so translateX(-50%) loops seamlessly.
