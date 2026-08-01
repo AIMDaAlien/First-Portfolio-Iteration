@@ -107,16 +107,19 @@ class KnowledgeGarden {
         // Sidebar toggle (desktop)
         const sidebarToggle = document.getElementById('sidebarToggle');
         sidebarToggle.addEventListener('click', () => {
-            this.sidebar.classList.toggle('collapsed');
-            // On mobile, this opens the sidebar
             if (window.innerWidth <= 768) {
-                this.sidebar.classList.add('open');
-                sidebarToggle.setAttribute('aria-expanded', 'true');
-                const overlay = document.getElementById('sidebarOverlay');
-                overlay?.classList.add('visible');
-                overlay?.setAttribute('aria-hidden', 'false');
+                if (this.sidebar.classList.contains('open')) {
+                    this.closeMobileSidebar();
+                } else {
+                    this.openMobileSidebar();
+                }
+                return;
             }
+            this.sidebar.classList.toggle('collapsed');
         });
+
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        mobileMenuBtn?.addEventListener('click', () => this.openMobileSidebar());
 
         // Close sidebar when clicking overlay
         const sidebarOverlay = document.getElementById('sidebarOverlay');
@@ -1196,12 +1199,22 @@ class KnowledgeGarden {
         this.statusInfo.textContent = 'Ready';
     }
 
+    openMobileSidebar() {
+        this.sidebar.classList.add('open');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        sidebarOverlay?.classList.add('visible');
+        sidebarOverlay?.setAttribute('aria-hidden', 'false');
+        document.getElementById('sidebarToggle')?.setAttribute('aria-expanded', 'true');
+        document.getElementById('mobileMenuBtn')?.setAttribute('aria-expanded', 'true');
+    }
+
     closeMobileSidebar() {
         this.sidebar.classList.remove('open');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
         sidebarOverlay?.classList.remove('visible');
         sidebarOverlay?.setAttribute('aria-hidden', 'true');
         document.getElementById('sidebarToggle')?.setAttribute('aria-expanded', 'false');
+        document.getElementById('mobileMenuBtn')?.setAttribute('aria-expanded', 'false');
     }
 
     async fetchNote(path) {
@@ -1460,6 +1473,7 @@ class KnowledgeGarden {
      */
     resolvePath(target) {
         if (!target || target === '~' || target === '/') return '';
+        const isAbsolute = target.startsWith('/');
 
         // Strip leading ~ or ~/
         if (target.startsWith('~/')) {
@@ -1475,7 +1489,7 @@ class KnowledgeGarden {
 
         // Build the starting segments from currentPath
         let segments;
-        if (target.startsWith('/') || target === '') {
+        if (isAbsolute || target === '') {
             segments = [];
         } else {
             segments = this.currentPath ? this.currentPath.split('/') : [];

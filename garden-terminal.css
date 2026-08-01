@@ -1117,6 +1117,7 @@ body {
 }
 
 .sidebar-toggle:focus-visible,
+.mobile-menu-btn:focus-visible,
 .sidebar-btn:focus-visible,
 .tree-item:focus-visible,
 .breadcrumb-item.clickable:focus-visible,
@@ -1216,6 +1217,8 @@ body {
     cursor: pointer;
     font-size: 18px;
     flex-shrink: 0;
+    transition: transform var(--duration-short) var(--motion-spring-bouncy),
+        background var(--duration-short) var(--motion-spring-bouncy);
 }
 
 /* Sidebar overlay backdrop */
@@ -1264,11 +1267,25 @@ body {
     /* Show mobile menu button */
     .mobile-menu-btn {
         display: flex;
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        z-index: 45;
+        background: var(--md-sys-color-surface-container-high);
+        box-shadow: var(--elevation-2);
     }
 
-    /* Hide desktop sidebar toggle */
+    .mobile-menu-btn:hover {
+        background: var(--md-sys-color-surface-container-highest);
+    }
+
+    .mobile-menu-btn:active {
+        transform: scale(0.95);
+    }
+
+    /* Use the in-drawer toggle to close mobile navigation. */
     .sidebar-toggle {
-        display: none;
+        display: flex;
     }
 
     /* Sidebar as slide-out drawer */

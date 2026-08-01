@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal Prompt A — Favicon Prototypes</title>
+    <link rel="icon" href="data:,">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../m3e-tokens.css">
+    <style>
+        :root {
+            --preview-surface: var(--md-sys-color-surface-container);
+            --preview-surface-high: var(--md-sys-color-surface-container-high);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-width: 320px;
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at 14% 4%, rgba(142, 153, 243, 0.13), transparent 27rem),
+                var(--md-sys-color-surface);
+            color: var(--md-sys-color-on-surface);
+            font-family: Ubuntu, sans-serif;
+        }
+
+        main {
+            width: min(1120px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: clamp(40px, 8vw, 88px) 0;
+        }
+
+        .eyebrow {
+            margin: 0 0 12px;
+            color: var(--md-sys-color-primary);
+            font: 600 12px/1.4 "JetBrains Mono", monospace;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            max-width: 12ch;
+            margin: 0;
+            font-size: clamp(36px, 6vw, 57px);
+            line-height: 1.08;
+            letter-spacing: -0.04em;
+        }
+
+        .intro {
+            max-width: 63ch;
+            margin: 20px 0 44px;
+            color: var(--md-sys-color-on-surface-variant);
+            font-size: 17px;
+            line-height: 1.65;
+        }
+
+        .prototype-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .prototype {
+            display: flex;
+            flex-direction: column;
+            min-height: 520px;
+            overflow: hidden;
+            background: var(--preview-surface);
+            border: 1px solid var(--md-sys-color-outline-variant);
+            border-radius: var(--md-sys-shape-corner-extra-large);
+            box-shadow: var(--elevation-1);
+            transition: transform var(--duration-medium) var(--motion-spring-bouncy),
+                background var(--duration-medium) var(--motion-spring-bouncy),
+                box-shadow var(--duration-medium) var(--motion-spring-bouncy);
+        }
+
+        .prototype:hover {
+            transform: translateY(-4px) scale(1.01);
+            background: var(--preview-surface-high);
+            box-shadow: var(--elevation-3);
+        }
+
+        .hero-mark {
+            display: grid;
+            min-height: 250px;
+            place-items: center;
+            background: linear-gradient(145deg, rgba(187, 195, 255, 0.08), transparent 56%);
+            border-bottom: 1px solid var(--md-sys-color-outline-variant);
+        }
+
+        .hero-mark svg {
+            width: 154px;
+            height: 154px;
+            filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.28));
+        }
+
+        .card-content {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            padding: 24px;
+        }
+
+        .mark-id {
+            color: var(--md-sys-color-primary);
+            font: 600 11px/1.3 "JetBrains Mono", monospace;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        h2 {
+            margin: 8px 0 10px;
+            font-size: 24px;
+            line-height: 1.2;
+        }
+
+        .description {
+            margin: 0;
+            color: var(--md-sys-color-on-surface-variant);
+            font-size: 15px;
+            line-height: 1.55;
+        }
+
+        .fit {
+            margin: 18px 0 0;
+            color: var(--md-sys-color-secondary);
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        .fit strong { color: var(--md-sys-color-on-surface); }
+
+        .sizes {
+            display: flex;
+            align-items: end;
+            gap: 15px;
+            min-height: 72px;
+            margin-top: auto;
+            padding-top: 24px;
+            border-top: 1px solid var(--md-sys-color-outline-variant);
+        }
+
+        .size {
+            display: grid;
+            justify-items: center;
+            gap: 7px;
+            color: var(--md-sys-color-primary);
+            font: 500 10px/1 "JetBrains Mono", monospace;
+        }
+
+        .size svg { display: block; }
+        .size-16 svg { width: 16px; height: 16px; }
+        .size-24 svg { width: 24px; height: 24px; }
+        .size-32 svg { width: 32px; height: 32px; }
+        .size-48 svg { width: 48px; height: 48px; }
+
+        .note {
+            margin: 34px 0 0;
+            padding: 18px 20px;
+            background: rgba(187, 195, 255, 0.08);
+            border-left: 3px solid var(--md-sys-color-primary);
+            border-radius: 0 var(--md-sys-shape-corner-medium) var(--md-sys-shape-corner-medium) 0;
+            color: var(--md-sys-color-on-surface-variant);
+            font-size: 14px;
+            line-height: 1.55;
+        }
+
+        .note strong { color: var(--md-sys-color-on-surface); }
+
+        @media (max-width: 820px) {
+            .prototype-grid { grid-template-columns: 1fr; }
+            .prototype { min-height: 0; }
+            .hero-mark { min-height: 210px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .prototype { transition: none; }
+        }
+    </style>
+</head>
+
+<body>
+    <svg aria-hidden="true" width="0" height="0" focusable="false">
+        <defs>
+            <!-- 01: A monoline letterform paired with the unmistakable terminal prompt. -->
+            <symbol id="prompt-angle" viewBox="0 0 128 128">
+                <rect x="6" y="6" width="116" height="116" rx="34" fill="#1E1F25" stroke="#46464F" stroke-width="4" />
+                <path d="M29 95 54 33h12l25 62M39 73h30" fill="none" stroke="#BBC3FF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="m86 73 13 10-13 10" fill="none" stroke="#E8B9D5" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+            </symbol>
+
+            <!-- 02: A decisive keycap, with the cursor becoming the A's baseline. -->
+            <symbol id="cursor-key" viewBox="0 0 128 128">
+                <rect x="6" y="6" width="116" height="116" rx="34" fill="#383F90" />
+                <path d="M30 91 55 31h13l22 54" fill="none" stroke="#DEE0FF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M40 70h30" fill="none" stroke="#DEE0FF" stroke-width="10" stroke-linecap="round" />
+                <path d="m81 77 11 8-11 8" fill="none" stroke="#FFD8EE" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+                <rect x="77" y="98" width="26" height="8" rx="4" fill="#BBC3FF" />
+            </symbol>
+
+            <!-- 03: The prompt chevron is cut into an architectural A frame. -->
+            <symbol id="signal-frame" viewBox="0 0 128 128">
+                <rect x="6" y="6" width="116" height="116" rx="34" fill="#0D0E13" stroke="#BBC3FF" stroke-width="4" />
+                <path d="M30 98 56 29h12l28 69M40 74h36" fill="none" stroke="#C4C4DD" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="m80 54 16 13-16 13" fill="none" stroke="#BBC3FF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+                <circle cx="102" cy="93" r="5" fill="#E8B9D5" />
+            </symbol>
+        </defs>
+    </svg>
+
+    <main>
+        <p class="eyebrow">AIM.EXE / favicon study</p>
+        <h1>Three Terminal Prompt A marks</h1>
+        <p class="intro">Each mark keeps the letter A legible at favicon size while carrying a small terminal cue. The preview row is the practical test: the 16px version matters more than the large showcase.</p>
+
+        <section class="prototype-grid" aria-label="Terminal Prompt A favicon prototypes">
+            <article class="prototype">
+                <div class="hero-mark">
+                    <svg aria-hidden="true" viewBox="0 0 128 128"><use href="#prompt-angle"></use></svg>
+                </div>
+                <div class="card-content">
+                    <span class="mark-id">01 / Prompt Angle</span>
+                    <h2>The clearest terminal read</h2>
+                    <p class="description">A monoline A carries a rose prompt chevron. It is the most literal translation of “Terminal Prompt A,” with the strongest recognition in a tab.</p>
+                    <p class="fit"><strong>Best for:</strong> a practical operator identity with a little warmth.</p>
+                    <div class="sizes" aria-label="Prompt Angle sizes">
+                        <div class="size size-16"><svg aria-hidden="true" viewBox="0 0 128 128"><use href="#prompt-angle"></use></svg><span>16</span></div>
+                        <div class="size size-24"><svg aria-hidden="true" viewBox="0 0 128 128"><use href="#prompt-angle"></use></svg><span>24</span></div>
+                        <div class="size size-32"><svg aria-hidden="true" viewBox="0 0 128 128"><use href="#prompt-angle"></use></svg><span>32</span></div>
+                        <div class="size size-48"><svg aria-hidden="true" viewBox="0 0 128 128"><use href="#prompt-angle"></use></svg><span>48</span></div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="prototype">
+                <div class="hero-mark">
+                    <svg aria-hidden="true" viewBox="0 0 128 128"><use href="#cursor-key"></use></svg>
+                </div>
+                <div class="card-content">
+                    <span class="mark-id">02 / Cursor Key</span>
+                    <h2>The most app-like mark</h2>
+                    <p class="description">A primary-container keycap gives this version a bolder, product-ready presence. The block cursor turns the mark into a command surface rather than a static letter.</p>
+                    <p class="fit"><strong>Best for:</strong> a future app icon, pinned shortcut, or desktop launcher.</p>
+                    <div class="sizes" aria-label="Cursor Key sizes">
+                        <div class="size size-16"><svg aria-hidden="true" viewBox="0 0 128 128"><use href="#cursor-key"></use></svg><span>16</span></div>
+                        <div class="size size-24"><svg aria-hidden="true" viewBox="0 0 128 128"><use href="#cursor-key"></use></svg><span>24</span></div>
+                        <div class="size size-32"><svg aria-hidden="true" viewBox="0 0 128 128"><use href="#cursor-key"></use></svg><span>32</span></div>
+                        <div class="size size-48"><svg aria-hidden="true" viewBox="0 0 128 128"><use href="#cursor-key"></use></svg><span>48</span></div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="prototype">
+                <div class="hero-mark">
+                    <svg aria-hidden="true" viewBox="0 0 128 128"><use href="#signal-frame"></use></svg>
+                </div>
+                <div class="card-content">
+                    <span class="mark-id">03 / Signal Frame</span>
+                    <h2>The most systems-oriented</h2>
+                    <p class="description">A framed A with a prompt chevron and signal dot feels closer to infrastructure, knowledge graphs, and live systems. It is less literal, but more ownable.</p>
+                    <p class="fit"><strong>Best for:</strong> the Penthouse ecosystem and infrastructure work.</p>
+                    <div class="sizes" aria-label="Signal Frame sizes">
+                        <div class="size size-16"><svg aria-hidden="true" viewBox="0 0 128 128"><use href="#signal-frame"></use></svg><span>16</span></div>
+                        <div class="size size-24"><svg aria-hidden="true" viewBox="0 0 128 128"><use href="#signal-frame"></use></svg><span>24</span></div>
+                        <div class="size size-32"><svg aria-hidden="true" viewBox="0 0 128 128"><use href="#signal-frame"></use></svg><span>32</span></div>
+                        <div class="size size-48"><svg aria-hidden="true" viewBox="0 0 128 128"><use href="#signal-frame"></use></svg><span>48</span></div>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <p class="note"><strong>Recommendation:</strong> choose <em>Prompt Angle</em> for the favicon. It retains the A and terminal cue at 16px without relying on tiny details. <em>Cursor Key</em> is the stronger choice if this becomes a broader app identity.</p>
+    </main>
+</body>
+
+</html>

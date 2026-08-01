@@ -13,8 +13,7 @@
         href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
         rel="stylesheet">
 
-    <!-- TODO: Replace this empty placeholder with the final AIM.EXE favicon. -->
-    <link rel="icon" href="data:,">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="m3e-tokens.css">
     <link rel="stylesheet" href="garden-terminal.css">
 </head>
@@ -72,6 +71,10 @@
 
         <!-- Mobile overlay backdrop -->
         <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+        <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Open file navigation"
+            aria-controls="sidebar" aria-expanded="false">
+            <span aria-hidden="true">☰</span>
+        </button>
 
         <!-- Main Content Area -->
         <div class="main-layout">
@@ -80,7 +83,7 @@
             <aside class="sidebar" id="sidebar" aria-label="File navigation">
                 <div class="sidebar-header">
                     <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar"
-                        aria-label="Toggle sidebar" aria-controls="sidebar" aria-expanded="false">
+                        aria-label="Toggle file navigation" aria-controls="sidebar" aria-expanded="false">
                         <span aria-hidden="true">☰</span>
                     </button>
                     <span class="sidebar-title">Files</span>
