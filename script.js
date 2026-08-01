@@ -867,18 +867,17 @@ function relativeDateLabel(rawDate) {
     // Clamp at 0: manifest timestamps carry no timezone, so a just-published
     // note can look slightly "future" depending on the viewer's clock.
     const diffMs = Math.max(0, Date.now() - date.getTime());
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
 
-    if (diffDays === 0) {
-        if (diffHours < 1) return 'just now';
-        return `${diffHours}h ago`;
-    }
-    if (diffDays === 1) return '1d ago';
-    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffMinutes < 1) return 'just now';
+    if (diffHours < 1) return `${diffMinutes}m ago`;
+    if (diffDays < 1) return `${diffHours}h ${diffMinutes % 60}m ago`;
+    if (diffDays < 7) return `${diffDays}d ${diffHours % 24}h ago`;
     if (diffDays < 30) {
         const weeks = Math.floor(diffDays / 7);
-        return `${weeks}w ago`;
+        return `${weeks}w ${diffDays % 7}d ago`;
     }
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
@@ -918,6 +917,10 @@ async function initVaultActivity() {
 
     const noteTitle = ({ path, meta }) =>
         meta.title || path.split('/').pop().replace(/\.md$/, '');
+    const activityDateLabel = (item, index, items) =>
+        index > 0 && item.date.getTime() === items[index - 1].date.getTime()
+            ? 'same update batch'
+            : relativeDateLabel(item.date);
 
     // Feature: "Latest transmissions" recent-notes widget
     if (listEl) {
@@ -925,7 +928,8 @@ async function initVaultActivity() {
             listEl.innerHTML = '<li class="recent-notes-empty">signal unavailable &mdash; check the garden directly</li>';
         } else {
             listEl.innerHTML = '';
-            recent.slice(0, 5).forEach(item => {
+            const latest = recent.slice(0, 5);
+            latest.forEach((item, index) => {
                 const li = document.createElement('li');
                 const link = document.createElement('a');
                 link.href = 'garden-terminal.html';
@@ -936,7 +940,7 @@ async function initVaultActivity() {
 
                 const dateSpan = document.createElement('span');
                 dateSpan.className = 'recent-notes-date';
-                dateSpan.textContent = relativeDateLabel(item.date);
+                dateSpan.textContent = activityDateLabel(item, index, latest);
 
                 link.append(titleSpan, dateSpan);
                 li.appendChild(link);
@@ -947,8 +951,9 @@ async function initVaultActivity() {
 
     // Feature: vault activity ticker in the footer
     if (tickerEl && tickerTrackEl && recent.length) {
-        const items = recent.slice(0, 8).map(item =>
-            `\u25B8 vault update: ${noteTitle(item)} \u2014 ${relativeDateLabel(item.date)}`
+        const latest = recent.slice(0, 8);
+        const items = latest.map((item, index) =>
+            `\u25B8 vault update: ${noteTitle(item)} \u2014 ${activityDateLabel(item, index, latest)}`
         );
         const sequence = items.join('\u2003\u2003\u00B7\u2003\u2003') + '\u2003\u2003\u00B7\u2003\u2003';
         // Render the sequence twice so translateX(-50%) loops seamlessly.
