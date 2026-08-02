@@ -1299,10 +1299,10 @@ class KnowledgeGarden {
 
     isSafeUrl(value) {
         if (!value) return true;
-        const lower = value.toLowerCase();
+        const lower = String(value).trim().toLowerCase();
         if (lower.startsWith('javascript:')) return false;
         if (lower.startsWith('vbscript:')) return false;
-        if (lower.startsWith('data:text/html')) return false;
+        if (lower.startsWith('data:')) return false;
         return true;
     }
 
@@ -1931,10 +1931,21 @@ LANG=en_US.UTF-8</pre>`);
             for (let i = 0; i < lines.length; i++) {
                 if (lines[i].toLowerCase().includes(pattern)) {
                     const displayLine = lines[i].trim();
-                    // Highlight the match
-                    const escaped = this.escapeHtml(displayLine);
-                    const regex = new RegExp('(' + this.escapeHtml(pattern).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
-                    const highlighted = escaped.replace(regex, '<b style="color:var(--terminal-yellow)">$1</b>');
+                    let highlighted = this.escapeHtml(displayLine);
+                    if (pattern) {
+                        const lowerLine = displayLine.toLowerCase();
+                        const matches = [];
+                        let start = 0;
+                        let matchIndex;
+
+                        while ((matchIndex = lowerLine.indexOf(pattern, start)) !== -1) {
+                            matches.push(this.escapeHtml(displayLine.slice(start, matchIndex)));
+                            matches.push(`<b style="color:var(--terminal-yellow)">${this.escapeHtml(displayLine.slice(matchIndex, matchIndex + pattern.length))}</b>`);
+                            start = matchIndex + pattern.length;
+                        }
+                        matches.push(this.escapeHtml(displayLine.slice(start)));
+                        highlighted = matches.join('');
+                    }
 
                     results.push(
                         `<span style="color:var(--terminal-cyan)">${this.escapeHtml(path)}:${i + 1}</span>: ${highlighted}`

@@ -12,7 +12,7 @@
 
     function shouldRetryError(error) {
         if (!error) return false;
-        if (error.name === 'AbortError') return true;
+        if (error.name === 'TimeoutError') return true;
         return error instanceof TypeError;
     }
 
@@ -26,6 +26,7 @@
         const signal = controller.signal;
         let timeoutId = null;
         let abortListener = null;
+        let timedOut = false;
 
         if (options.signal) {
             if (options.signal.aborted) controller.abort();
@@ -33,10 +34,22 @@
             options.signal.addEventListener('abort', abortListener, { once: true });
         }
 
-        timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        timeoutId = setTimeout(() => {
+            if (!signal.aborted) {
+                timedOut = true;
+                controller.abort();
+            }
+        }, timeoutMs);
 
         try {
             return await fetch(url, { ...options, signal });
+        } catch (error) {
+            if (timedOut) {
+                const timeoutError = new Error(`Request timed out after ${timeoutMs}ms`);
+                timeoutError.name = 'TimeoutError';
+                throw timeoutError;
+            }
+            throw error;
         } finally {
             clearTimeout(timeoutId);
             if (abortListener && options.signal) {

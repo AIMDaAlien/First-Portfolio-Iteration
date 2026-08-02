@@ -78,90 +78,204 @@ class KnowledgeGardenGraph {
     }
 
     async fetchGraphData() {
-        try {
-            // Get full tree
-            const treeData = await this.fetchJson(
-                `https://api.github.com/repos/${this.vaultOwner}/${this.vaultRepo}/git/trees/main?recursive=1`,
-                { timeoutMs: 12000, retries: 2 }
-            );
-
-            // Collect all markdown files
-            const mdFiles = (treeData.tree || []).filter(item => {
-                if (item.type !== 'blob' || !item.path.endsWith('.md')) return false;
-                const parts = item.path.split('/');
-                return !parts.some(p => this.hiddenItems.includes(p) || p.startsWith('.'));
-            });
-
-            // Build nodes
-            this.nodes = [];
-            this.nameToNode = new Map();
-
-            // Add central "sun" node
-            const sunNode = {
-                id: '_sun_',
-                name: 'Knowledge Garden',
-                folder: 'sun',
-                path: null,
-                connections: 100,
-                isSun: true
-            };
-            this.nodes.push(sunNode);
-
-            mdFiles.forEach(file => {
-                const fileName = file.path.split('/').pop().replace('.md', '');
-                let folder = file.path.includes('/') ? file.path.split('/')[0] : 'root';
-
-                const node = {
-                    id: file.path,
-                    name: fileName,
-                    folder: folder,
-                    path: file.path,
-                    connections: 0
-                };
-
-                this.nodes.push(node);
-                // Map by lowercase name for matching
-                this.nameToNode.set(fileName.toLowerCase(), node);
-            });
-
-            // Fetch ALL note content and parse [[links]]
-            this.links = [];
-            const linkSet = new Set(); // Avoid duplicates
-
-            // Fetch notes in batches
-            const batchSize = 20;
-            for (let i = 0; i < mdFiles.length; i += batchSize) {
-                const batch = mdFiles.slice(i, i + batchSize);
-                await Promise.all(batch.map(file => this.parseFileLinks(file.path, linkSet)));
+        // Fast path: use pre-built manifest links (zero API calls)
+        const manifest = window.garden?.manifest;
+        if (manifest && manifest.links && manifest.tree) {
+            try {
+                this._buildFromManifest(manifest);
+                return;
+            } catch (e) {
+                console.warn('Graph manifest fast path failed, falling back to GitHub API:', e);
             }
+        }
 
-            // Build a degree map in one pass (O(links))
-            const degreeMap = new Map();
-            const bump = (nodeId) => {
-                degreeMap.set(nodeId, (degreeMap.get(nodeId) || 0) + 1);
-            };
-
-            this.links.forEach(link => {
-                const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
-                const targetId = typeof link.target === 'object' ? link.target.id : link.target;
-                bump(sourceId);
-                bump(targetId);
-            });
-
-            this.nodes.forEach(node => {
-                if (node.isSun) {
-                    node.connections = Math.max(node.connections || 0, degreeMap.get(node.id) || 0);
-                } else {
-                    node.connections = degreeMap.get(node.id) || 0;
-                }
-            });
-
-
+        // Fallback: GitHub tree API + per-file fetch (existing behaviour)
+        try {
+            await this._fetchGraphFromGitHub();
         } catch (error) {
             console.error('Graph error:', error);
             this.nodes = [{ id: 'error', name: 'Failed to load', folder: 'root' }];
             this.links = [];
         }
+    }
+
+    /**
+     * Build nodes and links from the garden manifest (fast path — 0 network calls).
+     * Respects the same hidden-items and folder-color rules as the GitHub fallback.
+     */
+    _buildFromManifest(manifest) {
+        const hiddenItems = this.hiddenItems;
+
+        // Nodes: filter manifest.tree to .md files, respecting hidden items
+        this.nodes = [];
+        this.nameToNode = new Map();
+
+        // Add central "sun" node
+        const sunNode = {
+            id: '_sun_',
+            name: 'Knowledge Garden',
+            folder: 'sun',
+            path: null,
+            connections: 100,
+            isSun: true
+        };
+        this.nodes.push(sunNode);
+
+        const mdEntries = (manifest.tree || []).filter(entry => {
+            if (entry.type !== 'file' || !entry.path.endsWith('.md')) return false;
+            const parts = entry.path.split('/');
+            return !parts.some(p => hiddenItems.includes(p) || p.startsWith('.'));
+        });
+
+        mdEntries.forEach(entry => {
+            const fileName = entry.path.split('/').pop().replace('.md', '');
+            let folder = entry.path.includes('/') ? entry.path.split('/')[0] : 'root';
+
+            const node = {
+                id: entry.path,
+                name: fileName,
+                folder: folder,
+                path: entry.path,
+                connections: 0
+            };
+            this.nodes.push(node);
+            // Map by lowercase name for matching wikilink targets
+            this.nameToNode.set(fileName.toLowerCase(), node);
+        });
+
+        // Links: resolve manifest.links[sourcePath] -> [targetName, ...]
+        this.links = [];
+        const linkSet = new Set();
+        const manifestLinks = manifest.links || {};
+
+        for (const [sourcePath, targets] of Object.entries(manifestLinks)) {
+            // Skip if source is hidden or not in our node set
+            const sourceParts = sourcePath.split('/');
+            if (sourceParts.some(p => hiddenItems.includes(p) || p.startsWith('.'))) continue;
+
+            const sourceBase = sourcePath.split('/').pop().replace(/\.md$/, '');
+            if (!this.nameToNode.has(sourceBase.toLowerCase())) continue;
+
+            for (const targetName of targets) {
+                const targetNameLower = targetName.trim().toLowerCase();
+                let targetNode = this.nameToNode.get(targetNameLower);
+
+                // Secondary resolution: path-style wikilinks
+                // e.g. [[Programming Concepts/Python/Python Fundamentals]] → .../Python Fundamentals.md
+                if (!targetNode && targetNameLower.includes('/')) {
+                    const pathId = targetNameLower.endsWith('.md') ? targetNameLower : targetNameLower + '.md';
+                    targetNode = this.nodes.find(n => n.id && n.id.toLowerCase() === pathId) || null;
+                }
+
+                if (targetNode && targetNode.id !== sourcePath) {
+                    const linkKey = [sourcePath, targetNode.id].sort().join('::');
+                    if (!linkSet.has(linkKey)) {
+                        linkSet.add(linkKey);
+                        this.links.push({ source: sourcePath, target: targetNode.id });
+                    }
+                }
+            }
+        }
+
+        // Build degree map in one pass
+        const degreeMap = new Map();
+        const bump = (nodeId) => {
+            degreeMap.set(nodeId, (degreeMap.get(nodeId) || 0) + 1);
+        };
+        this.links.forEach(link => {
+            bump(link.source);
+            bump(link.target);
+        });
+        this.nodes.forEach(node => {
+            if (node.isSun) {
+                node.connections = Math.max(node.connections || 0, degreeMap.get(node.id) || 0);
+            } else {
+                node.connections = degreeMap.get(node.id) || 0;
+            }
+        });
+    }
+
+    /**
+     * Fallback: fetch GitHub tree, then parse each file's [[wikilinks]] from raw content.
+     * This is the original behaviour, preserved when no manifest links are available.
+     */
+    async _fetchGraphFromGitHub() {
+        // Get full tree
+        const treeData = await this.fetchJson(
+            `https://api.github.com/repos/${this.vaultOwner}/${this.vaultRepo}/git/trees/main?recursive=1`,
+            { timeoutMs: 12000, retries: 2 }
+        );
+
+        // Collect all markdown files
+        const mdFiles = (treeData.tree || []).filter(item => {
+            if (item.type !== 'blob' || !item.path.endsWith('.md')) return false;
+            const parts = item.path.split('/');
+            return !parts.some(p => this.hiddenItems.includes(p) || p.startsWith('.'));
+        });
+
+        // Build nodes
+        this.nodes = [];
+        this.nameToNode = new Map();
+
+        // Add central "sun" node
+        const sunNode = {
+            id: '_sun_',
+            name: 'Knowledge Garden',
+            folder: 'sun',
+            path: null,
+            connections: 100,
+            isSun: true
+        };
+        this.nodes.push(sunNode);
+
+        mdFiles.forEach(file => {
+            const fileName = file.path.split('/').pop().replace('.md', '');
+            let folder = file.path.includes('/') ? file.path.split('/')[0] : 'root';
+
+            const node = {
+                id: file.path,
+                name: fileName,
+                folder: folder,
+                path: file.path,
+                connections: 0
+            };
+
+            this.nodes.push(node);
+            // Map by lowercase name for matching
+            this.nameToNode.set(fileName.toLowerCase(), node);
+        });
+
+        // Fetch ALL note content and parse [[links]]
+        this.links = [];
+        const linkSet = new Set(); // Avoid duplicates
+
+        // Fetch notes in batches
+        const batchSize = 20;
+        for (let i = 0; i < mdFiles.length; i += batchSize) {
+            const batch = mdFiles.slice(i, i + batchSize);
+            await Promise.all(batch.map(file => this.parseFileLinks(file.path, linkSet)));
+        }
+
+        // Build a degree map in one pass (O(links))
+        const degreeMap = new Map();
+        const bump = (nodeId) => {
+            degreeMap.set(nodeId, (degreeMap.get(nodeId) || 0) + 1);
+        };
+
+        this.links.forEach(link => {
+            const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+            const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+            bump(sourceId);
+            bump(targetId);
+        });
+
+        this.nodes.forEach(node => {
+            if (node.isSun) {
+                node.connections = Math.max(node.connections || 0, degreeMap.get(node.id) || 0);
+            } else {
+                node.connections = degreeMap.get(node.id) || 0;
+            }
+        });
     }
 
     async parseFileLinks(filePath, linkSet) {

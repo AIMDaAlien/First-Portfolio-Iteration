@@ -1,0 +1,82 @@
+name: Static checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  static-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check JavaScript syntax and local HTML references
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          while IFS= read -r -d '' file; do
+            node --check "$file"
+          done < <(git ls-files -z -- '*.js')
+
+          node <<'NODE'
+          const { execFileSync } = require('node:child_process');
+          const fs = require('node:fs');
+          const path = require('node:path');
+
+          const repoRoot = fs.realpathSync(process.cwd());
+          const htmlFiles = execFileSync('git', ['ls-files', '-z', '--', '*.html'])
+            .toString()
+            .split('\0')
+            .filter(Boolean);
+          const referencePattern = /\b(?:href|src)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/gi;
+          const errors = [];
+
+          for (const htmlFile of htmlFiles) {
+            const html = fs.readFileSync(htmlFile, 'utf8');
+            const htmlDirectory = path.dirname(path.resolve(htmlFile));
+
+            for (const match of html.matchAll(referencePattern)) {
+              const reference = match[1] ?? match[2] ?? match[3];
+
+              if (
+                !reference ||
+                reference.startsWith('#') ||
+                reference.startsWith('//') ||
+                /^(?:data|mailto|tel):/i.test(reference) ||
+                /^[a-z][a-z\d+.-]*:/i.test(reference)
+              ) {
+                continue;
+              }
+
+              const pathname = reference.split(/[?#]/, 1)[0];
+              let decodedPathname;
+
+              try {
+                decodedPathname = decodeURIComponent(pathname);
+              } catch {
+                errors.push(`${htmlFile}: invalid URL encoding in ${reference}`);
+                continue;
+              }
+
+              const target = path.resolve(
+                reference.startsWith('/') ? repoRoot : htmlDirectory,
+                decodedPathname.replace(/^\/+/, '')
+              );
+              const relativeTarget = path.relative(repoRoot, target);
+
+              if (relativeTarget === '..' || relativeTarget.startsWith(`..${path.sep}`) || path.isAbsolute(relativeTarget)) {
+                errors.push(`${htmlFile}: ${reference} resolves outside the repository`);
+              } else if (!fs.existsSync(target)) {
+                errors.push(`${htmlFile}: ${reference} does not resolve to a repository file`);
+              } else if (!fs.realpathSync(target).startsWith(`${repoRoot}${path.sep}`) && fs.realpathSync(target) !== repoRoot) {
+                errors.push(`${htmlFile}: ${reference} resolves outside the repository`);
+              }
+            }
+          }
+
+          if (errors.length) {
+            console.error(errors.join('\n'));
+            process.exit(1);
+          }
+          NODE
