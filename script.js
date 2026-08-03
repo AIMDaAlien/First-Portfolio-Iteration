@@ -342,7 +342,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Scroll & Resize Listeners ---
     let navTicking = false;
+    let scrollIdleTimer;
     window.addEventListener('scroll', () => {
+        document.documentElement.classList.add('is-scrolling');
+        clearTimeout(scrollIdleTimer);
+        scrollIdleTimer = setTimeout(() => {
+            document.documentElement.classList.remove('is-scrolling');
+        }, 150);
+
         if (!navTicking) {
             requestAnimationFrame(() => {
                 updateActiveNavLink();
@@ -355,6 +362,11 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', () => {
         cacheSectionOffsets();
         updateActiveNavLink();
+    });
+
+    window.addEventListener('blur', () => {
+        clearTimeout(scrollIdleTimer);
+        document.documentElement.classList.remove('is-scrolling');
     });
 
     updateActiveNavLink();
@@ -551,7 +563,7 @@ function initFloatingParticles() {
     const container = document.getElementById('particles-container');
     if (!container) return;
 
-    const COUNT = (navigator.hardwareConcurrency || 4) <= 4 ? 20 : 40;
+    const COUNT = (navigator.hardwareConcurrency || 4) <= 4 ? 12 : 24;
     const sizes = ['sm', 'md', 'lg'];
     const weights = [0.6, 0.3, 0.1]; // probability weights
     const opacities = [0.05, 0.08, 0.12];
