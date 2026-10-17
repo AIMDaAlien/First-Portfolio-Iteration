@@ -322,7 +322,9 @@ Cutover completed. The old repository is `AIMDaAlien/Obsidian-Vault-archive` (pr
 | Publishable (`publish: true`) | 82 flagged for garden | 331 |
 | Featured | 0 | 15 |
 | Broken wikilinks | 209 | 41 (all point at planned, unwritten notes) |
-| Privacy gate hits | n/a | 0 across 377 tracked text files |
-| Images | 8 | 3 (five showed workstation identifiers) |
+| Privacy gate hits | n/a | 0 across 388 tracked blobs (every blob and symlink target scanned) |
+| Images | 8 under `images/` plus 4 app mockups | 3 under `images/` plus the 4 mockups (five screenshots showed workstation identifiers) |
 
 Deviations from this spec, decided during execution: the admin username is also the owner's public GitHub handle and stays in repository URLs (the admin-account mentions in the ops note are redacted); the Local REST API key rotation was waived by the owner (the API binds to loopback only); the sync script runs the privacy gate after `git add -A` and unstages on failure; the version-string exemption for dotted quads never applies to private addresses; `.stfolder/` is gitignored alongside the four planned entries.
+
+Post-cutover correction (2026-10-17): the final whole-branch review found that the first published history carried a tracked symlink whose target was a home path, four compiled Python files, and one private LAN address written with a netmask. The vault was re-redacted, the gate was hardened (index blobs and symlink targets scanned, CIDR and version-string rules tightened, PGP keys and more phone, path, and MAC forms caught, manual workflow trigger added), and the repo was recreated: the clean history was pushed to a fresh repo that then took the `Obsidian-Vault` name, while the first attempt was renamed `Obsidian-Vault-tainted` and made private for the owner to delete.
