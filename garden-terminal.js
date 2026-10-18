@@ -35,7 +35,7 @@ class KnowledgeGarden {
 
         // Featured strip: notes whose frontmatter carries `publish: true` and an
         // integer `featured` rank (1 = first). The vault owns the ordering.
-        this.featuredLimit = 7;
+        this.featuredLimit = 10;
 
         // Icon mapping by folder name
         this.iconMap = {
