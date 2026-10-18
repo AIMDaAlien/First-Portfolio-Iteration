@@ -400,13 +400,8 @@ async function updateGardenStats() {
         const stripNotesEl = document.getElementById('strip-notes');
 
         const isHiddenPath = (path) => path.split('/').some(part => HIDDEN.includes(part) || part.startsWith('.'));
-        const isCandidateFeaturedPath = (path) => (
-            path.startsWith('Projects/') ||
-            path.startsWith('Systems/Homelab/') ||
-            path.startsWith('Systems/Router Configuration/') ||
-            path.startsWith('Learning Journals/') ||
-            path.startsWith('IT Projects/')
-        );
+        // Featured = publishable note carrying an integer `featured` rank in frontmatter.
+        const isFeatured = (meta) => meta && meta.publish === true && Number.isInteger(meta.featured);
         const setLastUpdatedLabel = (rawDate) => {
             if (!lastUpdatedEl || !rawDate) return;
             const updatedDate = new Date(rawDate);
@@ -468,11 +463,9 @@ async function updateGardenStats() {
                 noteCount = mdCount;
                 folderCount = topFolders.size;
 
-                featuredCount = Object.entries(metadata).filter(([path, meta]) => {
-                    if (!meta || meta.published_to_garden !== true) return false;
-                    if (isHiddenPath(path)) return false;
-                    return isCandidateFeaturedPath(path);
-                }).length;
+                featuredCount = Object.entries(metadata).filter(([path, meta]) =>
+                    isFeatured(meta) && !isHiddenPath(path)
+                ).length;
 
                 if (manifest.generated_at && lastUpdatedEl) {
                     lastUpdatedEl.dataset.updated = manifest.generated_at;
@@ -919,12 +912,13 @@ async function initVaultActivity() {
     const metadata = (manifest && manifest.metadata) || {};
 
     const recent = Object.entries(metadata)
+        .filter(([, meta]) => meta && meta.publish === true)
         .map(([path, meta]) => ({
             path,
             meta,
-            date: new Date(meta && (meta.last_published || meta.updated || meta.created) || '')
+            date: new Date(meta.updated || meta.created || '')
         }))
-        .filter(item => item.meta && !isNaN(item.date.getTime()))
+        .filter(item => !isNaN(item.date.getTime()))
         .sort((a, b) => b.date - a.date);
 
     const noteTitle = ({ path, meta }) =>
@@ -976,7 +970,7 @@ async function initVaultActivity() {
     // Feature: incident sign ("days since last homelab incident")
     const incidentEntry = Object.values(metadata)
         .filter(meta => meta && meta.last_incident)
-        .sort((a, b) => new Date(b.last_published || 0) - new Date(a.last_published || 0))[0];
+        .sort((a, b) => new Date(b.updated || 0) - new Date(a.updated || 0))[0];
     const incidentDate = new Date(incidentEntry ? incidentEntry.last_incident : '2026-06-27');
     if (!isNaN(incidentDate.getTime())) {
         const days = Math.max(0, Math.floor((Date.now() - incidentDate.getTime()) / (1000 * 60 * 60 * 24)));

@@ -33,38 +33,19 @@ class KnowledgeGarden {
         // Hidden files/folders
         this.hiddenItems = ['.obsidian', '.stfolder', '.DS_Store', '.gitignore', '.github', 'Myself', 'images'];
 
-        // Featured project priority — most recent / highest-impact work first
-        this.featuredPriority = [
-            'Projects/Sovereign AI Stack/Unraid Qwen3.6 Terminal Agent - July 2026.md',
-            'Projects/Sovereign AI Stack/Project Overview - Sovereign AI Stack.md',
-            'IT Projects/Home Lab/00 - Server Inventory.md',
-            'Projects/Sovereign AI Stack/',
-            'Projects/The Penthouse/22 - v4.3 Collaboration Wave.md',
-            'Projects/The Penthouse/21 - v4.2 Privacy Terms and Operator Trust.md',
-            'Projects/The Penthouse/20 - V5 Redesign.md',
-            'Projects/The Penthouse/19 - v4 Clean-Room Rebuild.md',
-            'Projects/The Penthouse/00 - Knowledge Hub.md',
-            'Projects/The Penthouse/01 - Rebuild Timeline.md',
-            'Projects/The Penthouse/',
-            'IT Projects/Home Lab/01 - Services Dashboard.md',
-            'IT Projects/Home Lab/02 - Network Map.md',
-            'Projects/Teardown Cafe/',
-            'Projects/3D Print Shoppe/',
-            'Projects/Archive/TrueNAS Build Guide.md',
-            'Learning Journals/Privacy Hardening Journey.md',
-            'Systems/Homelab/Prometheus Grafana Stack - Implementation Guide.md',
-            'Learning Journals/3D Printing Optimization Journey.md',
-            'Projects/Archive/Pi-hole Setup Guide - Complete Journey.md'
-        ];
+        // Featured strip: notes whose frontmatter carries `publish: true` and an
+        // integer `featured` rank (1 = first). The vault owns the ordering.
+        this.featuredLimit = 7;
 
         // Icon mapping by folder name
         this.iconMap = {
-            'IT Projects': 'build',
-            'Learning Journals': 'school',
-            'Programming Concepts': 'code',
-            'Projects': 'build',
-            'Systems': 'computer',
-            'Home Lab': 'homelab',
+            '01 Projects': 'build',
+            '02 Homelab': 'homelab',
+            '03 AI and Local Models': 'computer',
+            '04 Programming': 'code',
+            '05 Linux and Systems': 'computer',
+            '06 Learning Journals': 'school',
+            '07 Tools and Workflow': 'build',
             'Session Notes': 'label',
             'default_folder': 'storage',
             'default_file': 'book'
@@ -191,7 +172,7 @@ class KnowledgeGarden {
         this.statusInfo.textContent = 'Loading vault...';
         await this.loadFileTree();
 
-        // Load featured projects (published_to_garden=true, sorted by last_published)
+        // Load featured notes (publish=true with a `featured` rank, sorted by rank)
         await this.loadFeaturedProjects();
 
         // Deep-linking: open a specific note if ?note= is provided
@@ -588,41 +569,25 @@ class KnowledgeGarden {
         const manifest = await this.fetchManifest();
         const metadata = manifest.metadata || {};
 
-        const published = [];
+        const featured = [];
         for (const [path, fm] of Object.entries(metadata)) {
-            if (fm.published_to_garden !== true) continue;
-            if (!this.isCandidateFeaturedPath(path)) continue;
+            if (!this.isFeatured(path, fm)) continue;
 
             const title = fm.title || path.split('/').pop().replace(/\.md$/, '');
-            const sortDate = this.parseDate(fm.last_published) || this.parseDate(fm.created);
-            const priority = this.getFeaturedPriorityScore(path);
+            const sortDate = this.parseDate(fm.updated) || this.parseDate(fm.created);
 
-            published.push({ path, title, published_to_garden: true, last_published: fm.last_published, created: fm.created, sortDate, priority });
+            featured.push({ path, title, publish: true, featured: fm.featured, updated: fm.updated, created: fm.created, sortDate, priority: fm.featured });
         }
 
-        // Sort: priority first (lower = better), then by date descending
-        published.sort((a, b) => {
+        return this.sortFeatured(featured).slice(0, this.featuredLimit);
+    }
+
+    /** Sort by `featured` rank ascending, then most recently updated first. */
+    sortFeatured(items) {
+        return items.sort((a, b) => {
             if (a.priority !== b.priority) return a.priority - b.priority;
             return (b.sortDate || 0) - (a.sortDate || 0);
         });
-
-        // Deduplicate by project prefix (only show one card per project folder)
-        const seen = new Set();
-        const deduped = [];
-        for (const item of published) {
-            // Use the first two path segments as the project key
-            const Math_min_len = Math.min(item.path.split('/').length, 2);
-            const projectKey = item.path.split('/').slice(0, Math_min_len).join('/');
-            
-            if (seen.has(projectKey)) continue;
-            
-            seen.add(projectKey);
-            deduped.push(item);
-            
-            if (deduped.length >= 7) break;
-        }
-
-        return deduped;
     }
 
     async loadFeaturedProjectsFallback(container) {
@@ -632,35 +597,11 @@ class KnowledgeGarden {
             const candidatePaths = (tree.tree || [])
                 .filter(item => item.type === 'blob' && item.path.endsWith('.md'))
                 .map(item => item.path)
-                .filter(p => this.isCandidateFeaturedPath(p));
+                .filter(p => !this.isHiddenPath(p));
 
             const metas = await this.fetchFeaturedMetadata(candidatePaths.slice(0, 120));
-            const published = metas.filter(m => m.published_to_garden === true);
-            
-            // Apply priority
-            published.forEach(meta => {
-                meta.priority = this.getFeaturedPriorityScore(meta.path);
-            });
-            
-            published.sort((a, b) => {
-                if (a.priority !== b.priority) return a.priority - b.priority;
-                return (b.sortDate || 0) - (a.sortDate || 0);
-            });
-
-            // Deduplicate by project prefix
-            const seen = new Set();
-            const featured = [];
-            for (const item of published) {
-                const Math_min_len = Math.min(item.path.split('/').length, 2);
-                const projectKey = item.path.split('/').slice(0, Math_min_len).join('/');
-                
-                if (seen.has(projectKey)) continue;
-                
-                seen.add(projectKey);
-                featured.push(item);
-                
-                if (featured.length >= 7) break;
-            }
+            const featured = this.sortFeatured(metas.filter(m => this.isFeatured(m.path, m)))
+                .slice(0, this.featuredLimit);
 
             if (featured.length === 0) {
                 container.innerHTML = '<div class="muted">No featured projects found.</div>';
@@ -685,31 +626,23 @@ class KnowledgeGarden {
         return data;
     }
 
-    isCandidateFeaturedPath(path) {
-        // Never surface hidden/private areas
+    isHiddenPath(path) {
         const parts = path.split('/');
-        if (parts.some(p => this.hiddenItems.includes(p) || p.startsWith('.'))) return false;
+        return parts.some(p => this.hiddenItems.includes(p) || p.startsWith('.'));
+    }
 
-        // Only treat these as "project" content for the featured strip
-        return (
-            path.startsWith('Projects/') ||
-            path.startsWith('Systems/Homelab/') ||
-            path.startsWith('Systems/Router Configuration/') ||
-            path.startsWith('Learning Journals/') ||
-            path.startsWith('IT Projects/')
-        );
+    /** A note is featured when it is publishable and its frontmatter carries an integer rank. */
+    isFeatured(path, fm) {
+        if (!fm || fm.publish !== true) return false;
+        if (!Number.isInteger(fm.featured)) return false;
+        return !this.isHiddenPath(path);
     }
 
     /**
-     * Returns a priority score for a path.
-     * Lower number = higher priority. Returns Infinity if not in priority list.
+     * Gallery ordering: featured rank first (lower = earlier), everything else after.
      */
-    getFeaturedPriorityScore(path) {
-        for (let i = 0; i < this.featuredPriority.length; i++) {
-            const prefix = this.featuredPriority[i];
-            if (path === prefix || path.startsWith(prefix)) return i;
-        }
-        return Infinity;
+    getFeaturedPriorityScore(fm) {
+        return fm && Number.isInteger(fm.featured) ? fm.featured : Infinity;
     }
 
     /**
@@ -720,7 +653,7 @@ class KnowledgeGarden {
         
         // Check for specific sub-projects first
         if (path.includes('Teardown Cafe')) return 'var(--terminal-blue)';
-        if (path.includes('The Penthouse')) return 'var(--terminal-magenta, #f5c2e7)';
+        if (path.includes('Penthouse')) return 'var(--terminal-magenta, #f5c2e7)';
         if (path.includes('TrueNAS')) return 'var(--terminal-green)';
         if (path.includes('Privacy Hardening')) return 'var(--terminal-yellow)';
         if (path.includes('Prometheus') || path.includes('Grafana')) return 'var(--terminal-cyan)';
@@ -730,11 +663,13 @@ class KnowledgeGarden {
         
         // Fallback to top-level folder colors
         const categoryColors = {
-            'Projects': 'var(--terminal-blue)',
-            'Systems': 'var(--terminal-green)',
-            'Learning Journals': 'var(--terminal-yellow)',
-            'IT Projects': 'var(--terminal-cyan)',
-            'Programming Concepts': 'var(--terminal-magenta, #f5c2e7)'
+            '01 Projects': 'var(--terminal-blue)',
+            '02 Homelab': 'var(--terminal-cyan)',
+            '03 AI and Local Models': 'var(--terminal-green)',
+            '04 Programming': 'var(--terminal-magenta, #f5c2e7)',
+            '05 Linux and Systems': 'var(--terminal-green)',
+            '06 Learning Journals': 'var(--terminal-yellow)',
+            '07 Tools and Workflow': 'var(--terminal-cyan)'
         };
         
         return categoryColors[topFolder] || 'var(--md-sys-color-primary)';
@@ -772,16 +707,19 @@ class KnowledgeGarden {
             // Title: use first H1 after frontmatter, else filename
             const title = this.extractTitle(text) || path.split('/').pop().replace(/\.md$/, '');
 
-            const lastPublishedRaw = fm.last_published;
+            const updatedRaw = fm.updated;
             const createdRaw = fm.created;
 
-            const sortDate = this.parseDate(lastPublishedRaw) || this.parseDate(createdRaw);
+            const sortDate = this.parseDate(updatedRaw) || this.parseDate(createdRaw);
+            const featured = /^\d+$/.test(String(fm.featured ?? '')) ? Number(fm.featured) : undefined;
 
             return {
                 path,
                 title,
-                published_to_garden: fm.published_to_garden === true,
-                last_published: lastPublishedRaw,
+                publish: fm.publish === true,
+                featured,
+                priority: featured ?? Infinity,
+                updated: updatedRaw,
                 created: createdRaw,
                 sortDate
             };
@@ -849,7 +787,7 @@ class KnowledgeGarden {
 
         // Date display
         let dateHtml = '';
-        const dateVal = meta.last_published || meta.created;
+        const dateVal = meta.updated || meta.created;
         if (dateVal) {
             const d = this.parseDate(dateVal);
             if (d) {
@@ -1032,8 +970,8 @@ class KnowledgeGarden {
                         const d = this.parseDate(fm.created);
                         if (d) parts.push(`<span class="meta-item">📅 Created: ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>`);
                     }
-                    if (fm.last_published) {
-                        const d = this.parseDate(fm.last_published);
+                    if (fm.updated) {
+                        const d = this.parseDate(fm.updated);
                         if (d) parts.push(`<span class="meta-item">🔄 Updated: ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>`);
                     }
                     if (parts.length > 0) {
@@ -2200,21 +2138,17 @@ LANG=en_US.UTF-8</pre>`);
         const published = [];
 
         for (const [path, fm] of Object.entries(metadata)) {
-            if (fm.published_to_garden !== true) continue;
-            const parts = path.split('/');
-            if (parts.some(p => this.hiddenItems.includes(p) || p.startsWith('.'))) continue;
+            if (!fm || fm.publish !== true) continue;
+            if (this.isHiddenPath(path)) continue;
 
             const title = fm.title || path.split('/').pop().replace(/\.md$/, '');
-            const sortDate = this.parseDate(fm.last_published) || this.parseDate(fm.created);
-            const priority = this.getFeaturedPriorityScore(path);
+            const sortDate = this.parseDate(fm.updated) || this.parseDate(fm.created);
+            const priority = this.getFeaturedPriorityScore(fm);
 
-            published.push({ path, title, last_published: fm.last_published, created: fm.created, sortDate, priority, snippet: '' });
+            published.push({ path, title, updated: fm.updated, created: fm.created, sortDate, priority, snippet: '' });
         }
 
-        published.sort((a, b) => {
-            if (a.priority !== b.priority) return a.priority - b.priority;
-            return (b.sortDate || 0) - (a.sortDate || 0);
-        });
+        this.sortFeatured(published);
 
         const cardsHtml = published.map(meta => this.renderGalleryCard(meta)).join('');
 
@@ -2253,7 +2187,7 @@ LANG=en_US.UTF-8</pre>`);
         const accentColor = this.getProjectColor(meta.path);
 
         let dateHtml = '';
-        const dateVal = meta.last_published || meta.created;
+        const dateVal = meta.updated || meta.created;
         if (dateVal) {
             const d = this.parseDate(dateVal);
             if (d) {

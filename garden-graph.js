@@ -17,11 +17,13 @@ class KnowledgeGardenGraph {
 
         // Colors by folder (periwinkle-aligned palette)
         this.folderColors = {
-            'IT Projects': '#89dceb',
-            'Learning Journals': '#f9e2af',
-            'Programming Concepts': '#BBC3FF',
-            'Projects': '#89b4fa',
-            'Systems': '#a6e3a1',
+            '01 Projects': '#89b4fa',
+            '02 Homelab': '#89dceb',
+            '03 AI and Local Models': '#a6e3a1',
+            '04 Programming': '#BBC3FF',
+            '05 Linux and Systems': '#a6e3a1',
+            '06 Learning Journals': '#f9e2af',
+            '07 Tools and Workflow': '#89dceb',
             'sun': '#FFD93D',
             'root': '#BBC3FF'
         };
@@ -127,16 +129,20 @@ class KnowledgeGardenGraph {
             return !parts.some(p => hiddenItems.includes(p) || p.startsWith('.'));
         });
 
+        const metadata = manifest.metadata || {};
         mdEntries.forEach(entry => {
             const fileName = entry.path.split('/').pop().replace('.md', '');
             let folder = entry.path.includes('/') ? entry.path.split('/')[0] : 'root';
+            const fm = metadata[entry.path];
 
             const node = {
                 id: entry.path,
                 name: fileName,
                 folder: folder,
                 path: entry.path,
-                connections: 0
+                connections: 0,
+                // Labelled in the graph when the vault marks the note as featured.
+                featured: fm && fm.publish === true && Number.isInteger(fm.featured)
             };
             this.nodes.push(node);
             // Map by lowercase name for matching wikilink targets
@@ -460,10 +466,10 @@ class KnowledgeGardenGraph {
             .on('mouseout', () => this.hideTooltip())
             .on('click', (e, d) => this.handleClick(e, d));
 
-        // Labels for curated important notes (not link count)
+        // Labels: the sun plus notes the vault marks `featured` (curated list as fallback)
         this.labelElements = this.nodesGroup
             .selectAll('text')
-            .data(this.nodes.filter(n => n.isSun || this.importantNotes.has(n.name.toLowerCase())))
+            .data(this.nodes.filter(n => n.isSun || n.featured || this.importantNotes.has(n.name.toLowerCase())))
             .enter()
             .append('text')
             .attr('class', 'node-label')
