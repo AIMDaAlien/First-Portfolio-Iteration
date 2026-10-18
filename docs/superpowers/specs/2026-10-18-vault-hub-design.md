@@ -208,3 +208,18 @@ The brief given to the owner's BigRig agent on 2026-10-18 covers: Model Benchmar
 - The two stray vault copies under the Mac's `Documents/Notes/` are untouched.
 - The `syncthing` share still spans two disks behind FUSE for the general backup; consolidation recommended.
 - Garden code: `summary` on cards, link resolution by title and path across both vaults, tag cleanup, bare-filename embeds not fixed by the compose job, DOMPurify with SRI, lazy manifest, the graph, AGENTS.md section 7. Next spec.
+
+## 12. Outcome (2026-10-18)
+
+| Item | Result |
+|---|---|
+| Code | `composelib/` + `compose.py` + `.github/unraid/*` on `AIMDaAlien/Obsidian-Vault` main (17 commits, then 4 follow-ups); 186 tests; CI green |
+| Hub | `/mnt/cache/vault/{sources/m5pro,sources/bigrig,published,curation.yml,compose.yml,last-run.md,logs}`; wrapper and Dockerfile under `/mnt/cache/appdata/vault-publisher/bin` (root-only, outside the container's write reach); terms copy beside it |
+| Syncthing | `m5pro-vault` Mac send-only → Unraid receive-only; `omarchy-vault` repointed to the cache hub; container recreated with `/mnt/cache/vault:/vault` |
+| First publish | 50c80e8: m5pro 371 notes, bigrig 79 notes, 91 files added (70 BigRig notes, 9 MOCs, 21 charts), `.stignore` removed |
+| Curation | 82 ranked (strip 1-10 per Section 6.3, useful 11-82), summaries on all; 65 Mac notes via frontmatter, 17 BigRig via `curation.yml`; empty BigRig stub unpublished |
+| Mac cutover | launchd job and obsidian-git removed; `.git`/`.github` archived in the session scratchpad for a week; vault is plain files |
+| Watch | BigRig cycle: new note + 5 charts published by the 17:15 and 17:30 cron runs unattended. Mac cycle: edit at 17:10, on Unraid 17:30 (slow first delivery), published 17:45, live on main 17:46 |
+| Gate | Two new rules (first-octet-0 quads, 10-digit numbers in code spans) after three false positives on BigRig notes; `--require-terms` enforces the owner's private terms list |
+
+Deviations from the text above, all ruled during execution: stale-lock breaking replaced by a hard timeout (5.1, 8); publisher-only local commits are discarded and recomposed instead of failing (5.2 step 2); Syncthing non-idle states other than scanning/syncing are failures (5.2 step 1); the wrapper lives outside `/mnt/cache/vault` (4.1 shows `bin/` under the hub); `exclude_files` and the always-excluded Syncthing metadata (5.5, 8); `_private` in `exclude_dirs`. Known follow-ups: the exclusive-share bind for `/mnt/user/vault` never appeared (pipeline does not need it); a `.git/*.lock` left by a killed git call would block runs until removed by hand; the first Mac delivery took 20 minutes, watch the Mac Syncthing link.
