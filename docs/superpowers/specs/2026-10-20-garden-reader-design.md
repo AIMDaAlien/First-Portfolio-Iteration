@@ -1,7 +1,7 @@
 # Knowledge Garden Reader Mode: Design
 
 **Date:** 2026-10-20
-**Status:** Approved in conversation; awaiting written review
+**Status:** Approved 2026-10-20
 **Builds on:** `2026-10-18-vault-hub-design.md` (the vault hub that produces `garden-manifest.json`)
 
 ## 1. Problem
@@ -133,3 +133,8 @@ Reader mode is the default from the first deploy; no flag. The ten blurbs can be
 ## 12. Out of scope
 
 Full-text search, tag cleanup and tag navigation, the graph view, summaries for unranked notes, DOMPurify or SRI, lazy manifest loading.
+
+## 13. Follow-up phases (not this plan)
+
+- **Note consolidation pass.** Some notes would read better merged (overlapping session notes, duplicate guides across the Mac and BigRig vaults). Owner rule from 2026-10-20: notes for active projects are not consolidated; only finished or reference material is a candidate. Done as a content pass in the vault with dated merge notes, after reader mode ships, starting from a candidate list produced by scanning titles, tags, and the links map.
+- **Garden code, later:** full-text search, tag cleanup and navigation, the graph view.
