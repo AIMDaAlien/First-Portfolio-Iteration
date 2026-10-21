@@ -156,3 +156,14 @@ Full-text search, tag cleanup and tag navigation, the graph view, summaries for 
 **Deferred** (reviewer minors, recorded in the plan ledger): double-backtick and indented code spans still get wikilinks rewritten; snippets can start with a table row or callout marker; no concurrency cap on lazy snippet fetches; the body H1 is hidden unconditionally; `machine: unraid` has no origin label; topic pages have no URL state; a refresh while searching clears the query; the manifest is parsed twice at startup; folders-only tree when the manifest is down but the API is up; the main-page featured count counts all ranks; sidebar labels still say "file navigation" in reader mode.
 
 **Not consolidated in this phase:** notes. The consolidation pass in §13 is still next.
+
+### Personality pass (2026-10-21, after the owner's review)
+
+The owner's feedback on the first build: per-sub-project card colours made no sense ("three different colours for projects"), and the reader looked less like them. Agreed in chat and shipped on the same branch (commits e1c5344, e5904ec, 584e2de):
+
+- **One colour per topic**: projects blue, homelab cyan, ai green, linux magenta, journals yellow, tools periwinkle (`topicColor`). The old `getProjectColor` map survives only in terminal mode.
+- **Proportional mixing**: a card's accent bar is a hard-stop vertical gradient of its own topic (at least half) plus up to two linked topics, weighted by links in both directions (`accentStops`, `accentCss`). 67 of 391 live notes mix.
+- **Folder groups**: topic pages group by sub-folder under `aim@garden:~/projects$ ls penthouse/` headings; groups with a strip note come first, then by size. Inside a group ranked notes lead, then linked notes chain next to each other, then newest (`groupByFolder`).
+- **Voice**: all reader copy lowercase in the owner's words; section headings are shell prompts in JetBrains Mono; the status bar stays visible with a shell-style path (`readerPath`); blobs tint toward the active topic; cards carry a faint accent wash and a hover glow.
+- **Playful bits**: a neofetch-style about card with live manifest numbers (`gardenFacts`), one-click easter eggs (`neofetch`, `cowsay sup`, `matrix`, `whoami`, `help`) that switch to the terminal and run, and a once-per-session boot line plus typed intro (`shouldBoot`; skipped under reduced motion).
+- **Found on the way**: eight composed notes stack a stale second frontmatter block under the first (four in Homelab/Session Notes, two in Linux/Fundamentals, one in Homelab/Guides, plus the hidden `markdown practice.md`). The reader now strips every leading block; the vault content should still be cleaned at the source.
