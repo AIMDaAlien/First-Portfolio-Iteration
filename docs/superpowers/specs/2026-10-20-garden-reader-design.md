@@ -31,7 +31,7 @@ Success: a skimmer landing cold can name three projects and what each is for wit
 
 ## 4. Modes
 
-The page keeps one URL and one `KnowledgeGarden` instance. `body` carries `data-mode="reader"` or `data-mode="terminal"`. The mode is stored in `localStorage` under `garden-mode` and defaults to `reader`.
+The page keeps one URL and one `KnowledgeGarden` instance. `html` carries `data-mode="reader"` or `data-mode="terminal"` (set by an inline head script before any stylesheet, so there is no flash) and `body` mirrors it once the reader initialises. The mode is stored in `localStorage` under `garden-mode` and defaults to `reader`.
 
 **Reader mode**
 - Sidebar shows the topic list (Section 5), not the file tree.
@@ -91,7 +91,7 @@ In reader mode a header renders above the markdown body:
 - `[[Name]]`, `[[Name|alias]]`, and `[[Name#heading]]` (heading ignored) in the rendered body become in-page links when the index resolves them, including links across the Mac and BigRig vaults. Unresolved links render as the alias or name in plain text. Terminal mode gets the same resolution, since both modes share the renderer.
 - **Related notes** at the end of the note: up to five published notes this note links to (from the manifest `links` map, resolved through the index) and up to five published notes that link to it, as small cards with summaries. Either list is omitted when empty.
 
-The body is unchanged: same `marked` configuration, same sanitiser, nothing collapsed.
+The body is unchanged: same `marked` configuration, same sanitiser, nothing collapsed. In reader mode the body's leading H1 is hidden by CSS under the header, since the manifest title is that same H1.
 
 ## 7. Code structure
 
@@ -138,3 +138,21 @@ Full-text search, tag cleanup and tag navigation, the graph view, summaries for 
 
 - **Note consolidation pass.** Some notes would read better merged (overlapping session notes, duplicate guides across the Mac and BigRig vaults). Owner rule from 2026-10-20: notes for active projects are not consolidated; only finished or reference material is a candidate. Done as a content pass in the vault with dated merge notes, after reader mode ships, starting from a candidate list produced by scanning titles, tags, and the links map.
 - **Garden code, later:** full-text search, tag cleanup and navigation, the graph view.
+
+## 14. Outcome (2026-10-21)
+
+**Shipped on branch `garden-reader`** (portfolio) and `blurb-curation` (public vault repo), implemented natively from the plan with a fresh whole-branch review at the end.
+
+- `garden-reader-logic.js` with 18 `node --test` cases; `garden-reader.js` and `garden-reader.css`; hooks in `garden-terminal.js`; `garden-terminal.html` markup; `script.js` count clipped at ten.
+- Reader mode is the default, the hint bar and backtick toggle terminal mode, `exit` and the ⇤ button return, the mode persists in `localStorage`.
+- Landing view, six topics with counts, featured strip with summaries, search over title/summary/tags, lazy snippets for cards without a summary.
+- Note header with topic chip, origin, dates, reading time, lede, and the "In plain terms" blurb box, verified end to end with a blurb on the vault hub note.
+- Wikilinks resolve through a title index in both modes; unresolved links render as text; unresolved embeds are dropped. Related notes list up to five each way.
+- Housekeeping paths and `publish: false` notes are hidden in both modes; the dead fallback card is gone.
+- Compose accepts `blurb` (string, ≤ 400) with four tests; publisher image rebuild is part of the ship step.
+- Bug fixed on the way: the shared in-flight fetch in `net-utils.js` handed one Response to concurrent callers.
+- Review fixes: refresh keeps the reader header and scroll position, missing reader script falls back to terminal mode, cold load shows the intro instead of the terminal welcome, in-app navigation resets the content scroller, attribute values escape quotes.
+
+**Deferred** (reviewer minors, recorded in the plan ledger): double-backtick and indented code spans still get wikilinks rewritten; snippets can start with a table row or callout marker; no concurrency cap on lazy snippet fetches; the body H1 is hidden unconditionally; `machine: unraid` has no origin label; topic pages have no URL state; a refresh while searching clears the query; the manifest is parsed twice at startup; folders-only tree when the manifest is down but the API is up; the main-page featured count counts all ranks; sidebar labels still say "file navigation" in reader mode.
+
+**Not consolidated in this phase:** notes. The consolidation pass in §13 is still next.
