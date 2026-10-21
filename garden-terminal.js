@@ -30,6 +30,8 @@ class KnowledgeGarden {
         this.markdownPreprocessors = []; // run on note markdown before marked.parse
         this.onNoteOpened = null;        // (path) => void, set by the reader layer
         this.requestMode = null;         // (mode) => void, set by the reader layer
+        this.onDeepLink = null;          // (path) => void, reader opens ?note= links with its header
+        this.onManifestApplied = null;   // (manifest) => void, reader rebuilds its title index
         this.commandHistory = [];
         this.historyIndex = -1;
 
@@ -183,11 +185,12 @@ class KnowledgeGarden {
         }
 
         // Deep-linking: open a specific note if ?note= is provided
-        const params = new URLSearchParams(window.location.search);
-        const deepNote = params.get('note');
+        const deepNote = window.GardenReaderLogic
+            ? window.GardenReaderLogic.notePathFromSearch(window.location.search)
+            : new URLSearchParams(window.location.search).get('note');
         if (deepNote) {
             // Small delay to let the UI settle before loading
-            setTimeout(() => this.viewFileByPath(deepNote), 100);
+            setTimeout(() => (this.onDeepLink ? this.onDeepLink(deepNote) : this.viewFileByPath(deepNote)), 100);
         }
 
         this.startVaultAutoSync();
@@ -439,6 +442,7 @@ class KnowledgeGarden {
         this.gitTreeCache = null;
         this.manifestParentIndex = null;
         this._buildParentIndex();
+        this.onManifestApplied?.(manifest);
 
         if (rerender) {
             await this.loadFileTree();

@@ -54,10 +54,47 @@ class GardenReader {
 
         this.bindContentEvents();
 
+        // Wikilinks resolve through the title index in both modes (shared renderer).
+        this.index = null;
+        this.garden.registerMarkdownPreprocessor((md) => (this.index ? this.logic.rewriteWikilinks(md, this.index) : md));
+        this.garden.onManifestApplied = (manifest) => this.onManifestApplied(manifest);
+        this.garden.onNoteOpened = () => { this.contentBody.scrollTop = 0; window.scrollTo(0, 0); };
+        this.garden.onDeepLink = (path) => this.openNote(path, { push: false });
+        window.addEventListener('popstate', () => this.onPopState());
+
         this.placeHint();
         window.matchMedia('(max-width: 768px)').addEventListener('change', () => this.placeHint());
 
-        if (this.mode === 'reader') this.renderHome();
+        const deepNote = this.logic.notePathFromSearch(window.location.search);
+        if (this.mode === 'reader') {
+            if (!deepNote) this.renderHome();
+            else this.loadData().catch(() => { /* the deep-link open reports its own error */ });
+        } else {
+            this.loadData().catch(() => { /* terminal mode renders without the index until the next refresh */ });
+        }
+    }
+
+    onManifestApplied(manifest) {
+        this.applyManifest(manifest);
+        if (this.mode !== 'reader' || this.garden.currentFile !== null) return;
+        if (this.activeTopic) this.renderTopic(this.activeTopic);
+        else this.renderHome();
+    }
+
+    onPopState() {
+        const path = this.logic.notePathFromSearch(window.location.search);
+        if (path) { this.openNote(path, { push: false }); return; }
+        if (this.mode === 'reader') { this.renderHome({ push: false }); return; }
+        this.garden.showWelcome();
+        this.garden.loadFeaturedProjects?.();
+    }
+
+    /** Keep the address bar in step with the view so the back button works. */
+    syncHistory(path) {
+        const current = this.logic.notePathFromSearch(window.location.search);
+        if (current === path) return;
+        const url = path ? this.logic.noteHref(path) : window.location.pathname;
+        try { history.pushState({ note: path }, '', url); } catch (e) { /* history blocked: links still work */ }
     }
 
     /** At phone width the hint moves into the sidebar drawer; otherwise it floats bottom-right. */
@@ -78,16 +115,20 @@ class GardenReader {
         document.body.dataset.mode = mode;
         this.updateChrome();
 
-        const noteOpen = this.garden.currentFile !== null;
+        const openFile = this.garden.currentFile;
         if (mode === 'terminal') {
             this.garden.closeMobileSidebar?.();
-            if (!noteOpen) {
+            if (openFile === null) {
                 this.garden.showWelcome();
                 this.garden.loadFeaturedProjects?.();
+            } else {
+                this.garden.viewFileByPath(openFile);
             }
             this.garden.terminalInput?.focus();
-        } else if (!noteOpen) {
+        } else if (openFile === null) {
             this.renderHome();
+        } else {
+            this.openNote(openFile, { push: false });
         }
     }
 
@@ -103,6 +144,7 @@ class GardenReader {
 
     applyManifest(manifest) {
         const metadata = (manifest && manifest.metadata) || {};
+        this.index = this.logic.buildTitleIndex(metadata);
         this.groups = this.logic.groupByTopic(metadata);
         this.strip = this.logic.featuredStrip(metadata, this.garden.featuredLimit || 10);
         this.entries = [];
@@ -154,6 +196,14 @@ class GardenReader {
         this.contentBody.addEventListener('click', (e) => {
             const card = e.target.closest('.reader-card[data-note]');
             if (card) { this.openNote(card.dataset.note); return; }
+            const link = e.target.closest('a[data-note], a[href^="?note="]');
+            if (link) {
+                const path = link.dataset.note || this.logic.notePathFromSearch(link.getAttribute('href'));
+                if (path) { e.preventDefault(); this.openNote(path); }
+                return;
+            }
+            const chip = e.target.closest('.note-topic-chip[data-topic]');
+            if (chip) { this.renderTopic(chip.dataset.topic); return; }
             const topic = e.target.closest('.reader-topic-card[data-topic]');
             if (topic) { this.renderTopic(topic.dataset.topic); return; }
             const retry = e.target.closest('#readerRetry');
@@ -195,11 +245,12 @@ class GardenReader {
         });
     }
 
-    async renderHome() {
+    async renderHome({ push = true } = {}) {
         this.garden.currentFile = null;
         this.garden.currentPath = '';
         this.setActiveTopic(null);
         this.setBreadcrumb([{ label: 'Home' }]);
+        if (push) this.syncHistory(null);
 
         try {
             await this.loadData();
@@ -279,6 +330,7 @@ class GardenReader {
         this.garden.currentPath = '';
         this.setActiveTopic(id);
         this.setBreadcrumb([{ label: 'Home', go: () => this.renderHome() }, { label: topic.label }]);
+        this.syncHistory(null);
 
         if (!this.groups) {
             try { await this.loadData(); } catch (error) { this.renderLoadError(error); return; }
@@ -367,9 +419,69 @@ class GardenReader {
     // Notes
     // ------------------------------------------------------------
 
-    openNote(path) {
+    async openNote(path, { push = true } = {}) {
         this.garden.closeMobileSidebar?.();
-        return this.garden.viewFileByPath(path);
+        if (push) this.syncHistory(path);
+
+        if (this.mode !== 'reader') return this.garden.viewFileByPath(path);
+
+        if (!this.groups) {
+            try { await this.loadData(); } catch (error) { /* header falls back to the filename */ }
+        }
+        const meta = this.garden.manifest?.metadata?.[path] || {};
+        let text = '';
+        try { text = await this.garden.fetchNote(path); } catch (error) { /* viewFileByPath shows the error under the header */ }
+
+        const topic = this.logic.topicForPath(path);
+        const headerHtml = this.renderHeader(path, meta, text);
+        const afterHtml = this.renderRelated(path);
+        await this.garden.viewFileByPath(path, { headerHtml, afterHtml });
+
+        this.setActiveTopic(topic ? topic.id : null);
+        const trail = [{ label: 'Home', go: () => this.renderHome() }];
+        if (topic) trail.push({ label: topic.label, go: () => this.renderTopic(topic.id) });
+        trail.push({ label: this.logic.toEntry(path, meta).title });
+        this.setBreadcrumb(trail);
+        this.observeSnippets(this.contentBody);
+    }
+
+    renderHeader(path, meta, text) {
+        const esc = (s) => this.garden.escapeHtml(String(s));
+        const entry = this.logic.toEntry(path, meta);
+        const topic = this.logic.topicForPath(path);
+
+        const facts = [];
+        if (entry.machine === 'bigrig') facts.push('written on BigRig');
+        else if (entry.machine === 'mac') facts.push('written on the Mac');
+        const created = this.formatDate(entry.created);
+        const updated = this.formatDate(entry.updated);
+        if (created) facts.push(`Created ${created}`);
+        if (updated && updated !== created) facts.push(`Updated ${updated}`);
+        if (text) facts.push(`${this.logic.readingTime(text)} min read`);
+
+        return `<header class="note-header">
+            ${topic ? `<button type="button" class="note-topic-chip" data-topic="${topic.id}">${esc(topic.label)}</button>` : ''}
+            <h1>${esc(entry.title)}</h1>
+            ${facts.length ? `<p class="note-meta">${facts.map(f => `<span>${esc(f)}</span>`).join('')}</p>` : ''}
+            ${entry.summary ? `<p class="note-lede">${esc(entry.summary)}</p>` : ''}
+            ${entry.blurb ? `<aside class="note-blurb"><h2>In plain terms</h2><p>${esc(entry.blurb)}</p></aside>` : ''}
+        </header>`;
+    }
+
+    renderRelated(path) {
+        const manifest = this.garden.manifest;
+        if (!manifest || !this.index) return '';
+        const metadata = manifest.metadata || {};
+        const { outgoing, incoming } = this.logic.relatedNotes(path, metadata, manifest.links || {}, this.index, 5);
+        if (!outgoing.length && !incoming.length) return '';
+
+        const list = (title, paths) => paths.length
+            ? `<h2>${title}</h2><div class="reader-grid">${paths.map(p => this.renderCard(this.logic.toEntry(p, metadata[p]))).join('')}</div>`
+            : '';
+        return `<section class="note-related" aria-label="Related notes">
+            ${list('Links to', outgoing)}
+            ${list('Linked from', incoming)}
+        </section>`;
     }
 }
 

@@ -380,3 +380,143 @@ html[data-mode="reader"] .sidebar.collapsed .topic-list {
         grid-template-columns: 1fr;
     }
 }
+
+/* ---------- Note header (reader mode) ---------- */
+
+.note-header {
+    max-width: 820px;
+    margin: 32px auto 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.note-topic-chip {
+    align-self: flex-start;
+    padding: 6px 14px;
+    background: var(--md-sys-color-secondary-container);
+    border: none;
+    border-radius: var(--md-sys-shape-corner-full);
+    color: var(--md-sys-color-on-secondary-container);
+    font-family: var(--font-primary);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition:
+        transform var(--duration-short) var(--motion-spring-bouncy),
+        background var(--duration-short) var(--motion-spring-bouncy);
+}
+
+.note-topic-chip:hover {
+    transform: translateY(-2px) scale(1.02);
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+}
+
+.note-topic-chip:active {
+    transform: scale(0.95);
+}
+
+.note-header h1 {
+    margin: 0;
+    font-family: var(--font-primary);
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 40px;
+    color: var(--md-sys-color-on-surface);
+}
+
+.note-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+    margin: 0;
+    font-family: var(--font-primary);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+    line-height: 20px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.note-lede {
+    margin: 4px 0 0;
+    font-family: var(--font-primary);
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 30px;
+    color: var(--md-sys-color-on-surface);
+}
+
+.note-blurb {
+    margin: 12px 0 0;
+    padding: 20px 28px;
+    background: var(--md-sys-color-primary-container);
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    color: var(--md-sys-color-on-primary-container);
+}
+
+.note-blurb h2 {
+    margin: 0 0 8px;
+    font-family: var(--font-primary);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--md-sys-color-on-primary-container);
+    opacity: 0.85;
+}
+
+.note-blurb p {
+    margin: 0;
+    font-family: var(--font-primary);
+    font-size: 16px;
+    line-height: 24px;
+    letter-spacing: 0.5px;
+}
+
+html[data-mode="reader"] .markdown-content {
+    max-width: 820px;
+    margin: 0 auto;
+}
+
+/* ---------- Related notes ---------- */
+
+.note-related {
+    max-width: 1100px;
+    margin: 56px auto 96px;
+    padding-top: 32px;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.note-related h2 {
+    margin: 24px 0 16px;
+    font-family: var(--font-primary);
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 28px;
+    color: var(--md-sys-color-on-surface);
+}
+
+@media (max-width: 768px) {
+    .note-header {
+        margin-top: 16px;
+    }
+
+    .note-header h1 {
+        font-size: 26px;
+        line-height: 32px;
+    }
+
+    .note-lede {
+        font-size: 18px;
+        line-height: 26px;
+    }
+}
+
+/* The header already shows the title; hide the body's own leading H1 under it. */
+html[data-mode="reader"] .note-header + .markdown-content > h1:first-child {
+    display: none;
+}
