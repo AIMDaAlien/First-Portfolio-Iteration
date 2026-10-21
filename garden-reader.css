@@ -7,7 +7,6 @@
 /* ---------- Mode switching ---------- */
 
 html[data-mode="reader"] .floating-terminal,
-html[data-mode="reader"] .status-bar,
 html[data-mode="reader"] .file-tree,
 html[data-mode="reader"] .sidebar-footer {
     display: none;
@@ -21,6 +20,56 @@ html[data-mode="terminal"] .topic-list {
 /* The static terminal welcome never shows under reader mode, even before the manifest arrives. */
 html[data-mode="reader"] .welcome-content {
     display: none;
+}
+
+/* ---------- Texture: the blobs show through and drift toward the active topic ---------- */
+
+html[data-mode="reader"] .blob {
+    opacity: 0.3;
+}
+
+html[data-mode="reader"] .blob-1 {
+    background: radial-gradient(circle, color-mix(in srgb, var(--reader-accent, #BBC3FF) 65%, transparent), transparent 70%);
+}
+
+html[data-mode="reader"] .blob-2 {
+    background: radial-gradient(circle, color-mix(in srgb, var(--reader-accent, #E8B9D5) 45%, transparent), transparent 70%);
+}
+
+/* ---------- Prompt lines: section headings read like a shell ---------- */
+
+.reader-prompt {
+    display: block;
+    margin: 40px 0 16px;
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0;
+    color: var(--md-sys-color-on-surface);
+}
+
+.reader-prompt .prompt-line { color: var(--md-sys-color-on-surface-variant); white-space: nowrap; }
+.reader-prompt .prompt-user { color: var(--terminal-green); }
+.reader-prompt .prompt-path { color: var(--terminal-blue); }
+.reader-prompt .prompt-cmd { color: var(--md-sys-color-on-surface); white-space: normal; }
+
+.reader-group-count {
+    margin-left: 10px;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--md-sys-color-outline);
+    white-space: nowrap;
+}
+
+.reader-group-count::before {
+    content: '· ';
+}
+
+p.reader-prompt {
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: var(--md-sys-color-on-surface-variant);
 }
 
 /* ---------- Terminal hint bar ---------- */
@@ -146,6 +195,22 @@ html[data-mode="reader"] .welcome-content {
     color: var(--md-sys-color-outline);
 }
 
+.topic-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
+    font-size: 13px;
+}
+
+.topic-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--topic-color, var(--md-sys-color-primary));
+    box-shadow: 0 0 8px color-mix(in srgb, var(--topic-color, var(--md-sys-color-primary)) 60%, transparent);
+}
+
 html[data-mode="reader"] .sidebar.collapsed .topic-list {
     display: none;
 }
@@ -160,32 +225,148 @@ html[data-mode="reader"] .sidebar.collapsed .topic-list {
 }
 
 .reader-intro {
-    font-family: var(--font-primary);
-    font-size: 22px;
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
+    font-size: 17px;
     font-weight: 400;
     line-height: 28px;
     color: var(--md-sys-color-on-surface);
-    max-width: 720px;
+    max-width: 640px;
     margin: 0 0 24px;
 }
 
 .reader-topic-header h1 {
-    font-family: var(--font-primary);
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
     font-size: 32px;
     font-weight: 600;
     line-height: 40px;
-    color: var(--md-sys-color-on-surface);
+    color: var(--card-accent, var(--md-sys-color-on-surface));
     margin: 0 0 8px;
 }
 
-.reader-home h2,
-.reader-results h2 {
-    font-family: var(--font-primary);
-    font-size: 22px;
-    font-weight: 500;
-    line-height: 28px;
+.reader-topic-header .reader-intro {
+    font-size: 16px;
+    line-height: 26px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Hero: intro and search on the left, the about card on the right. */
+
+.reader-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 32px;
+    align-items: start;
+}
+
+.reader-boot {
+    margin: 0 0 16px;
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
+    font-size: 13px;
+    line-height: 20px;
+    color: var(--md-sys-color-outline);
+    white-space: pre-wrap;
+}
+
+.reader-boot::before {
+    content: '❯ ';
+    color: var(--terminal-green);
+}
+
+.reader-cursor {
+    display: inline-block;
+    width: 9px;
+    height: 1.1em;
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    background: var(--terminal-green);
+    animation: readerBlink 1s step-end infinite;
+}
+
+@keyframes readerBlink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+.reader-home-rest {
+    transition: opacity var(--duration-long) var(--motion-spring-expressive), transform var(--duration-long) var(--motion-spring-expressive);
+}
+
+.reader-home.is-booting .reader-home-rest {
+    opacity: 0;
+    transform: translateY(12px);
+    pointer-events: none;
+}
+
+/* The about card: neofetch for the vault. */
+
+.reader-about {
+    padding: 20px 24px;
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-low) 85%, transparent);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: var(--elevation-1);
+}
+
+.reader-neofetch {
+    margin: 0 0 16px;
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
+    font-size: 12px;
+    line-height: 18px;
     color: var(--md-sys-color-on-surface);
-    margin: 40px 0 16px;
+    white-space: pre;
+    overflow-x: auto;
+}
+
+.reader-neofetch .about-art { color: var(--md-sys-color-primary); }
+.reader-neofetch .about-user { color: var(--terminal-green); font-weight: 600; }
+.reader-neofetch .about-rule { color: var(--md-sys-color-outline); }
+.reader-neofetch .about-key { color: var(--terminal-cyan); }
+
+.reader-eggs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.reader-egg {
+    padding: 6px 12px;
+    background: var(--md-sys-color-surface-container-high);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-full);
+    color: var(--md-sys-color-on-surface);
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
+    font-size: 12px;
+    cursor: pointer;
+    transition:
+        transform var(--duration-short) var(--motion-spring-bouncy),
+        background var(--duration-short) var(--motion-spring-bouncy),
+        border-color var(--duration-short) var(--motion-spring-bouncy);
+}
+
+.reader-egg::before {
+    content: '$ ';
+    color: var(--terminal-green);
+}
+
+.reader-egg:hover {
+    transform: translateY(-2px) scale(1.04);
+    background: var(--md-sys-color-surface-container-highest);
+    border-color: var(--terminal-green);
+}
+
+.reader-egg:active {
+    transform: scale(0.95);
+}
+
+.reader-egg:focus-visible {
+    outline: 2px solid var(--md-sys-color-primary);
+    outline-offset: 2px;
+}
+
+.reader-group {
+    margin: 0;
 }
 
 .reader-search {
@@ -244,27 +425,45 @@ html[data-mode="reader"] .sidebar.collapsed .topic-list {
 /* ---------- Cards ---------- */
 
 .reader-card {
+    position: relative;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     gap: 8px;
     min-height: 150px;
-    padding: 20px 24px 20px 24px;
-    background: var(--md-sys-color-surface-container);
+    padding: 20px 24px 20px 28px;
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--card-accent, var(--md-sys-color-primary)) 12%, transparent), transparent 55%),
+        color-mix(in srgb, var(--md-sys-color-surface-container) 88%, transparent);
     border: 1px solid var(--md-sys-color-outline-variant);
-    border-left: 4px solid var(--card-accent, var(--md-sys-color-primary));
     border-radius: var(--md-sys-shape-corner-extra-large);
     color: var(--md-sys-color-on-surface);
     cursor: pointer;
     transition:
         transform var(--duration-short) var(--motion-spring-bouncy),
-        background var(--duration-short) var(--motion-spring-bouncy),
+        border-color var(--duration-short) var(--motion-spring-bouncy),
         box-shadow var(--duration-short) var(--motion-spring-bouncy);
+}
+
+/* The accent bar: the note's topic, mixed with the topics it links to. */
+.reader-card::before,
+.reader-topic-card::before,
+.note-topic-chip::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    background: var(--card-mix, var(--card-accent, var(--md-sys-color-primary)));
 }
 
 .reader-card:hover {
     transform: translateY(-4px) scale(1.02);
-    background: var(--md-sys-color-surface-container-high);
-    box-shadow: var(--elevation-2);
+    border-color: color-mix(in srgb, var(--card-accent, var(--md-sys-color-primary)) 50%, var(--md-sys-color-outline-variant));
+    box-shadow:
+        var(--elevation-2),
+        0 0 28px color-mix(in srgb, var(--card-accent, var(--md-sys-color-primary)) 22%, transparent);
 }
 
 .reader-card:active {
@@ -277,11 +476,10 @@ html[data-mode="reader"] .sidebar.collapsed .topic-list {
 }
 
 .reader-card-topic {
-    font-family: var(--font-primary);
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
     font-size: 12px;
     font-weight: 500;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+    letter-spacing: 0;
     color: var(--card-accent, var(--md-sys-color-primary));
 }
 
@@ -316,11 +514,15 @@ html[data-mode="reader"] .sidebar.collapsed .topic-list {
 /* Topic cards on the landing view */
 
 .reader-topic-card {
+    position: relative;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 20px 24px;
-    background: var(--md-sys-color-surface-container-low);
+    padding: 20px 24px 20px 28px;
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--card-accent, var(--md-sys-color-primary)) 14%, transparent), transparent 60%),
+        color-mix(in srgb, var(--md-sys-color-surface-container-low) 88%, transparent);
     border: 1px solid var(--md-sys-color-outline-variant);
     border-radius: var(--md-sys-shape-corner-extra-large);
     color: var(--md-sys-color-on-surface);
@@ -349,10 +551,11 @@ html[data-mode="reader"] .sidebar.collapsed .topic-list {
 }
 
 .reader-topic-label {
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
     font-size: 18px;
-    font-weight: 500;
+    font-weight: 600;
     line-height: 24px;
-    color: var(--md-sys-color-primary);
+    color: var(--card-accent, var(--md-sys-color-primary));
 }
 
 .reader-topic-desc {
@@ -377,12 +580,33 @@ html[data-mode="reader"] .sidebar.collapsed .topic-list {
     }
 
     .reader-intro {
-        font-size: 18px;
-        line-height: 26px;
+        font-size: 15px;
+        line-height: 24px;
     }
 
     .reader-grid {
         grid-template-columns: 1fr;
+    }
+
+    .reader-topic-header h1 {
+        font-size: 26px;
+        line-height: 32px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .reader-hero {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .reader-cursor {
+        animation: none;
+    }
+
+    .reader-home-rest {
+        transition: none;
     }
 }
 
@@ -397,17 +621,18 @@ html[data-mode="reader"] .sidebar.collapsed .topic-list {
 }
 
 .note-topic-chip {
+    position: relative;
+    overflow: hidden;
     align-self: flex-start;
-    padding: 6px 14px;
+    padding: 6px 14px 6px 18px;
     background: var(--md-sys-color-secondary-container);
     border: none;
     border-radius: var(--md-sys-shape-corner-full);
     color: var(--md-sys-color-on-secondary-container);
-    font-family: var(--font-primary);
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
     font-size: 12px;
     font-weight: 500;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+    letter-spacing: 0;
     cursor: pointer;
     transition:
         transform var(--duration-short) var(--motion-spring-bouncy),
@@ -426,8 +651,8 @@ html[data-mode="reader"] .sidebar.collapsed .topic-list {
 
 .note-header h1 {
     margin: 0;
-    font-family: var(--font-primary);
-    font-size: 32px;
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
+    font-size: 30px;
     font-weight: 600;
     line-height: 40px;
     color: var(--md-sys-color-on-surface);
@@ -438,10 +663,10 @@ html[data-mode="reader"] .sidebar.collapsed .topic-list {
     flex-wrap: wrap;
     gap: 6px 20px;
     margin: 0;
-    font-family: var(--font-primary);
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: 0.1px;
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0;
     line-height: 20px;
     color: var(--md-sys-color-on-surface-variant);
 }
@@ -465,11 +690,10 @@ html[data-mode="reader"] .sidebar.collapsed .topic-list {
 
 .note-blurb h2 {
     margin: 0 0 8px;
-    font-family: var(--font-primary);
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
     font-size: 12px;
     font-weight: 500;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+    letter-spacing: 0;
     color: var(--md-sys-color-on-primary-container);
     opacity: 0.85;
 }
@@ -498,11 +722,6 @@ html[data-mode="reader"] .markdown-content {
 
 .note-related h2 {
     margin: 24px 0 16px;
-    font-family: var(--font-primary);
-    font-size: 22px;
-    font-weight: 500;
-    line-height: 28px;
-    color: var(--md-sys-color-on-surface);
 }
 
 @media (max-width: 768px) {
@@ -511,8 +730,8 @@ html[data-mode="reader"] .markdown-content {
     }
 
     .note-header h1 {
-        font-size: 26px;
-        line-height: 32px;
+        font-size: 22px;
+        line-height: 30px;
     }
 
     .note-lede {

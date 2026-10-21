@@ -175,8 +175,9 @@ class KnowledgeGarden {
             }
         }
 
-        // Load file tree from GitHub
-        this.statusInfo.textContent = 'Loading vault...';
+        // Load file tree from GitHub. In reader mode the reader layer owns the status bar.
+        const readerOwnsStatus = () => document.documentElement.dataset.mode === 'reader' && !!this.requestMode;
+        if (!readerOwnsStatus()) this.statusInfo.textContent = 'Loading vault...';
         await this.loadFileTree();
 
         // Load featured notes (publish=true with a `featured` rank, sorted by rank).
@@ -202,7 +203,7 @@ class KnowledgeGarden {
 
         this.startVaultAutoSync();
 
-        this.statusInfo.textContent = 'Ready';
+        if (!readerOwnsStatus()) this.statusInfo.textContent = 'Ready';
     }
 
     startVaultAutoSync() {
@@ -1215,7 +1216,10 @@ class KnowledgeGarden {
 
     renderMarkdown(content) {
         if (typeof marked === 'undefined') return this.escapeHtml(content);
-        content = content.replace(/^---\n[\s\S]*?\n---\n/m, '');
+        // Strip every leading frontmatter block (some composed notes stack a stale second one).
+        content = window.GardenReaderLogic
+            ? window.GardenReaderLogic.stripFrontmatter(content)
+            : content.replace(/^---\n[\s\S]*?\n---\n/, '');
         for (const fn of this.markdownPreprocessors) content = fn(content);
         if (!this._markedConfigured) {
             marked.setOptions({ breaks: true, gfm: true, headerIds: false, mangle: false });

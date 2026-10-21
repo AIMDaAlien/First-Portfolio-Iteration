@@ -24,7 +24,13 @@ class GardenReader {
         this.activeTopic = null; // topic id shown in the sidebar
         this.searchTimer = null;
         this.snippetObserver = null;
+        this.booted = false;     // the boot line plays at most once per page load
+        this.bootToken = 0;
     }
+
+    static get PROMPT_USER() { return 'aim@garden'; }
+    static get INTRO() { return "my notes, straight out of the vault. the homelab, the stuff i build, and whatever i'm running on my own hardware. featured is the good stuff. know what you're after? pick a topic."; }
+    static get EGGS() { return ['neofetch', 'cowsay sup', 'matrix', 'whoami', 'help']; }
 
     get mode() {
         return document.documentElement.dataset.mode === 'terminal' ? 'terminal' : 'reader';
@@ -118,7 +124,40 @@ class GardenReader {
     }
 
     updateChrome() {
-        if (this.sidebarTitle) this.sidebarTitle.textContent = this.mode === 'reader' ? 'Topics' : 'Files';
+        if (this.sidebarTitle) this.sidebarTitle.textContent = this.mode === 'reader' ? 'topics' : 'Files';
+    }
+
+    /** The git-style status bar stays in reader mode; the path reads like a shell. */
+    setStatus(path, info) {
+        if (this.garden.statusPath) this.garden.statusPath.textContent = path;
+        if (info !== undefined && this.garden.statusInfo) this.garden.statusInfo.textContent = info;
+    }
+
+    /** The background blobs drift toward the active topic's colour. */
+    tint(topicId) {
+        const root = document.documentElement.style;
+        if (topicId) root.setProperty('--reader-accent', this.logic.topicColor(topicId));
+        else root.removeProperty('--reader-accent');
+    }
+
+    /** A card's colours: its topic, plus the mix of topics it links to. */
+    accentStyle(path) {
+        const manifest = this.garden.manifest || {};
+        const topic = this.logic.topicForPath(path);
+        const stops = this.index
+            ? this.logic.accentStops(path, manifest.metadata || {}, manifest.links || {}, this.index)
+            : [{ id: topic ? topic.id : null, share: 1 }];
+        return `--card-accent: ${this.logic.topicColor(topic ? topic.id : null)}; --card-mix: ${this.logic.accentCss(stops)}`;
+    }
+
+    /** 'projects/penthouse' for a note path, '' at a topic root. */
+    folderLabel(path) {
+        return this.logic.readerPath(path).replace(/^~\/?/, '').split('/').slice(0, -1).join('/');
+    }
+
+    prompt(path, command) {
+        const esc = this.logic.escapeHtml;
+        return `<span class="prompt-line"><span class="prompt-user">${GardenReader.PROMPT_USER}</span>:<span class="prompt-path">${esc(path)}</span>$ <span class="prompt-cmd">${esc(command)}</span></span>`;
     }
 
     setMode(mode) {
@@ -177,13 +216,14 @@ class GardenReader {
     renderSidebar() {
         if (!this.topicList) return;
         const esc = this.logic.escapeHtml;
-        const items = [{ id: '', label: 'Home', count: null }]
+        const items = [{ id: '', label: '~ home', count: null }]
             .concat(this.logic.TOPICS.map(t => ({ id: t.id, label: t.label, count: this.topicCount(t.id) })));
         this.topicList.innerHTML = items.map(item => {
             const current = (item.id || null) === this.activeTopic ? ' aria-current="page"' : '';
             const count = item.count === null ? '' : `<span class="topic-count">${item.count}</span>`;
+            const dot = item.id ? `<span class="topic-dot" style="--topic-color: ${this.logic.topicColor(item.id)}" aria-hidden="true"></span>` : '';
             return `<button type="button" class="topic-item" data-topic="${esc(item.id)}"${current}>
-                <span class="topic-label">${esc(item.label)}</span>${count}
+                <span class="topic-label">${dot}${esc(item.label)}</span>${count}
             </button>`;
         }).join('');
     }
@@ -219,6 +259,8 @@ class GardenReader {
             if (chip) { this.renderTopic(chip.dataset.topic); return; }
             const topic = e.target.closest('.reader-topic-card[data-topic]');
             if (topic) { this.renderTopic(topic.dataset.topic); return; }
+            const egg = e.target.closest('.reader-egg[data-cmd]');
+            if (egg) { this.runInTerminal(egg.dataset.cmd); return; }
             const retry = e.target.closest('#readerRetry');
             if (retry) this.renderHome();
         });
@@ -262,16 +304,20 @@ class GardenReader {
         this.garden.currentFile = null;
         this.garden.currentPath = '';
         this.setActiveTopic(null);
-        this.setBreadcrumb([{ label: 'Home' }]);
+        this.setBreadcrumb([{ label: '~' }]);
         if (push) this.syncHistory(null);
         this.scrollToTop();
+        this.tint(null);
+        this.setStatus('~', this.groups ? `${this.entries.length} notes` : 'mounting vault...');
 
         const esc = this.logic.escapeHtml;
-        const intro = 'A working notebook from my homelab, my projects, and the models I run on my own hardware. Start with the featured notes, or pick a topic.';
+        const intro = esc(GardenReader.INTRO);
+        const boot = !this.booted && this.logic.shouldBoot(this.sessionStorage(), this.reducedMotion());
+        const token = ++this.bootToken;
 
         // Show the intro at once; a cold visitor should never see the terminal welcome while the manifest loads.
         if (!this.groups) {
-            this.contentBody.innerHTML = `<div class="reader-home"><p class="reader-intro">${intro}</p><p class="muted">Loading notes…</p></div>`;
+            this.contentBody.innerHTML = `<div class="reader-home"><pre class="reader-boot" aria-hidden="true">mounting vault…</pre>${boot ? '' : `<p class="reader-intro">${intro}</p>`}</div>`;
         }
 
         try {
@@ -280,39 +326,126 @@ class GardenReader {
             this.renderLoadError(error);
             return;
         }
+        if (token !== this.bootToken) return;
+
+        const facts = this.logic.gardenFacts(this.garden.manifest);
+        this.setStatus('~', `${facts.notes} notes`);
 
         const topicCards = this.logic.TOPICS.map(t => {
             const n = this.topicCount(t.id);
-            return `<button type="button" class="reader-topic-card" data-topic="${t.id}">
-                <span class="reader-topic-label">${esc(t.label)}</span>
+            return `<button type="button" class="reader-topic-card" data-topic="${t.id}" style="--card-accent: ${this.logic.topicColor(t.id)}">
+                <span class="reader-topic-label">${esc(t.label)}/</span>
                 <span class="reader-topic-desc">${esc(t.description)}</span>
                 <span class="reader-topic-count">${n} ${n === 1 ? 'note' : 'notes'}</span>
             </button>`;
         }).join('');
 
+        const eggs = GardenReader.EGGS.map(cmd =>
+            `<button type="button" class="reader-egg" data-cmd="${esc(cmd)}" aria-label="run ${esc(cmd)} in the terminal">${esc(cmd)}</button>`).join('');
+
         this.contentBody.innerHTML = `
-            <div class="reader-home">
-                <p class="reader-intro">${intro}</p>
-                <input type="search" id="readerSearch" class="reader-search" placeholder="Search titles, summaries, tags" aria-label="Search notes" autocomplete="off">
-                <section class="reader-results" id="readerResults" hidden aria-live="polite"></section>
-                <section class="reader-featured" id="readerFeatured">
-                    <h2>Featured</h2>
-                    <div class="reader-grid">${this.strip.map(e => this.renderCard(e)).join('')}</div>
+            <div class="reader-home${boot ? ' is-booting' : ''}">
+                <section class="reader-hero">
+                    <div class="reader-hero-text">
+                        <pre class="reader-boot" id="readerBoot" aria-hidden="true">mounting vault…\n${facts.notes} notes · ${facts.topics} topics · ready</pre>
+                        <p class="reader-intro"><span id="readerIntroText">${boot ? '' : intro}</span>${boot ? '<span class="reader-cursor" aria-hidden="true"></span>' : ''}</p>
+                        <input type="search" id="readerSearch" class="reader-search" placeholder="search titles, summaries, tags" aria-label="search notes" autocomplete="off">
+                    </div>
+                    <aside class="reader-about" aria-label="about this garden">
+                        ${this.renderAbout(facts)}
+                        <div class="reader-eggs" aria-label="terminal shortcuts">${eggs}</div>
+                    </aside>
                 </section>
-                <section class="reader-topics" id="readerTopics">
-                    <h2>Topics</h2>
-                    <div class="reader-grid reader-grid-topics">${topicCards}</div>
-                </section>
+                <div class="reader-home-rest">
+                    <section class="reader-results" id="readerResults" hidden aria-live="polite"></section>
+                    <section class="reader-featured" id="readerFeatured">
+                        <h2 class="reader-prompt">${this.prompt('~', 'ls featured/')}</h2>
+                        <div class="reader-grid">${this.strip.map(e => this.renderCard(e, { showFolder: true })).join('')}</div>
+                    </section>
+                    <section class="reader-topics" id="readerTopics">
+                        <h2 class="reader-prompt">${this.prompt('~', 'ls topics/')}</h2>
+                        <div class="reader-grid reader-grid-topics">${topicCards}</div>
+                    </section>
+                </div>
             </div>`;
         this.observeSnippets(this.contentBody);
+        if (boot) this.playBoot(token);
+    }
+
+    sessionStorage() {
+        try { return window.sessionStorage; } catch (e) { return null; }
+    }
+
+    reducedMotion() {
+        return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }
+
+    /** First visit per session: the boot lines resolve, the intro types out, then the rest fades in. */
+    async playBoot(token) {
+        this.booted = true;
+        try { this.sessionStorage()?.setItem('garden-booted', '1'); } catch (e) { /* private window: boot again next load */ }
+        const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+        const live = () => token === this.bootToken && document.getElementById('readerIntroText');
+        const home = this.contentBody.querySelector('.reader-home');
+        const text = GardenReader.INTRO;
+        const target = document.getElementById('readerIntroText');
+
+        await wait(350);
+        for (let i = 1; i <= text.length && live(); i++) {
+            target.textContent = text.slice(0, i);
+            await wait(text[i - 1] === '.' ? 90 : 9);
+        }
+        if (!live()) return;
+        target.textContent = text;
+        this.contentBody.querySelector('.reader-cursor')?.remove();
+        home?.classList.remove('is-booting');
+    }
+
+    /** neofetch for the vault, with live numbers from the manifest. */
+    renderAbout(facts) {
+        const esc = this.logic.escapeHtml;
+        const when = facts.generated ? this.formatStamp(facts.generated) : 'unknown';
+        const rows = [
+            ['notes', String(facts.notes)],
+            ['topics', String(facts.topics)],
+            ['featured', String(facts.featured)],
+            ['written on', facts.machines.length ? facts.machines.join(' · ') : 'the mac'],
+            ['published', when],
+            ['stack', 'html · css · js · no build'],
+            ['shell', 'press ` for the terminal'],
+        ];
+        const art = ['   /\\    ', '  /  \\   ', ' /    \\  ', '/______\\ ', '         ', '  ____   ', ' |    |  ', ' |____|  '];
+        const lines = art.map((mark, i) => {
+            const row = i === 0 ? `<span class="about-user">${GardenReader.PROMPT_USER}</span>`
+                : i === 1 ? '<span class="about-rule">----------</span>'
+                : rows[i - 2] ? `<span class="about-key">${esc(rows[i - 2][0])}:</span> ${esc(rows[i - 2][1])}` : '';
+            return `<span class="about-art">${esc(mark)}</span>  ${row}`;
+        });
+        return `<pre class="reader-neofetch">${lines.join('\n')}</pre>`;
+    }
+
+    formatStamp(value) {
+        const d = this.garden.parseDate(value);
+        if (!d) return String(value);
+        const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toLowerCase();
+        const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }).toLowerCase();
+        return `${date}, ${time}`;
+    }
+
+    /** The easter eggs are one click away: open the terminal and run the command there. */
+    runInTerminal(cmd) {
+        this.setMode('terminal');
+        this.garden.floatingTerminal?.classList.remove('minimized');
+        this.garden.executeCommand(cmd);
+        this.garden.terminalInput?.focus();
     }
 
     renderLoadError(error) {
         const message = this.garden.getFriendlyError(error, 'manifest');
         this.contentBody.innerHTML = `<div class="error-content">
-            <h2>Couldn't load the garden</h2>
+            <h2>couldn't load the garden</h2>
             <p class="muted">${this.logic.escapeHtml(message)}</p>
-            <button type="button" class="gallery-toggle-btn" id="readerRetry">Try again</button>
+            <button type="button" class="gallery-toggle-btn" id="readerRetry">try again</button>
         </div>`;
     }
 
@@ -333,9 +466,9 @@ class GardenReader {
 
         const matches = this.logic.filterNotes(q, this.entries);
         const n = matches.length;
-        results.innerHTML = `<h2>${n} ${n === 1 ? 'note matches' : 'notes match'}</h2>` +
-            (n ? `<div class="reader-grid">${matches.map(e => this.renderCard(e)).join('')}</div>`
-               : '<p class="muted">Nothing matches that yet. Try a different word, or pick a topic below.</p>');
+        results.innerHTML = `<h2 class="reader-prompt">${this.prompt('~', `grep -ri "${q}"`)}<span class="reader-group-count">${n} ${n === 1 ? 'note' : 'notes'}</span></h2>` +
+            (n ? `<div class="reader-grid">${matches.map(e => this.renderCard(e, { showFolder: true })).join('')}</div>`
+               : '<p class="muted">nothing matches that. try another word, or pick a topic.</p>');
         results.hidden = false;
         featured.hidden = true;
         topics.hidden = true;
@@ -350,30 +483,41 @@ class GardenReader {
         this.garden.currentFile = null;
         this.garden.currentPath = '';
         this.setActiveTopic(id);
-        this.setBreadcrumb([{ label: 'Home', go: () => this.renderHome() }, { label: topic.label }]);
+        this.setBreadcrumb([{ label: '~', go: () => this.renderHome() }, { label: topic.label }]);
         this.syncHistory(null);
         this.scrollToTop();
+        this.tint(id);
+        this.bootToken++;
 
         if (!this.groups) {
             try { await this.loadData(); } catch (error) { this.renderLoadError(error); return; }
         }
 
         const esc = this.logic.escapeHtml;
+        const manifest = this.garden.manifest || {};
         const { ranked, unranked } = this.groups.get(id) || { ranked: [], unranked: [] };
+        const groups = this.logic.groupByFolder(ranked.concat(unranked), id, manifest.metadata || {}, manifest.links || {}, this.index);
+        const total = ranked.length + unranked.length;
+        const home = `~/${id}`;
+        this.setStatus(home, `${total} ${total === 1 ? 'note' : 'notes'}${groups.length > 1 ? ` · ${groups.length} folders` : ''}`);
+
         let body;
-        if (ranked.length === 0 && unranked.length === 0) {
-            body = '<p class="muted">No published notes here yet.</p>';
+        if (groups.length === 0) {
+            body = '<p class="muted">nothing published here yet. soon.</p>';
+        } else if (groups.length === 1 && groups[0].key === '') {
+            body = `<div class="reader-grid">${groups[0].entries.map(e => this.renderCard(e)).join('')}</div>`;
         } else {
-            body = '';
-            if (ranked.length) body += `<div class="reader-grid">${ranked.map(e => this.renderCard(e)).join('')}</div>`;
-            if (ranked.length && unranked.length) body += '<hr class="reader-divider" data-label="More notes">';
-            if (unranked.length) body += `<div class="reader-grid">${unranked.map(e => this.renderCard(e)).join('')}</div>`;
+            body = groups.map(g => `<section class="reader-group" aria-label="${esc(g.label)}">
+                <h2 class="reader-prompt">${this.prompt(home, `ls ${g.label}`)}<span class="reader-group-count">${g.entries.length} ${g.entries.length === 1 ? 'note' : 'notes'}</span></h2>
+                <div class="reader-grid">${g.entries.map(e => this.renderCard(e)).join('')}</div>
+            </section>`).join('');
         }
 
         this.contentBody.innerHTML = `
-            <div class="reader-topic">
+            <div class="reader-topic" style="--card-accent: ${this.logic.topicColor(id)}">
                 <header class="reader-topic-header">
-                    <h1>${esc(topic.label)}</h1>
+                    <p class="reader-prompt">${this.prompt('~', `cd ${id}`)}</p>
+                    <h1>${esc(topic.label)}/</h1>
                     <p class="reader-intro">${esc(topic.description)}</p>
                 </header>
                 ${body}
@@ -387,20 +531,20 @@ class GardenReader {
 
     formatDate(value) {
         const d = this.garden.parseDate(value);
-        return d ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+        return d ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toLowerCase() : '';
     }
 
-    renderCard(entry) {
+    renderCard(entry, { showFolder = false } = {}) {
         const esc = this.logic.escapeHtml;
         const topic = this.logic.topicForPath(entry.path);
-        const accent = this.garden.getProjectColor(entry.path);
+        const label = showFolder ? this.folderLabel(entry.path) : (topic ? topic.label : '');
         const date = this.formatDate(entry.updated || entry.created);
         const needsSnippet = entry.summary ? '' : ' data-needs-snippet';
-        return `<article class="reader-card" data-note="${esc(entry.path)}" style="--card-accent: ${accent}" tabindex="0" role="link" aria-label="Open note: ${esc(entry.title)}"${needsSnippet}>
-            ${topic ? `<span class="reader-card-topic">${esc(topic.label)}</span>` : ''}
+        return `<article class="reader-card" data-note="${esc(entry.path)}" style="${this.accentStyle(entry.path)}" tabindex="0" role="link" aria-label="open note: ${esc(entry.title)}"${needsSnippet}>
+            ${label ? `<span class="reader-card-topic">${esc(label)}/</span>` : ''}
             <h3 class="reader-card-title">${esc(entry.title)}</h3>
             <p class="reader-card-summary">${esc(entry.summary || '')}</p>
-            ${date ? `<span class="reader-card-date">Updated ${esc(date)}</span>` : ''}
+            ${date ? `<span class="reader-card-date">updated ${esc(date)}</span>` : ''}
         </article>`;
     }
 
@@ -462,11 +606,14 @@ class GardenReader {
         const topic = this.logic.topicForPath(path);
         const headerHtml = this.renderHeader(path, meta, text);
         const afterHtml = this.renderRelated(path);
+        this.bootToken++;
         await this.garden.viewFileByPath(path, { headerHtml, afterHtml });
         restoreScroll();
+        this.tint(topic ? topic.id : null);
+        this.setStatus(this.logic.readerPath(path));
 
         this.setActiveTopic(topic ? topic.id : null);
-        const trail = [{ label: 'Home', go: () => this.renderHome() }];
+        const trail = [{ label: '~', go: () => this.renderHome() }];
         if (topic) trail.push({ label: topic.label, go: () => this.renderTopic(topic.id) });
         trail.push({ label: this.logic.toEntry(path, meta).title });
         this.setBreadcrumb(trail);
@@ -479,20 +626,21 @@ class GardenReader {
         const topic = this.logic.topicForPath(path);
 
         const facts = [];
-        if (entry.machine === 'bigrig') facts.push('written on BigRig');
-        else if (entry.machine === 'mac') facts.push('written on the Mac');
+        if (entry.machine) facts.push(`written on ${entry.machine}`);
         const created = this.formatDate(entry.created);
         const updated = this.formatDate(entry.updated);
-        if (created) facts.push(`Created ${created}`);
-        if (updated && updated !== created) facts.push(`Updated ${updated}`);
+        if (created) facts.push(`created ${created}`);
+        if (updated && updated !== created) facts.push(`updated ${updated}`);
         if (text) facts.push(`${this.logic.readingTime(text)} min read`);
+        const folder = this.folderLabel(path);
 
-        return `<header class="note-header">
-            ${topic ? `<button type="button" class="note-topic-chip" data-topic="${topic.id}">${esc(topic.label)}</button>` : ''}
+        return `<header class="note-header" style="${this.accentStyle(path)}">
+            <p class="reader-prompt">${this.prompt('~', `cat ${this.logic.readerPath(path).replace(/^~\//, '')}`)}</p>
+            ${topic ? `<button type="button" class="note-topic-chip" data-topic="${topic.id}">${esc(folder || topic.label)}/</button>` : ''}
             <h1>${esc(entry.title)}</h1>
             ${facts.length ? `<p class="note-meta">${facts.map(f => `<span>${esc(f)}</span>`).join('')}</p>` : ''}
             ${entry.summary ? `<p class="note-lede">${esc(entry.summary)}</p>` : ''}
-            ${entry.blurb ? `<aside class="note-blurb"><h2>In plain terms</h2><p>${esc(entry.blurb)}</p></aside>` : ''}
+            ${entry.blurb ? `<aside class="note-blurb"><h2>in plain terms</h2><p>${esc(entry.blurb)}</p></aside>` : ''}
         </header>`;
     }
 
@@ -504,11 +652,11 @@ class GardenReader {
         if (!outgoing.length && !incoming.length) return '';
 
         const list = (title, paths) => paths.length
-            ? `<h2>${title}</h2><div class="reader-grid">${paths.map(p => this.renderCard(this.logic.toEntry(p, metadata[p]))).join('')}</div>`
+            ? `<h2 class="reader-prompt">${this.prompt('~', title)}<span class="reader-group-count">${paths.length} ${paths.length === 1 ? 'note' : 'notes'}</span></h2><div class="reader-grid">${paths.map(p => this.renderCard(this.logic.toEntry(p, metadata[p]), { showFolder: true })).join('')}</div>`
             : '';
-        return `<section class="note-related" aria-label="Related notes">
-            ${list('Links to', outgoing)}
-            ${list('Linked from', incoming)}
+        return `<section class="note-related" aria-label="related notes">
+            ${list('ls links-out/', outgoing)}
+            ${list('ls links-in/', incoming)}
         </section>`;
     }
 }
