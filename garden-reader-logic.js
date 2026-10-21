@@ -211,8 +211,16 @@
         return Math.max(1, Math.ceil(words / 200));
     }
 
+    const FRONTMATTER_RE = /^---\r?\n[\s\S]*?\r?\n---\r?\n?/;
+
+    // Some composed notes carry a stale second block right under the first; strip every leading block.
     function stripFrontmatter(markdown) {
-        return String(markdown || '').replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '');
+        let text = String(markdown || '');
+        for (;;) {
+            const next = text.replace(FRONTMATTER_RE, '');
+            if (next === text) return text;
+            text = next;
+        }
     }
 
     function plainText(paragraph) {
@@ -520,6 +528,7 @@
         filterNotes,
         readingTime,
         snippetFromMarkdown,
+        stripFrontmatter,
         groupByTopic,
         featuredStrip,
         topicColor,

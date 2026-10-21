@@ -146,3 +146,8 @@ test('escapeHtml is safe inside attribute values as well as text', () => {
   assert.equal(L.escapeHtml('The "DNS Loop" & Pi-hole <tag> \'x\''), 'The &quot;DNS Loop&quot; &amp; Pi-hole &lt;tag&gt; &#39;x&#39;');
   assert.equal(L.escapeHtml(null), '');
 });
+
+test('snippetFromMarkdown skips a second, stale frontmatter block stacked under the first', () => {
+  const md = "---\ntags: []\npublish: true\n---\n---\ncreated: '2026-01-07'\nprivacy_scan: not_scanned\ntags: [a, b]\n---\n\n# Title\n\nThe real first paragraph.";
+  assert.equal(L.snippetFromMarkdown(md), 'The real first paragraph.');
+});
