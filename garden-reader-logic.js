@@ -9,14 +9,33 @@
 (function () {
     'use strict';
 
+    // Copy is in the owner's voice: lowercase, short, direct.
     const TOPICS = [
-        { id: 'projects', label: 'Projects', description: 'Things I built end to end', folders: ['01 Projects'] },
-        { id: 'homelab', label: 'Homelab', description: 'The physical servers, network, and the builds and upgrades behind them', folders: ['02 Homelab'] },
-        { id: 'ai', label: 'AI and benchmarks', description: 'Running models on my own hardware, with the numbers', folders: ['03 AI and Local Models'] },
-        { id: 'linux', label: 'Linux and systems', description: 'Notes from the command line and the code', folders: ['05 Linux and Systems', '04 Programming'] },
-        { id: 'journals', label: 'Learning journals', description: 'What I was figuring out, as I figured it out', folders: ['06 Learning Journals'] },
-        { id: 'tools', label: 'Tools and workflow', description: 'How the notes, the sync, and the publishing work', folders: ['07 Tools and Workflow'] },
+        { id: 'projects', label: 'projects', description: 'things i actually built, start to finish', folders: ['01 Projects'] },
+        { id: 'homelab', label: 'homelab', description: 'the servers, the network, the upgrades, and the fixes when they broke', folders: ['02 Homelab'] },
+        { id: 'ai', label: 'ai and benchmarks', description: 'models on my own hardware, with the numbers to back it up', folders: ['03 AI and Local Models'] },
+        { id: 'linux', label: 'linux and systems', description: 'command line notes and the code around them', folders: ['05 Linux and Systems', '04 Programming'] },
+        { id: 'journals', label: 'learning journals', description: 'what i was figuring out, while i figured it out', folders: ['06 Learning Journals'] },
+        { id: 'tools', label: 'tools and workflow', description: 'how the notes, the sync, and the publishing hang together', folders: ['07 Tools and Workflow'] },
     ];
+
+    // One accent per topic. Mixes on a card come from accentStops, never from the sub-project.
+    const TOPIC_COLORS = {
+        projects: 'var(--terminal-blue)',
+        homelab: 'var(--terminal-cyan)',
+        ai: 'var(--terminal-green)',
+        linux: 'var(--terminal-magenta)',
+        journals: 'var(--terminal-yellow)',
+        tools: 'var(--md-sys-color-primary)',
+    };
+    const FALLBACK_COLOR = 'var(--md-sys-color-primary)';
+    const MAX_STOPS = 3;
+    const OWN_SHARE_FLOOR = 0.5;
+    const STRIP_LIMIT = 10;
+
+    function topicColor(id) {
+        return TOPIC_COLORS[id] || FALLBACK_COLOR;
+    }
 
     const HIDDEN_SEGMENTS = ['.obsidian', '.stfolder', '.DS_Store', '.gitignore', '.github', 'Myself', 'images', '_attachments', '00 Index'];
     const HIDDEN_ROOT_FILES = ['Index.md', 'README.md', 'Redaction Conventions.md', 'markdown practice.md'];
@@ -270,6 +289,192 @@
             .sort(compareEntries);
     }
 
+    function topicIndexOf(id) {
+        return TOPICS.findIndex(t => t.id === id);
+    }
+
+    // Resolved, listable link targets of a note, one entry per link (duplicates count), self excluded.
+    function linkTargets(path, metadata, links, index) {
+        const out = [];
+        for (const target of (links && links[path]) || []) {
+            const resolved = resolveWikilink(target, index);
+            if (resolved && resolved !== path && isListable(resolved, metadata[resolved])) out.push(resolved);
+        }
+        return out;
+    }
+
+    // Listable notes that link to this one, one entry per link.
+    function linkSources(path, metadata, links, index) {
+        const out = [];
+        for (const source of Object.keys(links || {})) {
+            if (source === path || !isListable(source, metadata[source])) continue;
+            for (const target of links[source] || []) {
+                if (resolveWikilink(target, index) === path) out.push(source);
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Colour stops for a note's accent: its own topic first, holding at least half,
+     * then up to two linked topics in proportion to how many links go there (both
+     * directions). Shares sum to 1. Notes linked only inside their topic get one stop.
+     */
+    function accentStops(path, metadata, links, index) {
+        const meta = metadata || {};
+        const own = topicForPath(path);
+        if (!own) return [{ id: null, share: 1 }];
+
+        const counts = new Map();
+        const neighbours = linkTargets(path, meta, links, index).concat(linkSources(path, meta, links, index));
+        for (const p of neighbours) {
+            const t = topicForPath(p);
+            if (t) counts.set(t.id, (counts.get(t.id) || 0) + 1);
+        }
+
+        const others = [...counts.entries()]
+            .filter(([id]) => id !== own.id)
+            .sort((a, b) => (b[1] - a[1]) || (topicIndexOf(a[0]) - topicIndexOf(b[0])))
+            .slice(0, MAX_STOPS - 1);
+        if (others.length === 0) return [{ id: own.id, share: 1 }];
+
+        const total = neighbours.length;
+        const ownShare = Math.max(OWN_SHARE_FLOOR, (counts.get(own.id) || 0) / total);
+        const otherTotal = others.reduce((sum, [, n]) => sum + n, 0);
+        const rest = 1 - ownShare;
+        return [{ id: own.id, share: ownShare }]
+            .concat(others.map(([id, n]) => ({ id, share: rest * (n / otherTotal) })));
+    }
+
+    // A solid colour for one stop, a hard-edged top-to-bottom gradient for several.
+    function accentCss(stops) {
+        const list = stops || [];
+        if (list.length === 0) return FALLBACK_COLOR;
+        if (list.length === 1) return topicColor(list[0].id);
+        let at = 0;
+        const parts = list.map((stop, i) => {
+            const from = Math.round(at * 100);
+            at = i === list.length - 1 ? 1 : at + stop.share;
+            return `${topicColor(stop.id)} ${from}% ${Math.round(at * 100)}%`;
+        });
+        return `linear-gradient(180deg, ${parts.join(', ')})`;
+    }
+
+    function slug(text) {
+        return String(text || '').toLowerCase().replace(/\.md$/i, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    }
+
+    // '01 Projects/Penthouse/00 - Knowledge Hub.md' -> '~/projects/penthouse/00-knowledge-hub.md'
+    function readerPath(path) {
+        const segs = segments(path);
+        if (segs.length === 0) return '~';
+        const topic = TOPICS.find(t => t.folders.includes(segs[0]));
+        if (!topic) return '~';
+        const isFile = /\.md$/i.test(segs[segs.length - 1]);
+        const rest = segs.slice(1).map(slug).filter(Boolean);
+        if (isFile && rest.length) rest[rest.length - 1] += '.md';
+        return ['~', topic.id].concat(rest).join('/');
+    }
+
+    function folderKey(path) {
+        const segs = segments(path);
+        return segs.length >= 3 ? segs[1] : '';
+    }
+
+    function isStrip(entry) {
+        return entry.featured !== null && entry.featured >= 1 && entry.featured <= STRIP_LIMIT;
+    }
+
+    // Ranked notes keep rank order; the rest chain through links from the last placed note,
+    // and fall back to the newest unvisited note when the chain runs out.
+    function orderByLinks(entries, metadata, links, index) {
+        const ranked = entries.filter(e => e.featured !== null).sort(compareEntries);
+        const pool = entries.filter(e => e.featured === null).sort(compareEntries);
+        const ordered = ranked.slice();
+        const inPool = new Set(pool.map(e => e.path));
+
+        const degree = (a, b) =>
+            linkTargets(a, metadata, links, index).filter(p => p === b).length +
+            linkTargets(b, metadata, links, index).filter(p => p === a).length;
+
+        while (pool.length) {
+            const last = ordered[ordered.length - 1];
+            let next = null;
+            if (last) {
+                let best = 0;
+                for (const candidate of pool) {
+                    const d = degree(last.path, candidate.path);
+                    if (d > best) { best = d; next = candidate; }
+                }
+            }
+            if (!next) next = pool[0];
+            ordered.push(next);
+            pool.splice(pool.indexOf(next), 1);
+            inPool.delete(next.path);
+        }
+        return ordered;
+    }
+
+    /**
+     * Groups a topic's entries by their sub-folder. Groups holding a strip note come
+     * first (best rank wins), then larger groups, then alphabetical. Inside a group,
+     * see orderByLinks. The root group is labelled './'.
+     */
+    function groupByFolder(entries, topicId, metadata, links, index) {
+        const meta = metadata || {};
+        const byKey = new Map();
+        for (const entry of entries || []) {
+            const key = folderKey(entry.path);
+            if (!byKey.has(key)) byKey.set(key, []);
+            byKey.get(key).push(entry);
+        }
+        const groups = [...byKey.entries()].map(([key, list]) => {
+            const ranks = list.filter(isStrip).map(e => e.featured);
+            return {
+                key,
+                label: key ? slug(key) + '/' : './',
+                path: key ? `~/${topicId}/${slug(key)}` : `~/${topicId}`,
+                bestRank: ranks.length ? Math.min(...ranks) : Infinity,
+                entries: orderByLinks(list, meta, links, index),
+            };
+        });
+        groups.sort((a, b) =>
+            (a.bestRank - b.bestRank) ||
+            (b.entries.length - a.entries.length) ||
+            a.label.localeCompare(b.label));
+        return groups.map(({ bestRank, ...g }) => g);
+    }
+
+    // Numbers for the about card: what is published, where it came from, and when.
+    function gardenFacts(manifest) {
+        const meta = (manifest && manifest.metadata) || {};
+        const entries = listableEntries(meta);
+        const topicIds = new Set();
+        const machines = new Set();
+        for (const e of entries) {
+            const t = topicForPath(e.path);
+            if (t) topicIds.add(t.id);
+            if (e.machine) machines.add(e.machine);
+        }
+        return {
+            notes: entries.length,
+            topics: topicIds.size,
+            machines: [...machines].sort(),
+            featured: entries.filter(isStrip).length,
+            generated: (manifest && manifest.generated_at) || null,
+        };
+    }
+
+    // The boot animation plays once per session, never for reduced motion.
+    function shouldBoot(storage, reducedMotion) {
+        if (reducedMotion) return false;
+        try {
+            return !(storage && typeof storage.getItem === 'function' && storage.getItem('garden-booted'));
+        } catch (e) {
+            return true;
+        }
+    }
+
     const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
     // Safe for text nodes and for double- or single-quoted attribute values.
@@ -317,6 +522,13 @@
         snippetFromMarkdown,
         groupByTopic,
         featuredStrip,
+        topicColor,
+        accentStops,
+        accentCss,
+        groupByFolder,
+        readerPath,
+        gardenFacts,
+        shouldBoot,
         readStoredMode,
         isTypingTarget,
         escapeHtml,
