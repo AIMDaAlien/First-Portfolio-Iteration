@@ -141,3 +141,8 @@ test('isTypingTarget is true for inputs, textareas, selects, contenteditable', (
   assert.equal(L.isTypingTarget({ tagName: 'DIV' }), false);
   assert.equal(L.isTypingTarget(null), false);
 });
+
+test('escapeHtml is safe inside attribute values as well as text', () => {
+  assert.equal(L.escapeHtml('The "DNS Loop" & Pi-hole <tag> \'x\''), 'The &quot;DNS Loop&quot; &amp; Pi-hole &lt;tag&gt; &#39;x&#39;');
+  assert.equal(L.escapeHtml(null), '');
+});

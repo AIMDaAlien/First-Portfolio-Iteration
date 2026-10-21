@@ -270,6 +270,14 @@
             .sort(compareEntries);
     }
 
+    const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
+    // Safe for text nodes and for double- or single-quoted attribute values.
+    function escapeHtml(value) {
+        if (value === null || value === undefined) return '';
+        return String(value).replace(/[&<>"']/g, ch => HTML_ESCAPES[ch]);
+    }
+
     const MODES = ['reader', 'terminal'];
 
     // Mode persisted in localStorage; anything missing, unknown, or unreadable means reader.
@@ -311,6 +319,7 @@
         featuredStrip,
         readStoredMode,
         isTypingTarget,
+        escapeHtml,
     };
 
     if (typeof module !== 'undefined') module.exports = GardenReaderLogic;

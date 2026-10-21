@@ -18,6 +18,11 @@ html[data-mode="terminal"] .topic-list {
     display: none;
 }
 
+/* The static terminal welcome never shows under reader mode, even before the manifest arrives. */
+html[data-mode="reader"] .welcome-content {
+    display: none;
+}
+
 /* ---------- Terminal hint bar ---------- */
 
 .terminal-hint {

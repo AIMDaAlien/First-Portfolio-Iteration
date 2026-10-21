@@ -58,8 +58,8 @@ class GardenReader {
         this.index = null;
         this.garden.registerMarkdownPreprocessor((md) => (this.index ? this.logic.rewriteWikilinks(md, this.index) : md));
         this.garden.onManifestApplied = (manifest) => this.onManifestApplied(manifest);
-        this.garden.onNoteOpened = () => { this.contentBody.scrollTop = 0; window.scrollTo(0, 0); };
         this.garden.onDeepLink = (path) => this.openNote(path, { push: false });
+        this.garden.onRefreshRender = (path) => this.onRefreshRender(path);
         window.addEventListener('popstate', () => this.onPopState());
 
         this.placeHint();
@@ -79,6 +79,19 @@ class GardenReader {
         if (this.mode !== 'reader' || this.garden.currentFile !== null) return;
         if (this.activeTopic) this.renderTopic(this.activeTopic);
         else this.renderHome();
+    }
+
+    /** A manifest refresh re-renders the open note in place without losing the reader header or the scroll position. */
+    onRefreshRender(path) {
+        if (path) return this.openNote(path, { push: false, scroll: false });
+        if (this.mode === 'reader') return this.renderHome({ push: false });
+        this.garden.showWelcome();
+        return this.garden.loadFeaturedProjects?.();
+    }
+
+    /** The content pane is the scroller (body is overflow: hidden). */
+    scrollToTop() {
+        this.contentBody.scrollTop = 0;
     }
 
     onPopState() {
@@ -163,7 +176,7 @@ class GardenReader {
 
     renderSidebar() {
         if (!this.topicList) return;
-        const esc = (s) => this.garden.escapeHtml(String(s));
+        const esc = this.logic.escapeHtml;
         const items = [{ id: '', label: 'Home', count: null }]
             .concat(this.logic.TOPICS.map(t => ({ id: t.id, label: t.label, count: this.topicCount(t.id) })));
         this.topicList.innerHTML = items.map(item => {
@@ -251,6 +264,15 @@ class GardenReader {
         this.setActiveTopic(null);
         this.setBreadcrumb([{ label: 'Home' }]);
         if (push) this.syncHistory(null);
+        this.scrollToTop();
+
+        const esc = this.logic.escapeHtml;
+        const intro = 'A working notebook from my homelab, my projects, and the models I run on my own hardware. Start with the featured notes, or pick a topic.';
+
+        // Show the intro at once; a cold visitor should never see the terminal welcome while the manifest loads.
+        if (!this.groups) {
+            this.contentBody.innerHTML = `<div class="reader-home"><p class="reader-intro">${intro}</p><p class="muted">Loading notes…</p></div>`;
+        }
 
         try {
             await this.loadData();
@@ -259,7 +281,6 @@ class GardenReader {
             return;
         }
 
-        const esc = (s) => this.garden.escapeHtml(String(s));
         const topicCards = this.logic.TOPICS.map(t => {
             const n = this.topicCount(t.id);
             return `<button type="button" class="reader-topic-card" data-topic="${t.id}">
@@ -271,7 +292,7 @@ class GardenReader {
 
         this.contentBody.innerHTML = `
             <div class="reader-home">
-                <p class="reader-intro">A working notebook from my homelab, my projects, and the models I run on my own hardware. Start with the featured notes, or pick a topic.</p>
+                <p class="reader-intro">${intro}</p>
                 <input type="search" id="readerSearch" class="reader-search" placeholder="Search titles, summaries, tags" aria-label="Search notes" autocomplete="off">
                 <section class="reader-results" id="readerResults" hidden aria-live="polite"></section>
                 <section class="reader-featured" id="readerFeatured">
@@ -284,14 +305,13 @@ class GardenReader {
                 </section>
             </div>`;
         this.observeSnippets(this.contentBody);
-        window.scrollTo(0, 0);
     }
 
     renderLoadError(error) {
         const message = this.garden.getFriendlyError(error, 'manifest');
         this.contentBody.innerHTML = `<div class="error-content">
             <h2>Couldn't load the garden</h2>
-            <p class="muted">${this.garden.escapeHtml(String(message))}</p>
+            <p class="muted">${this.logic.escapeHtml(message)}</p>
             <button type="button" class="gallery-toggle-btn" id="readerRetry">Try again</button>
         </div>`;
     }
@@ -319,6 +339,7 @@ class GardenReader {
         results.hidden = false;
         featured.hidden = true;
         topics.hidden = true;
+        this.scrollToTop();
         this.observeSnippets(results);
     }
 
@@ -331,12 +352,13 @@ class GardenReader {
         this.setActiveTopic(id);
         this.setBreadcrumb([{ label: 'Home', go: () => this.renderHome() }, { label: topic.label }]);
         this.syncHistory(null);
+        this.scrollToTop();
 
         if (!this.groups) {
             try { await this.loadData(); } catch (error) { this.renderLoadError(error); return; }
         }
 
-        const esc = (s) => this.garden.escapeHtml(String(s));
+        const esc = this.logic.escapeHtml;
         const { ranked, unranked } = this.groups.get(id) || { ranked: [], unranked: [] };
         let body;
         if (ranked.length === 0 && unranked.length === 0) {
@@ -357,7 +379,6 @@ class GardenReader {
                 ${body}
             </div>`;
         this.observeSnippets(this.contentBody);
-        window.scrollTo(0, 0);
     }
 
     // ------------------------------------------------------------
@@ -370,7 +391,7 @@ class GardenReader {
     }
 
     renderCard(entry) {
-        const esc = (s) => this.garden.escapeHtml(String(s));
+        const esc = this.logic.escapeHtml;
         const topic = this.logic.topicForPath(entry.path);
         const accent = this.garden.getProjectColor(entry.path);
         const date = this.formatDate(entry.updated || entry.created);
@@ -419,11 +440,17 @@ class GardenReader {
     // Notes
     // ------------------------------------------------------------
 
-    async openNote(path, { push = true } = {}) {
+    async openNote(path, { push = true, scroll = true } = {}) {
         this.garden.closeMobileSidebar?.();
         if (push) this.syncHistory(path);
+        const keepScroll = scroll ? null : this.contentBody.scrollTop;
+        const restoreScroll = () => { this.contentBody.scrollTop = keepScroll === null ? 0 : keepScroll; };
 
-        if (this.mode !== 'reader') return this.garden.viewFileByPath(path);
+        if (this.mode !== 'reader') {
+            await this.garden.viewFileByPath(path);
+            restoreScroll();
+            return;
+        }
 
         if (!this.groups) {
             try { await this.loadData(); } catch (error) { /* header falls back to the filename */ }
@@ -436,6 +463,7 @@ class GardenReader {
         const headerHtml = this.renderHeader(path, meta, text);
         const afterHtml = this.renderRelated(path);
         await this.garden.viewFileByPath(path, { headerHtml, afterHtml });
+        restoreScroll();
 
         this.setActiveTopic(topic ? topic.id : null);
         const trail = [{ label: 'Home', go: () => this.renderHome() }];
@@ -446,7 +474,7 @@ class GardenReader {
     }
 
     renderHeader(path, meta, text) {
-        const esc = (s) => this.garden.escapeHtml(String(s));
+        const esc = this.logic.escapeHtml;
         const entry = this.logic.toEntry(path, meta);
         const topic = this.logic.topicForPath(path);
 

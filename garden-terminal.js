@@ -32,6 +32,7 @@ class KnowledgeGarden {
         this.requestMode = null;         // (mode) => void, set by the reader layer
         this.onDeepLink = null;          // (path) => void, reader opens ?note= links with its header
         this.onManifestApplied = null;   // (manifest) => void, reader rebuilds its title index
+        this.onRefreshRender = null;     // (path | null) => void, reader re-renders after a manifest refresh
         this.commandHistory = [];
         this.historyIndex = -1;
 
@@ -180,6 +181,12 @@ class KnowledgeGarden {
 
         // Load featured notes (publish=true with a `featured` rank, sorted by rank).
         // Reader mode draws its own landing view instead of the welcome strip.
+        // By now garden-reader.js has run if it ever will; if it did not register
+        // itself, fall back to terminal mode so the page is never left half-hidden.
+        if (document.documentElement.dataset.mode === 'reader' && !this.requestMode) {
+            document.documentElement.dataset.mode = 'terminal';
+            document.body.dataset.mode = 'terminal';
+        }
         if (document.documentElement.dataset.mode !== 'reader') {
             await this.loadFeaturedProjects();
         }
@@ -450,7 +457,9 @@ class KnowledgeGarden {
 
             if (this.currentFile) {
                 const fileStillExists = manifest.tree.some(e => e.path === this.currentFile && e.type === 'file');
-                if (fileStillExists) {
+                if (this.onRefreshRender) {
+                    await this.onRefreshRender(fileStillExists ? this.currentFile : null);
+                } else if (fileStillExists) {
                     await this.viewFileByPath(this.currentFile);
                 } else {
                     this.showWelcome();
