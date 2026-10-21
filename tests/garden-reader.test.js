@@ -64,3 +64,52 @@ test('rewriteWikilinks drops unresolved embeds and links resolved ones', () => {
   assert.equal(L.rewriteWikilinks('a ![[img.png]] b', idx), 'a  b');
   assert.match(L.rewriteWikilinks('![[Regex]]', idx), /^\[Regex\]\(\?note=04%20Programming%2FRegex\.md\)$/);
 });
+
+test('relatedNotes resolves both directions, drops unpublished and self, caps at limit', () => {
+  const idx = L.buildTitleIndex(META);
+  const links = {
+    '01 Projects/Penthouse/00 - Knowledge Hub.md': ['TrueNAS Build Guide', 'Obsidian Vault Git Sync', 'Nope', '00 - Knowledge Hub'],
+    '02 Homelab/Guides/TrueNAS Build Guide.md': ['The Penthouse Rebuild Knowledge Hub'],
+    '04 Programming/Regex.md': ['00 - Knowledge Hub'],
+    '07 Tools and Workflow/Obsidian Vault Git Sync.md': ['00 - Knowledge Hub'],
+  };
+  const r = L.relatedNotes('01 Projects/Penthouse/00 - Knowledge Hub.md', META, links, idx, 5);
+  assert.deepEqual(r.outgoing, ['02 Homelab/Guides/TrueNAS Build Guide.md']);
+  assert.deepEqual(r.incoming, ['02 Homelab/Guides/TrueNAS Build Guide.md', '04 Programming/Regex.md']);
+  assert.deepEqual(L.relatedNotes('01 Projects/Penthouse/00 - Knowledge Hub.md', META, links, idx, 1).incoming, ['02 Homelab/Guides/TrueNAS Build Guide.md']);
+});
+
+test('filterNotes matches title, summary, tags; blank query returns all', () => {
+  const entries = L.featuredStrip(META);
+  assert.equal(L.filterNotes('  ', entries).length, entries.length);
+  assert.deepEqual(L.filterNotes('sas', entries).map(e => e.path), ['02 Homelab/Guides/TrueNAS Build Guide.md']);
+  assert.deepEqual(L.filterNotes('PENTHOUSE', entries).map(e => e.path), ['01 Projects/Penthouse/00 - Knowledge Hub.md']);
+});
+
+test('readingTime rounds up and floors at one minute', () => {
+  assert.equal(L.readingTime('one two three'), 1);
+  assert.equal(L.readingTime(Array(401).fill('w').join(' ')), 3);
+});
+
+test('snippetFromMarkdown takes the first paragraph, strips noise, truncates on a word', () => {
+  const md = '---\ntitle: x\n---\n# Heading\n![[img.png]]\n\nThis is the **first** paragraph with a [[Wiki Link|link]] inside. ' + 'word '.repeat(60);
+  const s = L.snippetFromMarkdown(md, 60);
+  assert.ok(s.startsWith('This is the first paragraph with a link inside.'));
+  assert.ok(s.endsWith('…'));
+  assert.ok(s.length <= 61);
+  assert.equal(L.snippetFromMarkdown('```\ncode\n```\n'), '');
+});
+
+test('groupByTopic lists every topic, orders ranked then unranked, excludes unpublished', () => {
+  const g = L.groupByTopic(META);
+  assert.deepEqual([...g.keys()], ['projects', 'homelab', 'ai', 'linux', 'journals', 'tools']);
+  assert.deepEqual(g.get('linux').ranked.map(e => e.path), ['05 Linux and Systems/Shell/Dupe.md']);
+  assert.deepEqual(g.get('linux').unranked.map(e => e.path), ['05 Linux and Systems/Shell/Pipes.md', '04 Programming/Regex.md']);
+  assert.deepEqual(g.get('journals'), { ranked: [], unranked: [] });
+  assert.deepEqual(g.get('tools'), { ranked: [], unranked: [] });
+});
+
+test('featuredStrip returns ranks 1..limit sorted and ignores unpublished', () => {
+  assert.deepEqual(L.featuredStrip(META, 10).map(e => e.featured), [1, 4, 7]);
+  assert.deepEqual(L.featuredStrip(META, 5).map(e => e.featured), [1, 4]);
+});

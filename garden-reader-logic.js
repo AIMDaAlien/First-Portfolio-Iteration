@@ -126,6 +126,150 @@
         return parts.map((part, i) => (i % 2 === 0 ? rewriteSegment(part, index) : part)).join('');
     }
 
+    function timeOf(value) {
+        if (value === undefined || value === null || value === '') return 0;
+        const t = Date.parse(String(value));
+        return Number.isNaN(t) ? 0 : t;
+    }
+
+    function toEntry(path, meta) {
+        const m = meta || {};
+        return {
+            path,
+            title: (typeof m.title === 'string' && m.title.trim()) ? m.title.trim() : stem(path),
+            summary: typeof m.summary === 'string' ? m.summary : '',
+            blurb: typeof m.blurb === 'string' ? m.blurb : '',
+            tags: Array.isArray(m.tags) ? m.tags.map(String) : [],
+            featured: Number.isInteger(m.featured) ? m.featured : null,
+            updated: m.updated ?? null,
+            created: m.created ?? null,
+            machine: typeof m.machine === 'string' ? m.machine : '',
+        };
+    }
+
+    function byRankThenUpdated(metadata) {
+        return (a, b) => {
+            const ra = rankOf(metadata[a]);
+            const rb = rankOf(metadata[b]);
+            if (ra !== rb) return ra - rb;
+            return timeOf((metadata[b] || {}).updated) - timeOf((metadata[a] || {}).updated);
+        };
+    }
+
+    function relatedNotes(path, metadata, links, index, limit = 5) {
+        const meta = metadata || {};
+        const linkMap = links || {};
+        const listable = (p) => p !== path && isListable(p, meta[p]);
+
+        const outgoing = [];
+        for (const target of linkMap[path] || []) {
+            const resolved = resolveWikilink(target, index);
+            if (resolved && listable(resolved) && !outgoing.includes(resolved)) outgoing.push(resolved);
+            if (outgoing.length >= limit) break;
+        }
+
+        const incoming = Object.keys(linkMap)
+            .filter(listable)
+            .filter(p => (linkMap[p] || []).some(t => resolveWikilink(t, index) === path))
+            .sort(byRankThenUpdated(meta))
+            .slice(0, limit);
+
+        return { outgoing, incoming };
+    }
+
+    function filterNotes(query, entries) {
+        const q = String(query || '').trim().toLowerCase();
+        const list = entries || [];
+        if (!q) return list;
+        return list.filter(e => {
+            const hay = [e.title, e.summary, ...(e.tags || [])].join('\n').toLowerCase();
+            return hay.includes(q);
+        });
+    }
+
+    function readingTime(text) {
+        const words = String(text || '').trim().split(/\s+/).filter(Boolean).length;
+        return Math.max(1, Math.ceil(words / 200));
+    }
+
+    function stripFrontmatter(markdown) {
+        return String(markdown || '').replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '');
+    }
+
+    function plainText(paragraph) {
+        return paragraph
+            .replace(/!?\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]+))?\]\]/g, (m, name, alias) => (alias || name).trim())
+            .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+            .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+            .replace(/`([^`]*)`/g, '$1')
+            .replace(/(\*\*|__)(.*?)\1/g, '$2')
+            .replace(/(\*|_)(.*?)\1/g, '$2')
+            .replace(/<[^>]+>/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function truncateAtWord(text, max) {
+        if (text.length <= max) return text;
+        const cut = text.slice(0, max + 1);
+        const lastSpace = cut.lastIndexOf(' ');
+        const head = (lastSpace > 0 ? cut.slice(0, lastSpace) : text.slice(0, max)).replace(/[\s,;:.]+$/, '');
+        return head + '…';
+    }
+
+    function snippetFromMarkdown(markdown, max = 160) {
+        const body = stripFrontmatter(markdown)
+            .replace(/```[\s\S]*?```/g, '')
+            .replace(/~~~[\s\S]*?~~~/g, '');
+        const paragraphs = body.split(/\r?\n\s*\r?\n/);
+        for (const para of paragraphs) {
+            const lines = para.split(/\r?\n/)
+                .filter(line => !/^\s*#{1,6}\s/.test(line))
+                .filter(line => !/^\s*!\[\[.*\]\]\s*$/.test(line))
+                .map(line => line.replace(/^\s*(?:[-*+]|\d+[.)]|>)\s+/, ''));
+            const text = plainText(lines.join(' '));
+            if (text) return truncateAtWord(text, max);
+        }
+        return '';
+    }
+
+    function compareEntries(a, b) {
+        const ra = a.featured ?? Infinity;
+        const rb = b.featured ?? Infinity;
+        if (ra !== rb) return ra - rb;
+        const dt = timeOf(b.updated) - timeOf(a.updated);
+        if (dt !== 0) return dt;
+        return a.title.localeCompare(b.title);
+    }
+
+    function listableEntries(metadata) {
+        const meta = metadata || {};
+        return Object.keys(meta)
+            .filter(p => isListable(p, meta[p]))
+            .map(p => toEntry(p, meta[p]));
+    }
+
+    function groupByTopic(metadata) {
+        const groups = new Map(TOPICS.map(t => [t.id, { ranked: [], unranked: [] }]));
+        for (const entry of listableEntries(metadata)) {
+            const topic = topicForPath(entry.path);
+            if (!topic) continue;
+            const bucket = groups.get(topic.id);
+            (entry.featured === null ? bucket.unranked : bucket.ranked).push(entry);
+        }
+        for (const bucket of groups.values()) {
+            bucket.ranked.sort(compareEntries);
+            bucket.unranked.sort(compareEntries);
+        }
+        return groups;
+    }
+
+    function featuredStrip(metadata, limit = 10) {
+        return listableEntries(metadata)
+            .filter(e => e.featured !== null && e.featured >= 1 && e.featured <= limit)
+            .sort(compareEntries);
+    }
+
     const GardenReaderLogic = {
         TOPICS,
         HIDDEN_SEGMENTS,
@@ -138,6 +282,13 @@
         rewriteWikilinks,
         noteHref,
         notePathFromSearch,
+        toEntry,
+        relatedNotes,
+        filterNotes,
+        readingTime,
+        snippetFromMarkdown,
+        groupByTopic,
+        featuredStrip,
     };
 
     if (typeof module !== 'undefined') module.exports = GardenReaderLogic;
