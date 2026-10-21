@@ -113,3 +113,14 @@ test('featuredStrip returns ranks 1..limit sorted and ignores unpublished', () =
   assert.deepEqual(L.featuredStrip(META, 10).map(e => e.featured), [1, 4, 7]);
   assert.deepEqual(L.featuredStrip(META, 5).map(e => e.featured), [1, 4]);
 });
+
+test('isListable hides unpublished, dot and hidden segments, and root housekeeping files', () => {
+  assert.equal(L.isListable('01 Projects/Penthouse/00 - Knowledge Hub.md', META['01 Projects/Penthouse/00 - Knowledge Hub.md']), true);
+  assert.equal(L.isListable('07 Tools and Workflow/Obsidian Vault Git Sync.md', META['07 Tools and Workflow/Obsidian Vault Git Sync.md']), false);
+  assert.equal(L.isListable('_attachments/x.md', META['_attachments/x.md']), false);
+  assert.equal(L.isListable('README.md', META['README.md']), false);
+  assert.equal(L.isListable('markdown practice.md', { publish: true }), false);
+  assert.equal(L.isListable('00 Index/Projects Index.md', { publish: true }), false);
+  assert.equal(L.isListable('.obsidian/app.json', { publish: true }), false);
+  assert.equal(L.isListable('02 Homelab/Homelab Index.md', undefined), false);
+});

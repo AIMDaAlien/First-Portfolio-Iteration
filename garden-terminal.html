@@ -48,6 +48,8 @@
             <div class="terminal-titlebar" id="terminalTitlebar">
                 <span class="terminal-title">Terminal</span>
                 <div class="terminal-controls">
+                    <button class="terminal-btn" id="terminalReader" title="Reader mode"
+                        aria-label="Switch to reader mode">⇤</button>
                     <button class="terminal-btn" id="terminalMinimize" title="Minimize"
                         aria-label="Minimize terminal">_</button>
                     <button class="terminal-btn" id="terminalMaximize" title="Maximize"
@@ -127,15 +129,6 @@
                         <div class="featured-notes">
                             <h2>Featured Projects</h2>
                             <div class="note-cards" id="featuredNotes">
-                                <!-- Fallback content if JS fails -->
-                                <button type="button" class="note-card"
-                                    data-file="Systems/Homelab/Prometheus Grafana Stack - Implementation Guide.md"
-                                    aria-label="Open note: Prometheus Guide">
-                                    <svg class="note-icon">
-                                        <use href="#icon-science"></use>
-                                    </svg>
-                                    <span class="note-title">Prometheus Guide</span>
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -171,6 +164,7 @@
 
     <!-- Scripts -->
     <script src="net-utils.js"></script>
+    <script src="garden-reader-logic.js"></script>
     <script src="garden-terminal.js"></script>
     <script src="garden-graph.js"></script>
 </body>

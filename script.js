@@ -514,7 +514,7 @@ async function updateGardenStats() {
         if (stripNotesEl) stripNotesEl.textContent = `[garden: ${noteCount}]`;
 
         if (featuredCount !== null) {
-            const clipped = Math.min(featuredCount, 6);
+            const clipped = Math.min(featuredCount, 10);
             if (projectCountEl) projectCountEl.textContent = String(clipped);
             if (featuredProjectCountEl) featuredProjectCountEl.textContent = String(clipped);
         }

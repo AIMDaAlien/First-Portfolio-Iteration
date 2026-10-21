@@ -27,6 +27,9 @@ class KnowledgeGarden {
         this.treeCache = new Map();
         this.gitTreeCache = null;
         this.manifestParentIndex = null; // built once on manifest load
+        this.markdownPreprocessors = []; // run on note markdown before marked.parse
+        this.onNoteOpened = null;        // (path) => void, set by the reader layer
+        this.requestMode = null;         // (mode) => void, set by the reader layer
         this.commandHistory = [];
         this.historyIndex = -1;
 
@@ -84,6 +87,7 @@ class KnowledgeGarden {
         // Terminal controls
         document.getElementById('terminalMinimize')?.addEventListener('click', () => this.minimizeTerminal());
         document.getElementById('terminalMaximize')?.addEventListener('click', () => this.maximizeTerminal());
+        document.getElementById('terminalReader')?.addEventListener('click', () => this.requestMode?.('reader'));
 
         // Sidebar toggle (desktop)
         const sidebarToggle = document.getElementById('sidebarToggle');
@@ -172,8 +176,11 @@ class KnowledgeGarden {
         this.statusInfo.textContent = 'Loading vault...';
         await this.loadFileTree();
 
-        // Load featured notes (publish=true with a `featured` rank, sorted by rank)
-        await this.loadFeaturedProjects();
+        // Load featured notes (publish=true with a `featured` rank, sorted by rank).
+        // Reader mode draws its own landing view instead of the welcome strip.
+        if (document.documentElement.dataset.mode !== 'reader') {
+            await this.loadFeaturedProjects();
+        }
 
         // Deep-linking: open a specific note if ?note= is provided
         const params = new URLSearchParams(window.location.search);
@@ -230,19 +237,30 @@ class KnowledgeGarden {
         this.fileTree.appendChild(error);
     }
 
-    _buildParentIndex() {
-        if (!this.manifest || !this.manifest.tree) return;
+    _buildParentIndex(manifest = this.manifest) {
+        if (!manifest || !manifest.tree) return;
         const index = new Map();
-        const hidden = this.hiddenItems;
-        for (const entry of this.manifest.tree) {
+        const liveDirs = new Set();
+        const files = [];
+        for (const entry of manifest.tree) {
+            if (entry.type === 'dir') continue;
+            if (!entry.path.endsWith('.md')) continue;
+            if (!this.isListable(entry.path, manifest.metadata?.[entry.path])) continue;
+            files.push(entry.path);
             const parts = entry.path.split('/');
+            for (let i = 1; i < parts.length; i++) liveDirs.add(parts.slice(0, i).join('/'));
+        }
+        const add = (path, type) => {
+            const parts = path.split('/');
             const name = parts[parts.length - 1];
-            if (hidden.includes(name) || name.startsWith('.')) continue;
-            if (entry.type === 'file' && !name.endsWith('.md')) continue;
             const parent = parts.length > 1 ? parts.slice(0, -1).join('/') : '';
             if (!index.has(parent)) index.set(parent, []);
-            index.get(parent).push({ name, path: entry.path, type: entry.type === 'dir' ? 'dir' : 'file' });
+            index.get(parent).push({ name, path, type });
+        };
+        for (const entry of manifest.tree) {
+            if (entry.type === 'dir' && liveDirs.has(entry.path)) add(entry.path, 'dir');
         }
+        for (const path of files) add(path, 'file');
         for (const children of index.values()) {
             children.sort((a, b) => {
                 if (a.type === 'dir' && b.type !== 'dir') return -1;
@@ -254,26 +272,8 @@ class KnowledgeGarden {
     }
 
     buildTreeFromManifest(manifest, parentPath) {
-        if (this.manifestParentIndex) {
-            return this.manifestParentIndex.get(parentPath) || [];
-        }
-        const tree = manifest.tree || [];
-        const items = [];
-        for (const entry of tree) {
-            const parts = entry.path.split('/');
-            const entryParent = parts.length > 1 ? parts.slice(0, -1).join('/') : '';
-            if (entryParent !== parentPath) continue;
-            const name = parts[parts.length - 1];
-            if (this.hiddenItems.includes(name) || name.startsWith('.')) continue;
-            if (entry.type === 'file' && !name.endsWith('.md')) continue;
-            items.push({ name, path: entry.path, type: entry.type === 'dir' ? 'dir' : 'file' });
-        }
-        items.sort((a, b) => {
-            if (a.type === 'dir' && b.type !== 'dir') return -1;
-            if (a.type !== 'dir' && b.type === 'dir') return 1;
-            return a.name.localeCompare(b.name);
-        });
-        return items;
+        if (!this.manifestParentIndex) this._buildParentIndex(manifest);
+        return this.manifestParentIndex?.get(parentPath) || [];
     }
 
     renderManifestTree(items, container, depth) {
@@ -627,15 +627,28 @@ class KnowledgeGarden {
     }
 
     isHiddenPath(path) {
+        const logic = window.GardenReaderLogic;
+        if (logic) return logic.isHiddenPath(path);
         const parts = path.split('/');
         return parts.some(p => this.hiddenItems.includes(p) || p.startsWith('.'));
     }
 
-    /** A note is featured when it is publishable and its frontmatter carries an integer rank. */
+    /**
+     * A note may be listed (tree, strip, gallery, ls, find) only when it is
+     * published and not on a hidden path. Delegates to GardenReaderLogic when
+     * that file is loaded so both modes agree on the set.
+     */
+    isListable(path, meta = this.manifest?.metadata?.[path]) {
+        const logic = window.GardenReaderLogic;
+        if (logic) return logic.isListable(path, meta);
+        if (this.isHiddenPath(path)) return false;
+        return !meta || meta.publish === true;
+    }
+
+    /** A note is featured when it is listable and its frontmatter carries an integer rank. */
     isFeatured(path, fm) {
-        if (!fm || fm.publish !== true) return false;
-        if (!Number.isInteger(fm.featured)) return false;
-        return !this.isHiddenPath(path);
+        if (!fm || !Number.isInteger(fm.featured)) return false;
+        return this.isListable(path, fm);
     }
 
     /**
@@ -827,9 +840,8 @@ class KnowledgeGarden {
 
         // Filter and sort
         const filtered = items.filter(item =>
-            !this.hiddenItems.includes(item.name) &&
-            !item.name.startsWith('.') &&
-            (item.type === 'dir' || item.name.endsWith('.md'))
+            !this.isHiddenPath(item.path || item.name) &&
+            (item.type === 'dir' || (item.name.endsWith('.md') && this.isListable(item.path || item.name)))
         );
 
         // Sort: folders first, then files, alphabetically
@@ -950,7 +962,12 @@ class KnowledgeGarden {
     // CONTENT VIEWER
     // ============================================
 
-    async viewFileByPath(githubPath) {
+    /**
+     * Render a note into the content pane.
+     * `headerHtml` (reader mode) replaces the metadata bar above the body and
+     * still renders when the fetch fails; `afterHtml` lands below the body.
+     */
+    async viewFileByPath(githubPath, { headerHtml = '', afterHtml = '' } = {}) {
         this.currentFile = githubPath;
         this.updateBreadcrumb(githubPath);
         this.statusInfo.textContent = 'Loading...';
@@ -962,7 +979,7 @@ class KnowledgeGarden {
 
             // Build metadata bar from manifest
             let metaBarHtml = '';
-            if (this.manifest && this.manifest.metadata) {
+            if (!headerHtml && this.manifest && this.manifest.metadata) {
                 const fm = this.manifest.metadata[githubPath];
                 if (fm) {
                     const parts = [];
@@ -980,13 +997,14 @@ class KnowledgeGarden {
                 }
             }
 
-            this.contentBody.innerHTML = `${metaBarHtml}<div class="markdown-content">${html}</div>`;
+            this.contentBody.innerHTML = `${headerHtml}${metaBarHtml}<div class="markdown-content">${html}</div>${afterHtml}`;
             const lineCount = content.split('\n').length;
             this.statusInfo.textContent = `${lineCount} lines`;
+            this.onNoteOpened?.(githubPath);
         } catch (error) {
             console.error('Fetch error:', error);
             const friendlyMessage = this.getFriendlyError(error, 'file');
-            this.contentBody.innerHTML = `<div class="error-content">
+            this.contentBody.innerHTML = `${headerHtml}<div class="error-content">
                 <h2>Couldn't load this note</h2>
                 <p class="muted">${friendlyMessage}</p>
             </div>`;
@@ -1177,9 +1195,15 @@ class KnowledgeGarden {
         return content;
     }
 
+    /** Register a (markdown) => markdown function run after frontmatter stripping, before marked. */
+    registerMarkdownPreprocessor(fn) {
+        if (typeof fn === 'function') this.markdownPreprocessors.push(fn);
+    }
+
     renderMarkdown(content) {
         if (typeof marked === 'undefined') return this.escapeHtml(content);
         content = content.replace(/^---\n[\s\S]*?\n---\n/m, '');
+        for (const fn of this.markdownPreprocessors) content = fn(content);
         if (!this._markedConfigured) {
             marked.setOptions({ breaks: true, gfm: true, headerIds: false, mangle: false });
             this._markedConfigured = true;
@@ -1326,7 +1350,7 @@ class KnowledgeGarden {
         // If only one part, complete commands
         if (parts.length <= 1) {
             const partial = parts[0].toLowerCase();
-            const commands = ['cat', 'cd', 'clear', 'cowsay', 'date', 'echo', 'env', 'find', 'gallery', 'grep', 'head', 'help', 'history', 'ls', 'man', 'matrix', 'neofetch', 'open', 'pwd', 'sudo', 'sync', 'theme', 'tree', 'uname', 'wc', 'which', 'whoami'];
+            const commands = ['cat', 'cd', 'clear', 'cowsay', 'date', 'echo', 'env', 'exit', 'find', 'gallery', 'grep', 'head', 'help', 'history', 'ls', 'man', 'matrix', 'neofetch', 'open', 'pwd', 'sudo', 'sync', 'theme', 'tree', 'uname', 'wc', 'which', 'whoami'];
             const matches = commands.filter(c => c.startsWith(partial));
             if (matches.length === 1) {
                 this.terminalInput.value = matches[0] + ' ';
@@ -1469,25 +1493,8 @@ class KnowledgeGarden {
      * Returns array of {name, path, type} sorted folders-first then alphabetically.
      */
     getManifestEntries(dirPath) {
-        if (this.manifestParentIndex) {
-            return this.manifestParentIndex.get(dirPath) || [];
-        }
-        if (!this.manifest || !this.manifest.tree) return [];
-        const entries = [];
-        for (const entry of this.manifest.tree) {
-            const parts = entry.path.split('/');
-            const entryParent = parts.length > 1 ? parts.slice(0, -1).join('/') : '';
-            if (entryParent !== dirPath) continue;
-            const name = parts[parts.length - 1];
-            if (this.hiddenItems.includes(name) || name.startsWith('.')) continue;
-            if (entry.type === 'file' && !name.endsWith('.md')) continue;
-            entries.push({ name, path: entry.path, type: entry.type === 'dir' ? 'dir' : 'file' });
-        }
-        entries.sort((a, b) => {
-            if (a.type === 'dir' && b.type !== 'dir') return -1;
-            if (a.type !== 'dir' && b.type === 'dir') return 1;
-            return a.name.localeCompare(b.name);
-        });
+        if (!this.manifestParentIndex) this._buildParentIndex();
+        const entries = this.manifestParentIndex?.get(dirPath) || [];
         return entries;
     }
 
@@ -1628,6 +1635,7 @@ LANG=en_US.UTF-8</pre>`);
 <span style="color:var(--terminal-cyan)">sync</span>                 Force vault refresh
 <span style="color:var(--terminal-cyan)">clear</span>                Clear output
 <span style="color:var(--terminal-cyan)">gallery</span>              Toggle card gallery view
+<span style="color:var(--terminal-cyan)">exit</span>                 Back to reader mode
 
 <b>Fun:</b>
 <span style="color:var(--terminal-cyan)">neofetch</span>             System splash
@@ -1672,6 +1680,13 @@ LANG=en_US.UTF-8</pre>`);
                 break;
             case 'sudo':
                 this.showOutput('<span style="color:var(--terminal-red)">Nice try!</span>');
+                break;
+            case 'exit':
+                if (this.requestMode) {
+                    this.requestMode('reader');
+                } else {
+                    this.showOutput('<span class="muted">Reader mode is not loaded.</span>');
+                }
                 break;
             default:
                 this.showOutput(`<span style="color:var(--terminal-red)">${this.escapeHtml(cmd)}: command not found</span>`);
@@ -1825,12 +1840,10 @@ LANG=en_US.UTF-8</pre>`);
         const results = [];
 
         for (const entry of this.manifest.tree) {
-            // Filter hidden
+            // Filter hidden folders and unlistable notes
             const parts = entry.path.split('/');
-            if (parts.some(p => this.hiddenItems.includes(p) || p.startsWith('.'))) continue;
-
-            // Only .md files for file type
-            if (entry.type === 'file' && !entry.path.endsWith('.md')) continue;
+            if (this.isHiddenPath(entry.path)) continue;
+            if (entry.type === 'file' && !this.isListable(entry.path)) continue;
 
             // Match against file name
             const name = parts[parts.length - 1];
@@ -2003,7 +2016,7 @@ LANG=en_US.UTF-8</pre>`);
     }
 
     executeWhich(args) {
-        const knownCommands = ['ls', 'cd', 'pwd', 'cat', 'open', 'head', 'find', 'grep', 'tree', 'echo', 'date', 'wc', 'uname', 'env', 'history', 'which', 'man', 'theme', 'sync', 'clear', 'gallery', 'neofetch', 'cowsay', 'matrix', 'whoami', 'help'];
+        const knownCommands = ['ls', 'cd', 'pwd', 'cat', 'open', 'head', 'find', 'grep', 'tree', 'echo', 'date', 'wc', 'uname', 'env', 'history', 'which', 'man', 'theme', 'sync', 'clear', 'gallery', 'exit', 'neofetch', 'cowsay', 'matrix', 'whoami', 'help'];
 
         if (args.length === 0) {
             this.showOutput('Usage: which [command]');
@@ -2138,8 +2151,7 @@ LANG=en_US.UTF-8</pre>`);
         const published = [];
 
         for (const [path, fm] of Object.entries(metadata)) {
-            if (!fm || fm.publish !== true) continue;
-            if (this.isHiddenPath(path)) continue;
+            if (!this.isListable(path, fm)) continue;
 
             const title = fm.title || path.split('/').pop().replace(/\.md$/, '');
             const sortDate = this.parseDate(fm.updated) || this.parseDate(fm.created);
