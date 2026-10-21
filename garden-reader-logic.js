@@ -270,6 +270,26 @@
             .sort(compareEntries);
     }
 
+    const MODES = ['reader', 'terminal'];
+
+    // Mode persisted in localStorage; anything missing, unknown, or unreadable means reader.
+    function readStoredMode(storage) {
+        try {
+            const value = storage && typeof storage.getItem === 'function' ? storage.getItem('garden-mode') : null;
+            return MODES.includes(value) ? value : 'reader';
+        } catch (e) {
+            return 'reader';
+        }
+    }
+
+    // True when a keystroke on this element is the user typing, not a shortcut.
+    function isTypingTarget(el) {
+        if (!el) return false;
+        const tag = String(el.tagName || '').toUpperCase();
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+        return el.isContentEditable === true;
+    }
+
     const GardenReaderLogic = {
         TOPICS,
         HIDDEN_SEGMENTS,
@@ -289,6 +309,8 @@
         snippetFromMarkdown,
         groupByTopic,
         featuredStrip,
+        readStoredMode,
+        isTypingTarget,
     };
 
     if (typeof module !== 'undefined') module.exports = GardenReaderLogic;

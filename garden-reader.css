@@ -1,0 +1,84 @@
+/* ============================================
+   KNOWLEDGE GARDEN — READER MODE
+   Scoped to html[data-mode="reader"] plus the terminal hint, so terminal mode
+   is untouched. Loaded after garden-terminal.css.
+   ============================================ */
+
+/* ---------- Mode switching ---------- */
+
+html[data-mode="reader"] .floating-terminal,
+html[data-mode="reader"] .status-bar,
+html[data-mode="reader"] .file-tree,
+html[data-mode="reader"] .sidebar-footer {
+    display: none;
+}
+
+html[data-mode="terminal"] .terminal-hint,
+html[data-mode="terminal"] .topic-list {
+    display: none;
+}
+
+/* ---------- Terminal hint bar ---------- */
+
+.terminal-hint {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 40;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
+    font-size: 13px;
+    letter-spacing: 0.1px;
+    color: var(--md-sys-color-on-surface);
+    background: var(--md-sys-color-surface-container-high);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-full);
+    box-shadow: var(--elevation-2);
+    cursor: pointer;
+    transition:
+        transform var(--duration-short) var(--motion-spring-bouncy),
+        background var(--duration-short) var(--motion-spring-bouncy),
+        box-shadow var(--duration-short) var(--motion-spring-bouncy);
+}
+
+.terminal-hint:hover {
+    transform: translateY(-4px) scale(1.02);
+    background: var(--md-sys-color-surface-container-highest);
+    box-shadow: var(--elevation-3);
+}
+
+.terminal-hint:active {
+    transform: scale(0.95);
+}
+
+.terminal-hint:focus-visible {
+    outline: 2px solid var(--md-sys-color-primary);
+    outline-offset: 2px;
+}
+
+.terminal-hint-glyph {
+    color: var(--md-sys-color-primary);
+    font-weight: 600;
+}
+
+.terminal-hint kbd {
+    font: inherit;
+    padding: 0 6px;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-extra-small);
+    color: var(--md-sys-color-primary);
+}
+
+/* Phone width: the hint lives in the sidebar drawer, never pinned over content. */
+@media (max-width: 768px) {
+    .terminal-hint {
+        position: static;
+        width: calc(100% - 24px);
+        margin: 12px;
+        justify-content: center;
+        box-shadow: none;
+    }
+}

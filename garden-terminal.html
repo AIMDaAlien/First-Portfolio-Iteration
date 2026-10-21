@@ -14,8 +14,11 @@
         rel="stylesheet">
 
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <!-- Resolve the stored mode before any stylesheet applies so reader-mode visitors never see the terminal flash -->
+    <script>try{var m=localStorage.getItem('garden-mode');document.documentElement.dataset.mode=(m==='terminal'||m==='reader')?m:'reader';}catch(e){document.documentElement.dataset.mode='reader';}</script>
     <link rel="stylesheet" href="m3e-tokens.css">
     <link rel="stylesheet" href="garden-terminal.css">
+    <link rel="stylesheet" href="garden-reader.css">
 </head>
 
 <body>
@@ -71,6 +74,9 @@
             </div>
         </aside>
 
+        <!-- Reader-mode hint: the terminal, minimised to one line -->
+        <button type="button" class="terminal-hint" id="terminalHint" aria-label="Open the terminal"><span class="terminal-hint-glyph" aria-hidden="true">❯</span> press <kbd>`</kbd> for the terminal</button>
+
         <!-- Mobile overlay backdrop -->
         <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
         <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Open file navigation"
@@ -90,6 +96,7 @@
                     </button>
                     <span class="sidebar-title">Files</span>
                 </div>
+                <nav class="topic-list" id="topicList" aria-label="Topics"></nav>
                 <div class="file-tree" id="fileTree" role="tree" aria-label="File tree">
                     <!-- File tree rendered by JS -->
                 </div>
@@ -167,6 +174,7 @@
     <script src="garden-reader-logic.js"></script>
     <script src="garden-terminal.js"></script>
     <script src="garden-graph.js"></script>
+    <script src="garden-reader.js"></script>
 </body>
 
 </html>

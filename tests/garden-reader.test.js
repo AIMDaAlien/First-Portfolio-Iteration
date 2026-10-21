@@ -124,3 +124,20 @@ test('isListable hides unpublished, dot and hidden segments, and root housekeepi
   assert.equal(L.isListable('.obsidian/app.json', { publish: true }), false);
   assert.equal(L.isListable('02 Homelab/Homelab Index.md', undefined), false);
 });
+
+test('readStoredMode defaults to reader and accepts only known values', () => {
+  const store = (v) => ({ getItem: () => v });
+  assert.equal(L.readStoredMode(store(null)), 'reader');
+  assert.equal(L.readStoredMode(store('terminal')), 'terminal');
+  assert.equal(L.readStoredMode(store('bogus')), 'reader');
+  assert.equal(L.readStoredMode({ getItem() { throw new Error('blocked'); } }), 'reader');
+});
+
+test('isTypingTarget is true for inputs, textareas, selects, contenteditable', () => {
+  assert.equal(L.isTypingTarget({ tagName: 'INPUT' }), true);
+  assert.equal(L.isTypingTarget({ tagName: 'TEXTAREA' }), true);
+  assert.equal(L.isTypingTarget({ tagName: 'SELECT' }), true);
+  assert.equal(L.isTypingTarget({ tagName: 'DIV', isContentEditable: true }), true);
+  assert.equal(L.isTypingTarget({ tagName: 'DIV' }), false);
+  assert.equal(L.isTypingTarget(null), false);
+});
