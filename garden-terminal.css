@@ -350,6 +350,7 @@ body {
     font-size: 12px;
     overflow-y: auto;
     line-height: 1.6;
+    white-space: pre-wrap;
 }
 
 .terminal-output:empty {
