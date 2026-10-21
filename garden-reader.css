@@ -82,3 +82,301 @@ html[data-mode="terminal"] .topic-list {
         box-shadow: none;
     }
 }
+
+/* ---------- Reader sidebar: topics ---------- */
+
+.topic-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+    overflow-y: auto;
+}
+
+.topic-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    border-radius: var(--md-sys-shape-corner-full);
+    color: var(--md-sys-color-on-surface-variant);
+    font-family: var(--font-primary);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+    text-align: left;
+    cursor: pointer;
+    transition:
+        background var(--duration-short) var(--motion-spring-bouncy),
+        color var(--duration-short) var(--motion-spring-bouncy),
+        transform var(--duration-short) var(--motion-spring-bouncy);
+}
+
+.topic-item:hover {
+    background: var(--state-hover);
+    color: var(--md-sys-color-on-surface);
+}
+
+.topic-item:active {
+    transform: scale(0.95);
+}
+
+.topic-item[aria-current="page"] {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+}
+
+.topic-item:focus-visible {
+    outline: 2px solid var(--md-sys-color-primary);
+    outline-offset: 2px;
+}
+
+.topic-count {
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
+    font-size: 12px;
+    color: var(--md-sys-color-outline);
+}
+
+html[data-mode="reader"] .sidebar.collapsed .topic-list {
+    display: none;
+}
+
+/* ---------- Landing and topic pages ---------- */
+
+.reader-home,
+.reader-topic {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 0 96px;
+}
+
+.reader-intro {
+    font-family: var(--font-primary);
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 28px;
+    color: var(--md-sys-color-on-surface);
+    max-width: 720px;
+    margin: 0 0 24px;
+}
+
+.reader-topic-header h1 {
+    font-family: var(--font-primary);
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 40px;
+    color: var(--md-sys-color-on-surface);
+    margin: 0 0 8px;
+}
+
+.reader-home h2,
+.reader-results h2 {
+    font-family: var(--font-primary);
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 28px;
+    color: var(--md-sys-color-on-surface);
+    margin: 40px 0 16px;
+}
+
+.reader-search {
+    width: 100%;
+    padding: 14px 24px;
+    background: var(--md-sys-color-surface-container-high);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-full);
+    color: var(--md-sys-color-on-surface);
+    font-family: var(--font-primary);
+    font-size: 16px;
+    letter-spacing: 0.5px;
+    transition:
+        border-color var(--duration-short) var(--motion-spring-bouncy),
+        box-shadow var(--duration-short) var(--motion-spring-bouncy);
+}
+
+.reader-search::placeholder {
+    color: var(--md-sys-color-outline);
+}
+
+.reader-search:focus {
+    outline: none;
+    border-color: var(--md-sys-color-primary);
+    box-shadow: 0 0 0 3px var(--state-focus);
+}
+
+.reader-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.reader-divider {
+    position: relative;
+    margin: 40px 0 24px;
+    border: none;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    overflow: visible;
+}
+
+.reader-divider::after {
+    content: attr(data-label);
+    position: absolute;
+    top: -10px;
+    left: 0;
+    padding-right: 12px;
+    background: var(--md-sys-color-surface);
+    font-family: var(--font-primary);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ---------- Cards ---------- */
+
+.reader-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 150px;
+    padding: 20px 24px 20px 24px;
+    background: var(--md-sys-color-surface-container);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-left: 4px solid var(--card-accent, var(--md-sys-color-primary));
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    color: var(--md-sys-color-on-surface);
+    cursor: pointer;
+    transition:
+        transform var(--duration-short) var(--motion-spring-bouncy),
+        background var(--duration-short) var(--motion-spring-bouncy),
+        box-shadow var(--duration-short) var(--motion-spring-bouncy);
+}
+
+.reader-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    background: var(--md-sys-color-surface-container-high);
+    box-shadow: var(--elevation-2);
+}
+
+.reader-card:active {
+    transform: scale(0.95);
+}
+
+.reader-card:focus-visible {
+    outline: 2px solid var(--md-sys-color-primary);
+    outline-offset: 2px;
+}
+
+.reader-card-topic {
+    font-family: var(--font-primary);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--card-accent, var(--md-sys-color-primary));
+}
+
+.reader-card-title {
+    margin: 0;
+    font-family: var(--font-primary);
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 24px;
+    color: var(--md-sys-color-on-surface);
+}
+
+.reader-card-summary {
+    flex: 1;
+    margin: 0;
+    font-family: var(--font-primary);
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.reader-card-summary:empty {
+    display: none;
+}
+
+.reader-card-date {
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
+    font-size: 12px;
+    color: var(--md-sys-color-outline);
+}
+
+/* Topic cards on the landing view */
+
+.reader-topic-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 20px 24px;
+    background: var(--md-sys-color-surface-container-low);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    color: var(--md-sys-color-on-surface);
+    font-family: var(--font-primary);
+    text-align: left;
+    cursor: pointer;
+    transition:
+        transform var(--duration-short) var(--motion-spring-bouncy),
+        background var(--duration-short) var(--motion-spring-bouncy),
+        border-radius var(--duration-long) var(--motion-morph);
+}
+
+.reader-topic-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    background: var(--md-sys-color-surface-container-high);
+    border-radius: var(--md-sys-shape-corner-medium);
+}
+
+.reader-topic-card:active {
+    transform: scale(0.95);
+}
+
+.reader-topic-card:focus-visible {
+    outline: 2px solid var(--md-sys-color-primary);
+    outline-offset: 2px;
+}
+
+.reader-topic-label {
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 24px;
+    color: var(--md-sys-color-primary);
+}
+
+.reader-topic-desc {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.reader-topic-count {
+    margin-top: auto;
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
+    font-size: 12px;
+    color: var(--md-sys-color-outline);
+}
+
+/* ---------- Phone width ---------- */
+
+@media (max-width: 768px) {
+    .reader-home,
+    .reader-topic {
+        padding: 16px 0 80px;
+    }
+
+    .reader-intro {
+        font-size: 18px;
+        line-height: 26px;
+    }
+
+    .reader-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -99,16 +99,15 @@
 
         if (!dedupe) return run();
 
-        if (inFlightRequests.has(dedupeKey)) {
-            return inFlightRequests.get(dedupeKey);
+        // Every caller sharing an in-flight request gets its own clone, so the
+        // shared body is never consumed twice ("body stream already read").
+        if (!inFlightRequests.has(dedupeKey)) {
+            const pending = run().finally(() => {
+                inFlightRequests.delete(dedupeKey);
+            });
+            inFlightRequests.set(dedupeKey, pending);
         }
-
-        const pending = run().finally(() => {
-            inFlightRequests.delete(dedupeKey);
-        });
-
-        inFlightRequests.set(dedupeKey, pending);
-        return pending;
+        return inFlightRequests.get(dedupeKey).then(response => response.clone());
     }
 
     async function fetchJson(url, options = {}, policy = {}) {
