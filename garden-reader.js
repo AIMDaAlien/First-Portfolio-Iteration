@@ -390,10 +390,10 @@ class GardenReader {
         const text = GardenReader.INTRO;
         const target = document.getElementById('readerIntroText');
 
-        await wait(350);
+        await wait(250);
         for (let i = 1; i <= text.length && live(); i++) {
             target.textContent = text.slice(0, i);
-            await wait(text[i - 1] === '.' ? 90 : 9);
+            await wait(text[i - 1] === '.' ? 60 : 5);
         }
         if (!live()) return;
         target.textContent = text;
