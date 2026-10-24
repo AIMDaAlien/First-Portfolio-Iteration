@@ -182,8 +182,13 @@ class KnowledgeGarden {
 
         // Load featured notes (publish=true with a `featured` rank, sorted by rank).
         // Reader mode draws its own landing view instead of the welcome strip.
-        // By now garden-reader.js has run if it ever will; if it did not register
-        // itself, fall back to terminal mode so the page is never left half-hidden.
+        // A cached manifest can resolve before the later <script> tags have run, so
+        // wait for the document to finish parsing. After that garden-reader.js has run
+        // if it ever will; if it did not register itself, fall back to terminal mode
+        // so the page is never left half-hidden.
+        if (document.readyState === 'loading') {
+            await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve, { once: true }));
+        }
         if (document.documentElement.dataset.mode === 'reader' && !this.requestMode) {
             document.documentElement.dataset.mode = 'terminal';
             document.body.dataset.mode = 'terminal';
