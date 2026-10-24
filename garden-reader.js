@@ -403,7 +403,7 @@ class GardenReader {
             ['topics', String(facts.topics)],
             ['featured', String(facts.featured)],
             ['written', facts.machines.length ? facts.machines.join(' · ') : 'mac'],
-            ['synced', when],
+            ['published', when],
             ['stack', 'html · css · js'],
             ['shell', 'zsh, press `'],
         ];
