@@ -13,7 +13,8 @@
     const TOPICS = [
         { id: 'projects', label: 'projects', description: 'things i actually built, start to finish', folders: ['01 Projects'] },
         { id: 'homelab', label: 'homelab', description: 'the servers, the network, the upgrades, and the fixes when they broke', folders: ['02 Homelab'] },
-        { id: 'ai', label: 'ai and benchmarks', description: 'models on my own hardware, with the numbers to back it up', folders: ['03 AI and Local Models'] },
+        { id: 'ai', label: 'ai and local models', description: 'models on my own hardware, how i run them, and what i learned', folders: ['03 AI and Local Models'] },
+        { id: 'benchmarks', label: 'benchmarks', description: 'the numbers: every model i tested and how it held up', folders: ['03 AI and Local Models/Benchmarks'] },
         { id: 'linux', label: 'linux and systems', description: 'command line notes and the code around them', folders: ['05 Linux and Systems', '04 Programming'] },
         { id: 'journals', label: 'learning journals', description: 'what i was figuring out, while i figured it out', folders: ['06 Learning Journals'] },
         { id: 'tools', label: 'tools and workflow', description: 'how the notes, the sync, and the publishing hang together', folders: ['07 Tools and Workflow'] },
@@ -24,6 +25,7 @@
         projects: 'var(--terminal-blue)',
         homelab: 'var(--terminal-cyan)',
         ai: 'var(--terminal-green)',
+        benchmarks: 'var(--terminal-orange)',
         linux: 'var(--terminal-magenta)',
         journals: 'var(--terminal-yellow)',
         tools: 'var(--md-sys-color-primary)',
@@ -32,6 +34,8 @@
     const MAX_STOPS = 3;
     const OWN_SHARE_FLOOR = 0.5;
     const STRIP_LIMIT = 10;
+    // A benchmark tag counts like this many links toward the benchmarks colour.
+    const BENCHMARK_TAG_WEIGHT = 2;
 
     function topicColor(id) {
         return TOPIC_COLORS[id] || FALLBACK_COLOR;
@@ -62,10 +66,33 @@
         return !isHiddenPath(path);
     }
 
-    function topicForPath(path) {
+    // The topic whose folder is the longest prefix of the path, and how many segments that folder spans.
+    // A folder can be nested ('03 AI and Local Models/Benchmarks'), so the deeper match wins.
+    function topicMatch(path) {
         const segs = segments(path);
         if (segs.length < 2 || isHiddenPath(path)) return null;
-        return TOPICS.find(t => t.folders.includes(segs[0])) || null;
+        let best = null;
+        for (const topic of TOPICS) {
+            for (const folder of topic.folders) {
+                const parts = folder.split('/');
+                if (parts.length >= segs.length) continue;
+                if (parts.every((part, i) => segs[i] === part) && (!best || parts.length > best.depth)) {
+                    best = { topic, depth: parts.length };
+                }
+            }
+        }
+        return best;
+    }
+
+    function topicForPath(path) {
+        const match = topicMatch(path);
+        return match ? match.topic : null;
+    }
+
+    function isBenchmarkTagged(meta) {
+        const raw = meta && meta.tags;
+        const tags = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+        return tags.some(tag => /^bench(mark)?s?$/i.test(String(tag).trim()));
     }
 
     function rankOf(meta) {
@@ -339,6 +366,11 @@
             const t = topicForPath(p);
             if (t) counts.set(t.id, (counts.get(t.id) || 0) + 1);
         }
+        let total = neighbours.length;
+        if (own.id !== 'benchmarks' && isBenchmarkTagged(meta[path])) {
+            counts.set('benchmarks', (counts.get('benchmarks') || 0) + BENCHMARK_TAG_WEIGHT);
+            total += BENCHMARK_TAG_WEIGHT;
+        }
 
         const others = [...counts.entries()]
             .filter(([id]) => id !== own.id)
@@ -346,7 +378,6 @@
             .slice(0, MAX_STOPS - 1);
         if (others.length === 0) return [{ id: own.id, share: 1 }];
 
-        const total = neighbours.length;
         const ownShare = Math.max(OWN_SHARE_FLOOR, (counts.get(own.id) || 0) / total);
         const otherTotal = others.reduce((sum, [, n]) => sum + n, 0);
         const rest = 1 - ownShare;
@@ -375,18 +406,26 @@
     // '01 Projects/Penthouse/00 - Knowledge Hub.md' -> '~/projects/penthouse/00-knowledge-hub.md'
     function readerPath(path) {
         const segs = segments(path);
-        if (segs.length === 0) return '~';
-        const topic = TOPICS.find(t => t.folders.includes(segs[0]));
-        if (!topic) return '~';
+        const match = topicMatch(path) || topicMatchFolder(segs);
+        if (!match) return '~';
+        const topic = match.topic;
         const isFile = /\.md$/i.test(segs[segs.length - 1]);
-        const rest = segs.slice(1).map(slug).filter(Boolean);
+        const rest = segs.slice(match.depth).map(slug).filter(Boolean);
         if (isFile && rest.length) rest[rest.length - 1] += '.md';
         return ['~', topic.id].concat(rest).join('/');
     }
 
+    // readerPath also takes folder paths like '01 Projects/Penthouse', which topicMatch skips.
+    function topicMatchFolder(segs) {
+        return topicMatch(segs.concat('_.md'));
+    }
+
+    // The sub-folder directly under a note's topic folder, or '' for notes at the topic root.
     function folderKey(path) {
         const segs = segments(path);
-        return segs.length >= 3 ? segs[1] : '';
+        const match = topicMatch(path);
+        const depth = match ? match.depth : 1;
+        return segs.length >= depth + 2 ? segs[depth] : '';
     }
 
     function isStrip(entry) {
@@ -451,6 +490,20 @@
             (b.entries.length - a.entries.length) ||
             a.label.localeCompare(b.label));
         return groups.map(({ bestRank, ...g }) => g);
+    }
+
+    // Bars for the landing: notes per topic, largest first (ties keep topic order), share of the largest.
+    function topicLoad(metadata) {
+        const counts = new Map();
+        for (const entry of listableEntries(metadata)) {
+            const topic = topicForPath(entry.path);
+            if (topic) counts.set(topic.id, (counts.get(topic.id) || 0) + 1);
+        }
+        const rows = TOPICS.filter(t => counts.has(t.id))
+            .map(t => ({ id: t.id, label: t.label, count: counts.get(t.id) }))
+            .sort((a, b) => (b.count - a.count) || (topicIndexOf(a.id) - topicIndexOf(b.id)));
+        const max = rows.length ? rows[0].count : 1;
+        return rows.map(r => ({ ...r, share: r.count / max }));
     }
 
     // Numbers for the about card: what is published, where it came from, and when.
@@ -518,6 +571,8 @@
         isHiddenPath,
         isListable,
         topicForPath,
+        isBenchmarkTagged,
+        topicLoad,
         buildTitleIndex,
         resolveWikilink,
         rewriteWikilinks,

@@ -58,7 +58,7 @@ test('accentStops keeps at most three colours and drops self links', () => {
   const idx = L.buildTitleIndex(META);
   // Rack: out ai 1, linux 1, homelab 1 (Pi-hole); in homelab 1 (Pi-hole) → homelab 2, ai 1, linux 1 → own 0.5, then ai, linux tie broken by topic order; cap keeps own + 2
   const rack = L.accentStops('02 Homelab/Hardware/Rack.md', META, LINKS, idx);
-  assert.deepEqual(rack, [{ id: 'homelab', share: 0.5 }, { id: 'ai', share: 0.25 }, { id: 'linux', share: 0.25 }]);
+  assert.deepEqual(rack, [{ id: 'homelab', share: 0.5 }, { id: 'benchmarks', share: 0.25 }, { id: 'linux', share: 0.25 }]);
   // Pi-hole: self link ignored; out homelab 2; in homelab 1 → solid
   assert.deepEqual(L.accentStops('02 Homelab/Guides/Pi-hole.md', META, LINKS, idx), [{ id: 'homelab', share: 1 }]);
 });

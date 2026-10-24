@@ -16,7 +16,7 @@ const META = {
 };
 
 test('TOPICS order and the Programming fold', () => {
-  assert.deepEqual(L.TOPICS.map(t => t.id), ['projects', 'homelab', 'ai', 'linux', 'journals', 'tools']);
+  assert.deepEqual(L.TOPICS.map(t => t.id), ['projects', 'homelab', 'ai', 'benchmarks', 'linux', 'journals', 'tools']);
   assert.deepEqual(L.TOPICS.find(t => t.id === 'linux').folders, ['05 Linux and Systems', '04 Programming']);
 });
 
@@ -102,7 +102,7 @@ test('snippetFromMarkdown takes the first paragraph, strips noise, truncates on 
 
 test('groupByTopic lists every topic, orders ranked then unranked, excludes unpublished', () => {
   const g = L.groupByTopic(META);
-  assert.deepEqual([...g.keys()], ['projects', 'homelab', 'ai', 'linux', 'journals', 'tools']);
+  assert.deepEqual([...g.keys()], ['projects', 'homelab', 'ai', 'benchmarks', 'linux', 'journals', 'tools']);
   assert.deepEqual(g.get('linux').ranked.map(e => e.path), ['05 Linux and Systems/Shell/Dupe.md']);
   assert.deepEqual(g.get('linux').unranked.map(e => e.path), ['05 Linux and Systems/Shell/Pipes.md', '04 Programming/Regex.md']);
   assert.deepEqual(g.get('journals'), { ranked: [], unranked: [] });

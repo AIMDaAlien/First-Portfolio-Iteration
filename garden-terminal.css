@@ -14,6 +14,7 @@
     --terminal-cyan: #89dceb;
     --terminal-blue: #89b4fa;
     --terminal-magenta: #E8B9D5;
+    --terminal-orange: #fab387;
 
     /* Shape aliases (reference M3 tokens) */
     --radius-sm: var(--md-sys-shape-corner-extra-small);

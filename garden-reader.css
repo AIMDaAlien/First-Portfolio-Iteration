@@ -249,13 +249,10 @@ html[data-mode="reader"] .sidebar.collapsed .topic-list {
     color: var(--md-sys-color-on-surface-variant);
 }
 
-/* Hero: intro and search on the left, the about card on the right. */
+/* Hero: boot line, intro, search. The dashboard below carries the rest. */
 
 .reader-hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 380px;
-    gap: 32px;
-    align-items: start;
+    max-width: 760px;
 }
 
 .reader-boot {
@@ -297,32 +294,251 @@ html[data-mode="reader"] .sidebar.collapsed .topic-list {
     pointer-events: none;
 }
 
-/* The about card: neofetch for the vault. */
+/* Operator dashboard: the about panel on the left, topic load and the featured queue on the right. */
 
-.reader-about {
-    padding: 20px 24px;
-    background: color-mix(in srgb, var(--md-sys-color-surface-container-low) 85%, transparent);
+.reader-ops {
+    display: grid;
+    grid-template-columns: minmax(0, 480px) minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+    margin-top: 32px;
+}
+
+.reader-ops-side {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+}
+
+.reader-panel {
+    position: relative;
+    overflow: hidden;
+    padding: 18px 20px;
+    background: color-mix(in srgb, var(--md-sys-color-surface-container) 90%, transparent);
     border: 1px solid var(--md-sys-color-outline-variant);
-    border-radius: var(--md-sys-shape-corner-extra-large);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    border-radius: var(--md-sys-shape-corner-medium);
     box-shadow: var(--elevation-1);
 }
 
+.reader-panel-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 14px;
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 16px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--md-sys-color-outline);
+}
+
+.reader-panel-label::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--md-sys-color-primary);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--md-sys-color-primary) 60%, transparent);
+}
+
+/* neofetch for the vault: patchy, a speech bubble, and the numbers. */
+
+.reader-fetch {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+    margin-bottom: 16px;
+}
+
+.reader-patchy {
+    display: block;
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: var(--md-sys-shape-corner-small);
+    opacity: 0.9;
+}
+
+.reader-fetch-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+}
+
+.reader-bubble {
+    position: relative;
+    margin: 4px 0 12px;
+    padding: 5px 14px;
+    background: var(--md-sys-color-on-surface);
+    color: var(--md-sys-color-surface-container-low);
+    border-radius: var(--md-sys-shape-corner-medium);
+    font-family: 'M PLUS 1 Code', 'Hiragino Sans', 'Noto Sans JP', var(--font-terminal, monospace);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 22px;
+    opacity: 0.9;
+}
+
+.reader-bubble::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 8px solid transparent;
+    border-right-color: var(--md-sys-color-on-surface);
+    border-left: 0;
+}
+
 .reader-neofetch {
-    margin: 0 0 16px;
+    margin: 0;
     font-family: var(--font-terminal, 'JetBrains Mono', monospace);
     font-size: 12px;
     line-height: 18px;
     color: var(--md-sys-color-on-surface);
-    white-space: pre;
-    overflow-x: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
 
-.reader-neofetch .about-art { color: var(--md-sys-color-primary); }
 .reader-neofetch .about-user { color: var(--terminal-green); font-weight: 600; }
 .reader-neofetch .about-rule { color: var(--md-sys-color-outline); }
 .reader-neofetch .about-key { color: var(--terminal-cyan); }
+
+/* Vault load: one bar per topic, each opens its topic. */
+
+.reader-load-row {
+    display: grid;
+    grid-template-columns: 160px minmax(0, 1fr) 40px;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 6px 8px;
+    margin: 0 -8px;
+    box-sizing: content-box;
+    background: transparent;
+    border: none;
+    border-radius: var(--md-sys-shape-corner-small);
+    color: var(--md-sys-color-on-surface-variant);
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--duration-short) var(--motion-spring-bouncy), transform var(--duration-short) var(--motion-spring-bouncy);
+}
+
+.reader-load-row:hover { background: var(--state-hover); }
+.reader-load-row:active { transform: scale(0.98); }
+.reader-load-row:focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: 1px; }
+
+.reader-load-bar {
+    height: 6px;
+    background: var(--md-sys-color-surface-container-highest);
+    border-radius: var(--md-sys-shape-corner-full);
+    overflow: hidden;
+}
+
+.reader-load-bar span {
+    display: block;
+    width: var(--bar-share, 0%);
+    height: 100%;
+    background: var(--bar-color);
+    border-radius: inherit;
+    box-shadow: 0 0 10px color-mix(in srgb, var(--bar-color) 45%, transparent);
+}
+
+.reader-load-count {
+    text-align: right;
+    color: var(--md-sys-color-outline);
+}
+
+/* Featured queue under a hazard stripe. */
+
+.reader-queue { padding-top: 26px; }
+
+.reader-hazard {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 8px;
+    background: repeating-linear-gradient(135deg, var(--md-sys-color-primary) 0 10px, transparent 10px 20px);
+    opacity: 0.8;
+}
+
+.reader-job {
+    position: relative;
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: baseline;
+    width: 100%;
+    padding: 10px 8px 10px 14px;
+    background: transparent;
+    border: none;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 0;
+    color: var(--md-sys-color-on-surface);
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--duration-short) var(--motion-spring-bouncy);
+}
+
+.reader-job:first-of-type { border-top: none; }
+
+.reader-job::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--card-mix, var(--card-accent, var(--md-sys-color-primary)));
+}
+
+.reader-job:hover { background: var(--state-hover); }
+.reader-job:focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: -2px; }
+
+.reader-job-rank {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--card-accent, var(--md-sys-color-primary));
+}
+
+.reader-job-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.reader-job-title { font-size: 13px; font-weight: 500; line-height: 18px; }
+.reader-job-summary { font-family: var(--font-primary); font-size: 13px; line-height: 19px; color: var(--md-sys-color-on-surface-variant); }
+
+.reader-job-topic {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--md-sys-color-outline);
+}
+
+/* Topic tiles with big counts. */
+
+.reader-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.reader-tile-count {
+    margin-top: auto;
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 34px;
+    color: var(--card-accent, var(--md-sys-color-primary));
+}
 
 .reader-eggs {
     display: flex;
@@ -594,9 +810,41 @@ html[data-mode="reader"] .sidebar.collapsed .topic-list {
     }
 }
 
-@media (max-width: 1024px) {
-    .reader-hero {
+@media (max-width: 1100px) {
+    .reader-ops {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .reader-fetch {
+        grid-template-columns: 1fr;
+    }
+
+    .reader-bubble {
+        margin-top: 2px;
+    }
+
+    /* Stacked: the photo is above, so the tail points up at her. */
+    .reader-bubble::before {
+        left: 22px;
+        top: -8px;
+        transform: none;
+        border: 8px solid transparent;
+        border-bottom-color: var(--md-sys-color-on-surface);
+        border-top: 0;
+    }
+
+    .reader-load-row {
+        grid-template-columns: 120px minmax(0, 1fr) 32px;
+    }
+
+    .reader-job {
+        grid-template-columns: 28px minmax(0, 1fr);
+    }
+
+    .reader-job-topic {
+        display: none;
     }
 }
 
