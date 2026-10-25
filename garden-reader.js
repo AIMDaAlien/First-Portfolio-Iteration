@@ -404,7 +404,6 @@ class GardenReader {
             ['featured', String(facts.featured)],
             ['written', facts.machines.length ? facts.machines.join(' · ') : 'mac'],
             ['published', when],
-            ['stack', 'html · css · js'],
             ['shell', 'zsh, press `'],
         ];
         const width = Math.max(...rows.map(([k]) => k.length)) + 1;
