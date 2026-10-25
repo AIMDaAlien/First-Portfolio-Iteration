@@ -89,10 +89,37 @@
         return match ? match.topic : null;
     }
 
-    function isBenchmarkTagged(meta) {
+    // Spellings that mean the same tag on different machines fold into one.
+    const TAG_ALIASES = {
+        benchmarks: 'benchmark',
+        benchmarking: 'benchmark',
+        bench: 'benchmark',
+        'llama-cpp': 'llama.cpp',
+        models: 'model',
+        network: 'networking',
+        'self-hosted': 'self-hosting',
+        tooling: 'tools',
+        versions: 'versioning',
+    };
+
+    function normalizeTag(tag) {
+        const t = String(tag ?? '').trim().replace(/^#+/, '').toLowerCase();
+        return TAG_ALIASES[t] || t;
+    }
+
+    function tagsOf(meta) {
         const raw = meta && meta.tags;
-        const tags = Array.isArray(raw) ? raw : (raw ? [raw] : []);
-        return tags.some(tag => /^bench(mark)?s?$/i.test(String(tag).trim()));
+        const list = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+        const out = [];
+        for (const tag of list) {
+            const t = normalizeTag(tag);
+            if (t && !out.includes(t)) out.push(t);
+        }
+        return out;
+    }
+
+    function isBenchmarkTagged(meta) {
+        return tagsOf(meta).includes('benchmark');
     }
 
     function rankOf(meta) {
@@ -185,7 +212,7 @@
             title: (typeof m.title === 'string' && m.title.trim()) ? m.title.trim() : stem(path),
             summary: typeof m.summary === 'string' ? m.summary : '',
             blurb: typeof m.blurb === 'string' ? m.blurb : '',
-            tags: Array.isArray(m.tags) ? m.tags.map(String) : [],
+            tags: tagsOf(m),
             featured: Number.isInteger(m.featured) ? m.featured : null,
             updated: m.updated ?? null,
             created: m.created ?? null,
@@ -221,6 +248,57 @@
             .slice(0, limit);
 
         return { outgoing, incoming };
+    }
+
+    // tag -> published paths carrying it, best ranked first.
+    function tagIndex(metadata) {
+        const meta = metadata || {};
+        const idx = new Map();
+        for (const path of Object.keys(meta)) {
+            if (!isListable(path, meta[path])) continue;
+            for (const tag of tagsOf(meta[path])) {
+                if (!idx.has(tag)) idx.set(tag, []);
+                idx.get(tag).push(path);
+            }
+        }
+        const order = byRankThenUpdated(meta);
+        for (const paths of idx.values()) paths.sort(order);
+        return idx;
+    }
+
+    function tagHref(tag) {
+        return '?tag=' + encodeURIComponent(normalizeTag(tag));
+    }
+
+    function tagFromSearch(search) {
+        const raw = String(search || '');
+        const params = new URLSearchParams(raw.startsWith('?') ? raw.slice(1) : raw);
+        const tag = normalizeTag(params.get('tag'));
+        return tag ? tag : null;
+    }
+
+    const machineOf = (meta) => (meta && (meta.machine === 'bigrig' || meta.machine === 'unraid')) ? 'bigrig' : 'mac';
+
+    // Notes that share tags with this one. A shared rare tag says more than a shared common one,
+    // and on a tie the note from the other machine wins, since that link is the one nobody wrote by hand.
+    function sharedTagNotes(path, metadata, idx, limit = 5) {
+        const meta = metadata || {};
+        const scores = new Map();
+        for (const tag of tagsOf(meta[path])) {
+            const paths = (idx && idx.get(tag)) || [];
+            const weight = 1 / Math.log2(1 + paths.length);
+            for (const other of paths) {
+                if (other === path) continue;
+                scores.set(other, (scores.get(other) || 0) + weight);
+            }
+        }
+        const own = machineOf(meta[path]);
+        const order = byRankThenUpdated(meta);
+        return [...scores.keys()].sort((a, b) =>
+            (scores.get(b) - scores.get(a)) ||
+            ((machineOf(meta[a]) === own) - (machineOf(meta[b]) === own)) ||
+            order(a, b)
+        ).slice(0, limit);
     }
 
     function filterNotes(query, entries) {
@@ -572,6 +650,12 @@
         isListable,
         topicForPath,
         isBenchmarkTagged,
+        normalizeTag,
+        tagsOf,
+        tagIndex,
+        tagHref,
+        tagFromSearch,
+        sharedTagNotes,
         topicLoad,
         buildTitleIndex,
         resolveWikilink,

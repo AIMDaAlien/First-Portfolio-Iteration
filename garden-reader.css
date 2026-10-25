@@ -905,6 +905,65 @@ html[data-mode="reader"] .sidebar.collapsed .topic-list {
     transform: scale(0.95);
 }
 
+.note-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.note-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: transparent;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-full);
+    color: var(--md-sys-color-primary);
+    font-family: var(--font-terminal, 'JetBrains Mono', monospace);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 18px;
+    letter-spacing: 0;
+    cursor: pointer;
+    transition:
+        transform var(--duration-short) var(--motion-spring-bouncy),
+        background var(--duration-short) var(--motion-spring-bouncy),
+        border-color var(--duration-short) var(--motion-spring-bouncy);
+}
+
+.note-tag:hover {
+    transform: translateY(-2px) scale(1.02);
+    background: var(--state-hover);
+    border-color: var(--md-sys-color-primary);
+}
+
+.note-tag:active {
+    transform: scale(0.95);
+}
+
+.note-tag:focus-visible {
+    outline: 2px solid var(--md-sys-color-primary);
+    outline-offset: 2px;
+}
+
+.note-tag-count {
+    color: var(--md-sys-color-on-surface-variant);
+    font-weight: 400;
+}
+
+.note-tag-solo {
+    cursor: default;
+    color: var(--md-sys-color-on-surface-variant);
+    border-style: dashed;
+}
+
+.note-tag-solo:hover {
+    transform: none;
+    background: transparent;
+    border-color: var(--md-sys-color-outline-variant);
+}
+
 .note-header h1 {
     margin: 0;
     font-family: var(--font-terminal, 'JetBrains Mono', monospace);

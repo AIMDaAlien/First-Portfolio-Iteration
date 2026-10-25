@@ -72,8 +72,10 @@ class GardenReader {
         window.matchMedia('(max-width: 768px)').addEventListener('change', () => this.placeHint());
 
         const deepNote = this.logic.notePathFromSearch(window.location.search);
+        const deepTag = this.logic.tagFromSearch(window.location.search);
         if (this.mode === 'reader') {
-            if (!deepNote) this.renderHome();
+            if (deepTag && !deepNote) this.renderTag(deepTag, { push: false });
+            else if (!deepNote) this.renderHome();
             else this.loadData().catch(() => { /* the deep-link open reports its own error */ });
         } else {
             this.loadData().catch(() => { /* terminal mode renders without the index until the next refresh */ });
@@ -103,17 +105,18 @@ class GardenReader {
     onPopState() {
         const path = this.logic.notePathFromSearch(window.location.search);
         if (path) { this.openNote(path, { push: false }); return; }
+        const tag = this.logic.tagFromSearch(window.location.search);
+        if (tag && this.mode === 'reader') { this.renderTag(tag, { push: false }); return; }
         if (this.mode === 'reader') { this.renderHome({ push: false }); return; }
         this.garden.showWelcome();
         this.garden.loadFeaturedProjects?.();
     }
 
     /** Keep the address bar in step with the view so the back button works. */
-    syncHistory(path) {
-        const current = this.logic.notePathFromSearch(window.location.search);
-        if (current === path) return;
-        const url = path ? this.logic.noteHref(path) : window.location.pathname;
-        try { history.pushState({ note: path }, '', url); } catch (e) { /* history blocked: links still work */ }
+    syncHistory(path, { tag = null } = {}) {
+        const url = path ? this.logic.noteHref(path) : (tag ? this.logic.tagHref(tag) : window.location.pathname);
+        if (url === (window.location.search || window.location.pathname)) return;
+        try { history.pushState({ note: path, tag }, '', url); } catch (e) { /* history blocked: links still work */ }
     }
 
     /** At phone width the hint moves into the sidebar drawer; otherwise it floats bottom-right. */
@@ -197,6 +200,7 @@ class GardenReader {
     applyManifest(manifest) {
         const metadata = (manifest && manifest.metadata) || {};
         this.index = this.logic.buildTitleIndex(metadata);
+        this.tagIdx = this.logic.tagIndex(metadata);
         this.groups = this.logic.groupByTopic(metadata);
         this.strip = this.logic.featuredStrip(metadata, this.garden.featuredLimit || 10);
         this.entries = [];
@@ -255,6 +259,8 @@ class GardenReader {
                 if (path) { e.preventDefault(); this.openNote(path); }
                 return;
             }
+            const tagChip = e.target.closest('.note-tag[data-tag]');
+            if (tagChip) { this.renderTag(tagChip.dataset.tag); return; }
             const chip = e.target.closest('.note-topic-chip[data-topic]');
             if (chip) { this.renderTopic(chip.dataset.topic); return; }
             const job = e.target.closest('.reader-job[data-note]');
@@ -682,6 +688,7 @@ class GardenReader {
             ${topic ? `<button type="button" class="note-topic-chip" data-topic="${topic.id}">${esc(folder || topic.label)}/</button>` : ''}
             <h1>${esc(entry.title)}</h1>
             ${facts.length ? `<p class="note-meta">${facts.map(f => `<span>${esc(f)}</span>`).join('')}</p>` : ''}
+            ${this.renderTagChips(entry.tags)}
             ${entry.summary ? `<p class="note-lede">${esc(entry.summary)}</p>` : ''}
             ${entry.blurb ? `<aside class="note-blurb"><h2>in plain terms</h2><p>${esc(entry.blurb)}</p></aside>` : ''}
         </header>`;
@@ -692,7 +699,9 @@ class GardenReader {
         if (!manifest || !this.index) return '';
         const metadata = manifest.metadata || {};
         const { outgoing, incoming } = this.logic.relatedNotes(path, metadata, manifest.links || {}, this.index, 5);
-        if (!outgoing.length && !incoming.length) return '';
+        const linked = new Set([...outgoing, ...incoming]);
+        const sameTags = this.logic.sharedTagNotes(path, metadata, this.tagIdx, 10).filter(p => !linked.has(p)).slice(0, 5);
+        if (!outgoing.length && !incoming.length && !sameTags.length) return '';
 
         const list = (title, paths) => paths.length
             ? `<h2 class="reader-prompt">${this.prompt('~', title)}<span class="reader-group-count">${paths.length} ${paths.length === 1 ? 'note' : 'notes'}</span></h2><div class="reader-grid">${paths.map(p => this.renderCard(this.logic.toEntry(p, metadata[p]), { showFolder: true })).join('')}</div>`
@@ -700,7 +709,60 @@ class GardenReader {
         return `<section class="note-related" aria-label="related notes">
             ${list('ls links-out/', outgoing)}
             ${list('ls links-in/', incoming)}
+            ${list('ls same-tags/', sameTags)}
         </section>`;
+    }
+
+    /** Tags on more than one note open that tag's page; a tag only this note carries stays plain text. */
+    renderTagChips(tags) {
+        if (!tags || !tags.length) return '';
+        const esc = this.logic.escapeHtml;
+        const chips = tags.map(tag => {
+            const n = (this.tagIdx?.get(tag) || []).length;
+            return n > 1
+                ? `<button type="button" class="note-tag" data-tag="${esc(tag)}" aria-label="notes tagged ${esc(tag)} (${n})">#${esc(tag)}<span class="note-tag-count">${n}</span></button>`
+                : `<span class="note-tag note-tag-solo">#${esc(tag)}</span>`;
+        });
+        return `<div class="note-tags" aria-label="tags">${chips.join('')}</div>`;
+    }
+
+    /** Every published note with this tag, from both machines. */
+    async renderTag(tag, { push = true } = {}) {
+        tag = this.logic.normalizeTag(tag);
+        this.garden.currentFile = null;
+        this.garden.currentPath = '';
+        this.setActiveTopic(null);
+        this.setBreadcrumb([{ label: '~', go: () => this.renderHome() }, { label: `#${tag}` }]);
+        if (push) this.syncHistory(null, { tag });
+        this.scrollToTop();
+        this.tint(null);
+        this.bootToken++;
+
+        if (!this.groups) {
+            try { await this.loadData(); } catch (error) { this.renderLoadError(error); return; }
+        }
+
+        const esc = this.logic.escapeHtml;
+        const metadata = this.garden.manifest?.metadata || {};
+        const paths = this.tagIdx.get(tag) || [];
+        const machines = {};
+        for (const p of paths) {
+            const m = metadata[p]?.machine === 'bigrig' || metadata[p]?.machine === 'unraid' ? 'bigrig' : 'mac';
+            machines[m] = (machines[m] || 0) + 1;
+        }
+        const split = Object.entries(machines).map(([m, n]) => `${n} from ${m}`).join(' · ');
+        this.setStatus(`~/#${tag}`, `${paths.length} ${paths.length === 1 ? 'note' : 'notes'}`);
+
+        this.contentBody.innerHTML = `
+            <div class="reader-topic reader-tag-page">
+                <header class="reader-topic-header">
+                    <p class="reader-prompt">${this.prompt('~', `grep -rl "#${esc(tag)}"`)}</p>
+                    <h1>#${esc(tag)}</h1>
+                    <p class="reader-intro">${paths.length ? esc(split) : 'no published note carries this tag.'}</p>
+                </header>
+                ${paths.length ? `<div class="reader-grid">${paths.map(p => this.renderCard(this.logic.toEntry(p, metadata[p]), { showFolder: true })).join('')}</div>` : ''}
+            </div>`;
+        this.observeSnippets(this.contentBody);
     }
 }
 
