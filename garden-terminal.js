@@ -2390,7 +2390,8 @@ LANG=en_US.UTF-8</pre>`);
             return;
         }
 
-        if (!window.graph) {
+        // A graph whose first load failed has no view yet; build it again rather than showing an empty box.
+        if (!window.graph?.view) {
             window.graph = new KnowledgeGardenGraph();
             await window.graph.init('graphCanvas');
         }

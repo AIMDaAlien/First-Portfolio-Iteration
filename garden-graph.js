@@ -211,8 +211,11 @@
             this.select(id);
         }
 
+        /** Shake the layout loose, then frame it once it has settled. */
         reheat() {
-            if (!reducedMotion()) this.sim.alpha(0.5).restart();
+            if (reducedMotion()) { this.fit(false); return; }
+            this.sim.on('end.fit', () => { this.sim.on('end.fit', null); this.fit(true); });
+            this.sim.alpha(0.5).restart();
         }
 
         pause() {
@@ -603,7 +606,13 @@
                 if (e.key !== 'Enter') return;
                 e.preventDefault();
                 const best = this.bestMatch();
-                if (best) this.view.focusOn(best.id);
+                if (!best) return;
+                // First enter frames the match, a second one opens it, so the keyboard can get all the way to a note.
+                if (this.view.selectedId === best.id) this.open(best);
+                else {
+                    this.view.focusOn(best.id);
+                    this.container.querySelector('.graph-search-count').textContent = `${best.title} · enter again to open`;
+                }
             });
             c.querySelectorAll('[data-opt]').forEach(box => box.addEventListener('change', () => {
                 this.options[box.dataset.opt] = box.checked;
@@ -709,6 +718,7 @@
             this.isVisible = true;
             if (!this.view) return;
             const latest = window.garden?.manifest;
+            this.view.readColors();
             this.view.resume();
             if (latest && latest !== this.manifest) this.load(latest);
             if (focus && this.view.byId.has(focus)) this.view.focusOn(focus);
@@ -725,9 +735,7 @@
 
         /** The header's fit button: shake the layout loose and frame it again. */
         animate() {
-            if (!this.view) return;
-            this.view.reheat();
-            this.view.fit(true);
+            this.view?.reheat();
         }
     }
 
