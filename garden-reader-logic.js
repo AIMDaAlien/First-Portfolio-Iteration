@@ -656,6 +656,7 @@
         tagHref,
         tagFromSearch,
         sharedTagNotes,
+        machineOf,
         topicLoad,
         buildTitleIndex,
         resolveWikilink,

@@ -7,8 +7,7 @@
 /* ---------- Mode switching ---------- */
 
 html[data-mode="reader"] .floating-terminal,
-html[data-mode="reader"] .file-tree,
-html[data-mode="reader"] .sidebar-footer {
+html[data-mode="reader"] .file-tree {
     display: none;
 }
 
@@ -601,6 +600,105 @@ html[data-mode="reader"] .sidebar.collapsed .topic-list {
     transition:
         border-color var(--duration-short) var(--motion-spring-bouncy),
         box-shadow var(--duration-short) var(--motion-spring-bouncy);
+}
+
+.reader-find {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+}
+
+.reader-find .reader-search {
+    flex: 1;
+    min-width: 0;
+}
+
+.reader-graph-btn,
+.local-graph-open {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--md-sys-color-surface-container-high);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-full);
+    color: var(--md-sys-color-on-surface);
+    font-family: var(--font-terminal);
+    cursor: pointer;
+    transition:
+        transform var(--duration-short) var(--motion-spring-bouncy),
+        border-color var(--duration-short) var(--motion-spring-bouncy),
+        background var(--duration-short) var(--motion-spring-bouncy);
+}
+
+.reader-graph-btn {
+    flex: none;
+    padding: 0 22px;
+    font-size: 14px;
+}
+
+.reader-graph-btn:hover,
+.local-graph-open:hover {
+    border-color: var(--md-sys-color-primary);
+    background: var(--md-sys-color-surface-container-highest);
+    transform: translateY(-2px);
+}
+
+.reader-graph-btn:active,
+.local-graph-open:active {
+    transform: scale(0.95);
+}
+
+.reader-graph-btn:focus-visible,
+.local-graph-open:focus-visible {
+    outline: 2px solid var(--md-sys-color-primary);
+    outline-offset: 2px;
+}
+
+/* The local graph under a note: the note, ringed, and what it links to */
+.note-local-graph {
+    margin-bottom: 8px;
+}
+
+.note-local-graph .prompt-line {
+    white-space: nowrap;
+}
+
+.local-graph {
+    position: relative;
+    height: 320px;
+    background: var(--md-sys-color-surface-container-lowest);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    overflow: hidden;
+}
+
+.local-graph .graph-surface {
+    cursor: default;
+}
+
+.local-graph-open {
+    margin-top: 12px;
+    padding: 8px 16px;
+    font-size: 12px;
+}
+
+@media (max-width: 600px) {
+    .local-graph {
+        height: 260px;
+    }
+
+    .note-local-graph .reader-group-count {
+        display: block;
+        margin: 4px 0 0;
+    }
+
+    .note-local-graph .reader-group-count::before {
+        content: none;
+    }
+
+    .reader-graph-btn {
+        padding: 0 16px;
+    }
 }
 
 .reader-search::placeholder {

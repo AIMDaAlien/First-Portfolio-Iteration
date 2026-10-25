@@ -201,6 +201,7 @@ class GardenReader {
         const metadata = (manifest && manifest.metadata) || {};
         this.index = this.logic.buildTitleIndex(metadata);
         this.tagIdx = this.logic.tagIndex(metadata);
+        this.graphData = window.GardenGraphLogic ? window.GardenGraphLogic.buildGraph(manifest) : null;
         this.groups = this.logic.groupByTopic(metadata);
         this.strip = this.logic.featuredStrip(metadata, this.garden.featuredLimit || 10);
         this.entries = [];
@@ -269,6 +270,8 @@ class GardenReader {
             if (topic) { this.renderTopic(topic.dataset.topic); return; }
             const egg = e.target.closest('.reader-egg[data-cmd]');
             if (egg) { this.runInTerminal(egg.dataset.cmd); return; }
+            const graphBtn = e.target.closest('[data-graph-open]');
+            if (graphBtn) { this.garden.showGraph?.({ focus: graphBtn.dataset.graphOpen || null }); return; }
             const retry = e.target.closest('#readerRetry');
             if (retry) this.renderHome();
         });
@@ -347,7 +350,10 @@ class GardenReader {
                 <section class="reader-hero">
                     <pre class="reader-boot" id="readerBoot" aria-hidden="true">mounting vault…\n${facts.notes} notes · ${facts.topics} topics · ready</pre>
                     <p class="reader-intro"><span id="readerIntroText">${boot ? '' : intro}</span>${boot ? '<span class="reader-cursor" aria-hidden="true"></span>' : ''}</p>
-                    <input type="search" id="readerSearch" class="reader-search" placeholder="search titles, summaries, tags" aria-label="search notes" autocomplete="off">
+                    <div class="reader-find">
+                        <input type="search" id="readerSearch" class="reader-search" placeholder="search titles, summaries, tags" aria-label="search notes" autocomplete="off">
+                        <button type="button" class="reader-graph-btn" data-graph-open="" aria-label="open the graph of every note"><span aria-hidden="true">🕸️</span> graph</button>
+                    </div>
                 </section>
                 <div class="reader-home-rest">
                     <section class="reader-results" id="readerResults" hidden aria-live="polite"></section>
@@ -667,6 +673,24 @@ class GardenReader {
         trail.push({ label: this.logic.toEntry(path, meta).title });
         this.setBreadcrumb(trail);
         this.observeSnippets(this.contentBody);
+        this.mountLocalGraph(path);
+    }
+
+    /** Draw the local graph into the slot renderRelated left, once d3 is in. */
+    async mountLocalGraph(path) {
+        this.localView?.destroy();
+        this.localView = null;
+        const host = this.contentBody.querySelector('[data-local-graph]');
+        if (!host || !this.graphData || !window.GardenGraphCanvas) return;
+        const ready = await this.garden.ensureD3Loaded?.();
+        if (!ready) { host.closest('.note-local-graph')?.remove(); return; }
+        if (!host.isConnected) return;
+        const local = window.GardenGraphLogic.localGraph(this.graphData, path);
+        this.localView = new window.GardenGraphCanvas(host, {
+            mode: 'local',
+            onOpen: n => (n.kind === 'tag' ? this.renderTag(n.id.slice(window.GardenGraphLogic.TAG_PREFIX.length)) : n.id !== path && this.openNote(n.id)),
+        });
+        this.localView.setData(local, { center: path });
     }
 
     renderHeader(path, meta, text) {
@@ -701,12 +725,21 @@ class GardenReader {
         const { outgoing, incoming } = this.logic.relatedNotes(path, metadata, manifest.links || {}, this.index, 5);
         const linked = new Set([...outgoing, ...incoming]);
         const sameTags = this.logic.sharedTagNotes(path, metadata, this.tagIdx, 10).filter(p => !linked.has(p)).slice(0, 5);
-        if (!outgoing.length && !incoming.length && !sameTags.length) return '';
+        const local = this.graphData ? window.GardenGraphLogic.localGraph(this.graphData, path) : { nodes: [] };
+        if (!outgoing.length && !incoming.length && !sameTags.length && local.nodes.length < 2) return '';
+        const esc = this.logic.escapeHtml;
+        const others = local.nodes.length - 1;
+        const graph = local.nodes.length < 2 ? '' : `<div class="note-local-graph">
+                <h2 class="reader-prompt">${this.prompt('~', 'graph --local')}<span class="reader-group-count">${others} linked ${others === 1 ? 'note' : 'notes'}</span></h2>
+                <div class="local-graph" data-local-graph aria-hidden="true"></div>
+                <button type="button" class="local-graph-open" data-graph-open="${esc(path)}">open in the full graph →</button>
+            </div>`;
 
         const list = (title, paths) => paths.length
             ? `<h2 class="reader-prompt">${this.prompt('~', title)}<span class="reader-group-count">${paths.length} ${paths.length === 1 ? 'note' : 'notes'}</span></h2><div class="reader-grid">${paths.map(p => this.renderCard(this.logic.toEntry(p, metadata[p]), { showFolder: true })).join('')}</div>`
             : '';
         return `<section class="note-related" aria-label="related notes">
+            ${graph}
             ${list('ls links-out/', outgoing)}
             ${list('ls links-in/', incoming)}
             ${list('ls same-tags/', sameTags)}

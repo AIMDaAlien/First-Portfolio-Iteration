@@ -104,7 +104,7 @@
                 </div>
                 <div class="sidebar-footer">
                     <button class="sidebar-btn" id="graphBtn" title="Graph View" aria-label="Open graph view">
-                        <span aria-hidden="true">🕸️</span> Graph
+                        <span aria-hidden="true">🕸️</span> graph
                     </button>
                 </div>
             </aside>
@@ -162,10 +162,10 @@
     <div class="graph-container" id="graphContainer" style="display: none;" role="dialog" aria-modal="true"
         aria-labelledby="graphTitle" aria-hidden="true" tabindex="-1">
         <div class="graph-header">
-            <h2 class="graph-title" id="graphTitle">Graph View</h2>
+            <h2 class="graph-title" id="graphTitle"><span class="graph-title-prompt">aim@garden:~$</span> graph</h2>
             <div class="graph-controls">
-                <button class="graph-control-btn" id="animateBtn">⟳ Animate</button>
-                <button class="graph-control-btn" id="closeGraphBtn">✕ Close</button>
+                <button type="button" class="graph-control-btn" id="animateBtn" aria-label="re-settle and fit the graph">⤢ fit</button>
+                <button type="button" class="graph-control-btn" id="closeGraphBtn" aria-label="close the graph">✕ close</button>
             </div>
         </div>
         <div class="graph-canvas" id="graphCanvas"></div>
@@ -175,6 +175,7 @@
     <script src="net-utils.js"></script>
     <script src="garden-reader-logic.js" onerror="document.documentElement.dataset.mode='terminal'"></script>
     <script src="garden-terminal.js"></script>
+    <script src="garden-graph-logic.js"></script>
     <script src="garden-graph.js"></script>
     <script src="garden-reader.js" onerror="document.documentElement.dataset.mode='terminal'"></script>
 </body>

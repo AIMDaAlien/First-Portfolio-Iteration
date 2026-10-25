@@ -1072,8 +1072,7 @@ body {
     z-index: 100;
     display: flex;
     flex-direction: column;
-    background: rgba(13, 14, 19, 0.98);
-    backdrop-filter: blur(20px);
+    background: var(--md-sys-color-surface-container-lowest);
 }
 
 .graph-header {
@@ -1134,71 +1133,293 @@ body {
 .graph-canvas {
     flex: 1;
     position: relative;
+    overflow: hidden;
+    background: var(--md-sys-color-surface-container-lowest);
 }
 
-/* Graph tooltip */
-.graph-tooltip {
-    position: fixed;
-    padding: 8px 12px;
-    background: var(--md-sys-color-surface-container-high);
-    border: 1px solid rgba(187, 195, 255, 0.3);
-    border-radius: var(--radius-sm);
-    font-family: var(--font-chrome);
-    font-size: 12px;
-    pointer-events: none;
-    z-index: 200;
-}
-
-/* Graph legend */
-.graph-legend {
+/* The canvas the graph draws on, full graph and local graph alike. */
+.graph-stage,
+.graph-surface {
     position: absolute;
-    bottom: 20px;
-    left: 20px;
-    background: rgba(13, 14, 19, 0.9);
-    border: 1px solid var(--md-sys-color-outline-variant);
-    border-radius: var(--radius-md);
-    padding: 12px 16px;
-    max-height: 300px;
-    overflow-y: auto;
-    z-index: 100;
+    inset: 0;
+    width: 100%;
+    height: 100%;
 }
 
-.legend-title {
-    font-family: var(--font-chrome);
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+.graph-surface {
+    display: block;
+    cursor: grab;
+}
+
+.graph-loading {
+    margin: 0;
+    padding: 48px 24px;
+    text-align: center;
+    font-family: var(--font-terminal);
+    font-size: 13px;
     color: var(--md-sys-color-on-surface-variant);
-    margin-bottom: 10px;
 }
 
-.legend-item {
+.graph-title-prompt {
+    font-family: var(--font-terminal);
+    font-size: 0.85em;
+    color: var(--md-sys-color-primary);
+    margin-right: 4px;
+}
+
+/* Filters: a floating panel, folded away on phones */
+.graph-panel {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 2;
+    width: 236px;
+    max-height: calc(100% - 32px);
+    display: flex;
+    flex-direction: column;
+    background: color-mix(in srgb, var(--md-sys-color-surface-container) 92%, transparent);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-large);
+    box-shadow: var(--elevation-2);
+    backdrop-filter: blur(12px);
+    overflow: hidden;
+}
+
+.graph-panel-toggle {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 4px 0;
+    padding: 12px 16px;
+    background: none;
+    border: 0;
+    color: var(--md-sys-color-on-surface);
+    font-family: var(--font-terminal);
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.graph-panel-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 0 16px 16px;
+    overflow-y: auto;
+}
+
+.graph-panel.is-collapsed {
+    width: auto;
+}
+
+.graph-panel.is-collapsed .graph-panel-body {
+    display: none;
+}
+
+.graph-search {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 9px 14px;
+    background: var(--md-sys-color-surface-container-lowest);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-full);
+    color: var(--md-sys-color-on-surface);
+    font-family: var(--font-terminal);
     font-size: 12px;
 }
 
-.legend-color {
+.graph-search:focus-visible {
+    outline: 2px solid var(--md-sys-color-primary);
+    outline-offset: 1px;
+}
+
+.graph-search-count,
+.graph-stats {
+    margin: 0;
+    font-family: var(--font-terminal);
+    font-size: 11px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.graph-search-count:empty {
+    display: none;
+}
+
+.graph-switch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-chrome);
+    font-size: 13px;
+    color: var(--md-sys-color-on-surface);
+    cursor: pointer;
+}
+
+.graph-switch input {
+    accent-color: var(--md-sys-color-primary);
+    width: 16px;
+    height: 16px;
+    margin: 0;
+}
+
+.graph-segment {
+    display: flex;
+    padding: 3px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-full);
+}
+
+.graph-segment button {
+    flex: 1;
+    padding: 6px 0;
+    background: none;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-full);
+    color: var(--md-sys-color-on-surface-variant);
+    font-family: var(--font-terminal);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background var(--duration-short) var(--motion-spring);
+}
+
+.graph-segment button[aria-checked="true"] {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+}
+
+.graph-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 6px;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.graph-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 8px;
+    background: none;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-small);
+    color: var(--md-sys-color-on-surface);
+    font-family: var(--font-chrome);
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+    transition: opacity var(--duration-short) var(--motion-spring), background var(--duration-short) var(--motion-spring);
+}
+
+.graph-legend-item:hover {
+    background: var(--state-hover);
+}
+
+.graph-legend-item[aria-pressed="false"] {
+    opacity: 0.4;
+}
+
+.graph-legend-item[aria-pressed="false"] .graph-legend-label {
+    text-decoration: line-through;
+}
+
+.graph-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex: none;
+}
+
+.graph-legend-label {
+    flex: 1;
+}
+
+.graph-legend-count {
+    font-family: var(--font-terminal);
+    font-size: 11px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.graph-hint {
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+    z-index: 1;
+    margin: 0;
+    padding: 6px 12px;
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 80%, transparent);
+    border-radius: var(--md-sys-shape-corner-full);
+    font-family: var(--font-terminal);
+    font-size: 11px;
+    color: var(--md-sys-color-on-surface-variant);
+    pointer-events: none;
+}
+
+/* The tap card: phones have no hover, so a first tap names the dot */
+.graph-card {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 12px 12px 16px;
+    background: var(--md-sys-color-surface-container-high);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-large);
+    box-shadow: var(--elevation-3);
+}
+
+.graph-card[hidden] {
+    display: none;
+}
+
+.graph-card-dot {
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    flex-shrink: 0;
+    flex: none;
 }
 
-.legend-label {
-    color: var(--md-sys-color-on-surface);
+.graph-card-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.graph-card-title {
+    font-family: var(--font-chrome);
+    font-size: 14px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.legend-stats {
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid var(--md-sys-color-outline-variant);
+.graph-card-meta {
+    font-family: var(--font-terminal);
     font-size: 11px;
     color: var(--md-sys-color-on-surface-variant);
+}
+
+.graph-card-open {
+    padding: 10px 18px;
+    background: var(--md-sys-color-primary);
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-full);
+    color: var(--md-sys-color-on-primary);
+    font-family: var(--font-terminal);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform var(--duration-short) var(--motion-spring);
+}
+
+.graph-card-open:active {
+    transform: scale(0.95);
 }
 
 /* ============================================
@@ -1380,20 +1601,15 @@ body {
         padding: 12px 16px;
     }
 
-    /* Graph legend */
-    .graph-legend {
-        bottom: 10px;
-        left: 10px;
-        padding: 8px 12px;
-        font-size: 11px;
-        max-height: 200px;
+    .graph-panel {
+        top: 12px;
+        right: 12px;
+        max-width: calc(100% - 24px);
     }
 
-    /* Graph controls */
-    .graph-controls {
-        top: auto;
-        bottom: 10px;
-        right: 10px;
+    .graph-hint {
+        left: 12px;
+        bottom: 12px;
     }
 }
 

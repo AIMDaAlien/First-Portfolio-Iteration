@@ -118,7 +118,7 @@ class KnowledgeGarden {
         }
 
         // Graph button
-        document.getElementById('graphBtn').addEventListener('click', () => this.showGraph());
+        document.getElementById('graphBtn').addEventListener('click', () => { this.closeMobileSidebar?.(); this.showGraph(); });
         document.getElementById('closeGraphBtn')?.addEventListener('click', () => this.hideGraph());
         document.getElementById('animateBtn')?.addEventListener('click', () => window.graph?.animate());
 
@@ -2375,7 +2375,7 @@ LANG=en_US.UTF-8</pre>`);
     // GRAPH VIEW
     // ============================================
 
-    async showGraph() {
+    async showGraph({ focus = null } = {}) {
         const graphContainer = document.getElementById('graphContainer');
         const graphCanvas = document.getElementById('graphCanvas');
         const closeButton = document.getElementById('closeGraphBtn');
@@ -2394,7 +2394,7 @@ LANG=en_US.UTF-8</pre>`);
             window.graph = new KnowledgeGardenGraph();
             await window.graph.init('graphCanvas');
         }
-        window.graph.show();
+        window.graph.show({ focus });
         closeButton?.focus();
     }
 
