@@ -346,15 +346,15 @@ class GardenReader {
                 <div class="reader-home-rest">
                     <section class="reader-results" id="readerResults" hidden aria-live="polite"></section>
                     <section class="reader-ops" id="readerFeatured">
-                        <aside class="reader-panel reader-operator" aria-label="about this garden">
-                            <h2 class="reader-panel-label">operator</h2>
-                            ${this.renderAbout(facts)}
-                            <div class="reader-eggs" aria-label="terminal shortcuts">${eggs}</div>
-                        </aside>
-                        <div class="reader-ops-side">
+                        <div class="reader-ops-main">
+                            <aside class="reader-panel reader-operator" aria-label="about this garden">
+                                <h2 class="reader-panel-label">operator</h2>
+                                ${this.renderAbout(facts)}
+                                <div class="reader-eggs" aria-label="terminal shortcuts">${eggs}</div>
+                            </aside>
                             ${this.renderLoad()}
-                            ${this.renderQueue()}
                         </div>
+                        ${this.renderQueue()}
                     </section>
                     <section class="reader-tiles" id="readerTopics" aria-label="topics">
                         ${this.renderTiles()}

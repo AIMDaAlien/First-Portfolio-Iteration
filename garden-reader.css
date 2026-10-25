@@ -304,7 +304,10 @@ html[data-mode="reader"] .sidebar.collapsed .topic-list {
     margin-top: 32px;
 }
 
-.reader-ops-side {
+/* The operator and load panels stay in view while the queue scrolls past. */
+.reader-ops-main {
+    position: sticky;
+    top: 24px;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -810,9 +813,14 @@ html[data-mode="reader"] .sidebar.collapsed .topic-list {
     }
 }
 
-@media (max-width: 1100px) {
+/* Below this the queue column gets too narrow beside the 480px operator panel. */
+@media (max-width: 1320px) {
     .reader-ops {
         grid-template-columns: 1fr;
+    }
+
+    .reader-ops-main {
+        position: static;
     }
 }
 
