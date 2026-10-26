@@ -181,7 +181,7 @@
             <ul id="primary-navigation">
                 <li><a href="#hero" class="nav-link">Home</a></li>
                 <li><a href="#about" class="nav-link">About</a></li>
-                <li><a href="#skills" class="nav-link">Skills</a></li>
+                <li><a href="#skills" class="nav-link">Lab</a></li>
                 <li><a href="#experience" class="nav-link">Experience</a></li>
                 <li><a href="#projects" class="nav-link">Projects</a></li>
                 <li><a href="garden-terminal.html" class="nav-link"><svg class="nav-icon" aria-hidden="true">
@@ -212,6 +212,14 @@
                     <span>[status: OK]</span>
                 </div>
             </div>
+            <div class="door-switch">
+                <div class="card-led">SELECT DEPTH</div>
+                <div class="door-buttons" role="group" aria-label="How deep do you want to go?">
+                    <button type="button" class="door-btn" data-door="short" aria-pressed="true">[ the short version ]</button>
+                    <button type="button" class="door-btn" data-door="deep" aria-pressed="false">[ the deep end ]</button>
+                </div>
+                <div class="door-hint" id="doorHint" aria-live="polite">plain words, big numbers &middot; 2 min read &middot; <span class="nudge">the charts live in the deep end</span></div>
+            </div>
             <div class="scroll-indicator">
                 <svg class="scroll-arrow" viewBox="0 0 24 24" aria-hidden="true">
                     <use href="#icon-arrow-down"></use>
@@ -219,6 +227,8 @@
             </div>
         </section>
 
+        <!-- THE SHORT VERSION -->
+        <div class="door" data-door-panel="short">
         <!-- M3 BALANCED ABOUT SECTION -->
         <section id="about" class="content-section">
             <h2 class="section-title">Hi there,</h2>
@@ -289,6 +299,80 @@
             </svg>
         </div>
 
+        <section id="experience" class="content-section">
+            <h2 class="section-title">Experience Timeline</h2>
+            <div class="experience-grid-enhanced">
+                <!-- Assistant Store Manager -->
+                <div class="experience-card-enhanced animate-on-scroll fade-in-up">
+                    <div class="experience-header">
+                        <div class="experience-icon">
+                            <svg>
+                                <use href="#icon-badge"></use>
+                            </svg>
+                        </div>
+                        <div class="experience-info">
+                            <h3>Assistant Store Manager</h3>
+                            <p class="experience-company">NTB/Mavis Tires</p>
+                            <div class="experience-date">
+                                <div class="status-dot past"></div>
+                                <span>April 2024 - June 2025</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="experience-description">
+                        Directed daily operations for automotive service center, managing team of 8+ technicians.
+                        Implemented systematic improvements reducing turnaround time by 15% through shop management
+                        software optimization.
+                    </p>
+
+                    <div class="experience-tags">
+                        <span class="experience-tag">Team Leadership</span>
+                        <span class="experience-tag">Operations Management</span>
+                        <span class="experience-tag">Process Improvement</span>
+                        <span class="experience-tag">Quality Control</span>
+                    </div>
+                </div>
+
+                <!-- Data Annotation Contractor -->
+                <div class="experience-card-enhanced animate-on-scroll fade-in-up">
+                    <div class="experience-header">
+                        <div class="experience-icon">
+                            <svg>
+                                <use href="#icon-label"></use>
+                            </svg>
+                        </div>
+                        <div class="experience-info">
+                            <h3>Data Annotation Contractor</h3>
+                            <p class="experience-company">Remote Platforms</p>
+                            <div class="experience-date">
+                                <div class="status-dot"></div>
+                                <span>January 2023 - Present</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="experience-description">
+                        Multi-modal LLM evaluation and data annotation across text, image, audio, and video pipelines.
+                        Work includes preference labeling, ELO/H2H comparative ranking, and quality assurance for AI
+                        training datasets across platforms including Prolific, Mindrift, and Alignerr.
+                    </p>
+
+                    <div class="experience-tags">
+                        <span class="experience-tag">LLM Evaluation</span>
+                        <span class="experience-tag">Multi-modal Annotation</span>
+                        <span class="experience-tag">Preference Labeling</span>
+                        <span class="experience-tag">RLHF</span>
+                        <span class="experience-tag">AI Training Pipelines</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        </div>
+
+        <!-- THE DEEP END -->
+        <div class="door" data-door-panel="deep" hidden>
         <section id="machine-spec" class="content-section">
             <h2 class="section-title">Machine Spec</h2>
             <div class="spec-layout">
@@ -545,86 +629,6 @@
         </div>
 
         <!-- M3 BALANCED EXPERIENCE SECTION -->
-        <section id="experience" class="content-section">
-            <h2 class="section-title">Experience Timeline</h2>
-            <div class="experience-grid-enhanced">
-                <!-- Assistant Store Manager -->
-                <div class="experience-card-enhanced animate-on-scroll fade-in-up">
-                    <div class="experience-header">
-                        <div class="experience-icon">
-                            <svg>
-                                <use href="#icon-badge"></use>
-                            </svg>
-                        </div>
-                        <div class="experience-info">
-                            <h3>Assistant Store Manager</h3>
-                            <p class="experience-company">NTB/Mavis Tires</p>
-                            <div class="experience-date">
-                                <div class="status-dot past"></div>
-                                <span>April 2024 - June 2025</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <p class="experience-description">
-                        Directed daily operations for automotive service center, managing team of 8+ technicians.
-                        Implemented systematic improvements reducing turnaround time by 15% through shop management
-                        software optimization.
-                    </p>
-
-                    <div class="experience-tags">
-                        <span class="experience-tag">Team Leadership</span>
-                        <span class="experience-tag">Operations Management</span>
-                        <span class="experience-tag">Process Improvement</span>
-                        <span class="experience-tag">Quality Control</span>
-                    </div>
-                </div>
-
-                <!-- Data Annotation Contractor -->
-                <div class="experience-card-enhanced animate-on-scroll fade-in-up">
-                    <div class="experience-header">
-                        <div class="experience-icon">
-                            <svg>
-                                <use href="#icon-label"></use>
-                            </svg>
-                        </div>
-                        <div class="experience-info">
-                            <h3>Data Annotation Contractor</h3>
-                            <p class="experience-company">Remote Platforms</p>
-                            <div class="experience-date">
-                                <div class="status-dot"></div>
-                                <span>January 2023 - Present</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <p class="experience-description">
-                        Multi-modal LLM evaluation and data annotation across text, image, audio, and video pipelines.
-                        Work includes preference labeling, ELO/H2H comparative ranking, and quality assurance for AI
-                        training datasets across platforms including Prolific, Mindrift, and Alignerr.
-                    </p>
-
-                    <div class="experience-tags">
-                        <span class="experience-tag">LLM Evaluation</span>
-                        <span class="experience-tag">Multi-modal Annotation</span>
-                        <span class="experience-tag">Preference Labeling</span>
-                        <span class="experience-tag">RLHF</span>
-                        <span class="experience-tag">AI Training Pipelines</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <div class="pcb-divider" aria-hidden="true">
-            <svg viewBox="0 0 1200 28" preserveAspectRatio="none">
-                <path class="pcb-trace" pathLength="1200" d="M0 14 H420 L436 4 H760 L776 14 H1200" />
-                <path class="pcb-trace pcb-trace--2" pathLength="1200" d="M0 22 H300 L312 26 H900 L912 22 H1200" />
-                <circle class="pcb-via" cx="436" cy="4" r="2.5" />
-                <circle class="pcb-via" cx="776" cy="14" r="2.5" />
-                <path class="pcb-pulse" pathLength="1200" d="M0 14 H420 L436 4 H760 L776 14 H1200" />
-            </svg>
-        </div>
-
         <section id="projects" class="content-section">
             <h2 class="section-title">Technical Projects</h2>
             <div class="projects-grid">
@@ -967,6 +971,8 @@
             </div>
         </section>
 
+        </div>
+
         <div class="pcb-divider" aria-hidden="true">
             <svg viewBox="0 0 1200 28" preserveAspectRatio="none">
                 <path class="pcb-trace" pathLength="1200" d="M0 14 H420 L436 4 H760 L776 14 H1200" />
@@ -1036,6 +1042,8 @@
     <script src="net-utils.js" defer></script>
     <script src="garden-reader-logic.js" defer></script>
     <script src="script.js" defer></script>
+    <script src="home-doors-logic.js" defer></script>
+    <script src="home-doors.js" defer></script>
     <script src="terminal.js" defer></script>
 </body>
 

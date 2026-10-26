@@ -2950,3 +2950,94 @@ button:focus-visible {
         animation: none;
     }
 }
+
+/* === TWO DOORS: the short version / the deep end === */
+[data-door-panel][hidden] {
+    display: none;
+}
+
+.door-switch {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 2.5rem auto 0;
+    padding: 0 16px;
+    text-align: center;
+}
+
+.door-switch .card-led {
+    margin: 0;
+}
+
+.door-buttons {
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.35rem;
+    border: 1px solid var(--border);
+    border-radius: var(--md-sys-shape-corner-full);
+    background: rgba(142, 153, 243, 0.06);
+}
+
+.door-btn {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--md-sys-shape-corner-full);
+    padding: 0.55rem 1.2rem;
+    cursor: pointer;
+    transition:
+        background var(--duration-short) var(--motion-spring-bouncy),
+        color var(--duration-short) var(--motion-spring-bouncy),
+        transform var(--duration-short) var(--motion-spring-bouncy);
+}
+
+.door-btn:hover {
+    background: var(--state-hover);
+    color: var(--fg);
+}
+
+.door-btn:focus-visible {
+    outline: 2px solid var(--md-sys-color-primary);
+    outline-offset: 2px;
+}
+
+.door-btn:active {
+    transform: scale(0.95);
+}
+
+.door-btn[aria-pressed="true"] {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    border-color: var(--md-sys-color-primary);
+}
+
+.door-hint {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+}
+
+.door-hint .nudge {
+    color: var(--lavender);
+}
+
+@media (max-width: 600px) {
+    .door-btn {
+        font-size: 0.72rem;
+        padding: 0.5rem 0.9rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .door-btn {
+        transition: none;
+    }
+}

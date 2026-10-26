@@ -39,7 +39,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Section Offsets for Scroll Tracking ---
     let sectionOffsets = [];
     function cacheSectionOffsets() {
-        sectionOffsets = pageSections.map(section => ({
+        // Sections inside the closed door have no layout; leave them out of the scroll spy.
+        sectionOffsets = pageSections.filter(section => section.offsetParent !== null).map(section => ({
             id: section.id,
             offsetTop: section.offsetTop - mainNav.offsetHeight - 50
         }));
@@ -110,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (heroSubtitle) {
                             heroSubtitle.style.opacity = '1';
                             heroSubtitle.style.transform = 'translateY(0) scale(1)';
-                            typeSubtitle('Builder working across self-hosted infrastructure, AI orchestration, and live app deployment.');
+                            typeSubtitle('i build and break my own servers, then write down what actually happened.');
                         }
                         if (scrollIndicator) {
                             scrollIndicator.style.opacity = '1';
@@ -369,6 +370,13 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.classList.remove('is-scrolling');
     });
 
+    // Opening the other door changes what is on the page: re-measure and reveal its cards.
+    document.addEventListener('door:change', () => {
+        cacheSectionOffsets();
+        updateActiveNavLink();
+        checkElementsVisibility();
+    });
+
     updateActiveNavLink();
 });
 
@@ -532,23 +540,14 @@ async function updateGardenStats() {
         gardenStatsInFlight = null;
     }
 }
-// Defer garden stats fetch until section is visible
+// Garden stats feed the hero strip and both doors, so fetch them on load
+// rather than waiting for one section to scroll into view.
 document.addEventListener('DOMContentLoaded', () => {
-    const gardenSection = document.getElementById('knowledge-garden-showcase');
-    if (!gardenSection) return;
-    let statsIntervalId = null;
-    const gardenObserver = new IntersectionObserver((entries, obs) => {
-        if (entries[0].isIntersecting) {
-            updateGardenStats();
-            if (!statsIntervalId) {
-                statsIntervalId = setInterval(() => {
-                    if (!document.hidden) updateGardenStats();
-                }, 10 * 60 * 1000);
-            }
-            obs.disconnect();
-        }
-    }, { rootMargin: '200px', threshold: 0 });
-    gardenObserver.observe(gardenSection);
+    if (!document.getElementById('noteCount') && !document.getElementById('strip-notes')) return;
+    updateGardenStats();
+    setInterval(() => {
+        if (!document.hidden) updateGardenStats();
+    }, 10 * 60 * 1000);
 
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden) updateGardenStats();
