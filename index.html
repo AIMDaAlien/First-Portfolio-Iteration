@@ -181,7 +181,7 @@
             <ul id="primary-navigation">
                 <li><a href="#hero" class="nav-link">Home</a></li>
                 <li><a href="#about" class="nav-link">About</a></li>
-                <li><a href="#skills" class="nav-link">Lab</a></li>
+                <li><a href="#lab" class="nav-link">Lab</a></li>
                 <li><a href="#experience" class="nav-link">Experience</a></li>
                 <li><a href="#projects" class="nav-link">Projects</a></li>
                 <li><a href="garden-terminal.html" class="nav-link"><svg class="nav-icon" aria-hidden="true">
@@ -396,6 +396,62 @@
 
         <!-- THE DEEP END -->
         <div class="door" data-door-panel="deep" hidden>
+        <section id="lab" class="content-section">
+            <h2 class="section-title">Lab Results</h2>
+            <p class="section-lede">real charts from my notes. click any chart to zoom in.</p>
+            <div class="lab-stack">
+                <article class="spec-unit lab-card wide animate-on-scroll fade-in">
+                    <div class="chart" data-note="garden-terminal.html?note=01%20Projects%2FStrata%2FStrata%20V100%20update%20%E2%80%94%202026-10-25.md"><img src="https://raw.githubusercontent.com/AIMDaAlien/Obsidian-Vault/main/_attachments/strata-v100-update-20261025/headline.png" alt="Bar charts: a long chat's next reply drops from 62 seconds to 1 second; 80K-token prompt reading rises from 1,298 to 1,393 tokens per second; screenshot questions stay at 7 of 7." loading="lazy" decoding="async"></div>
+                    <div class="lab-text">
+                        <div class="card-led">STRATA-V100 &middot; 2026-10-25</div>
+                        <div class="lab-num">62s &rarr; 1s next reply</div>
+                        <p class="spec-line">long chats survive interruptions now. 80K prefill 1,298 &rarr; 1,393 tok/s at 150W, screenshot questions still 7 of 7.</p>
+                        <a class="proof-link" href="garden-terminal.html?note=01%20Projects%2FStrata%2FStrata%20V100%20update%20%E2%80%94%202026-10-25.md">[ read the write-up &rarr; ]</a>
+                    </div>
+                </article>
+                <div class="lab-grid">
+                    <article class="spec-unit lab-card animate-on-scroll stagger">
+                        <div class="chart dark" data-note="garden-terminal.html?note=01%20Projects%2FStrata%2FStrata%20RTX%203060%20Optimization%20Showcase.md"><img src="https://raw.githubusercontent.com/AIMDaAlien/Obsidian-Vault/main/_attachments/strata-rtx3060-showcase/accepted-response-times.png" alt="Original versus tuned response times for six long-context workloads on an RTX 3060, 16.58% less total time." loading="lazy" decoding="async"></div>
+                        <div class="card-led">STRATA-3060 &middot; PAIRED A/B</div>
+                        <div class="lab-num">&minus;16.58% response time</div>
+                        <p class="spec-line">six long-context workloads, five alternating pairs, every one faster.</p>
+                        <a class="proof-link" href="garden-terminal.html?note=01%20Projects%2FStrata%2FStrata%20RTX%203060%20Optimization%20Showcase.md">[ read the write-up &rarr; ]</a>
+                    </article>
+                    <article class="spec-unit lab-card animate-on-scroll stagger">
+                        <div class="chart dark" data-note="garden-terminal.html?note=03%20AI%20and%20Local%20Models%2FBenchmarks%2FModel%20Benchmarks.md"><img src="https://raw.githubusercontent.com/AIMDaAlien/Obsidian-Vault/main/_attachments/lcb60-pareto.png" alt="Scatter of coding quality against decode speed for local models, with the Pareto frontier marked." loading="lazy" decoding="async"></div>
+                        <div class="card-led">LCB-60 &middot; QUALITY vs SPEED</div>
+                        <div class="lab-num">quality vs speed</div>
+                        <p class="spec-line">the pareto frontier at the time. a later 98-task rerun overturned it, and the note says so.</p>
+                        <a class="proof-link" href="garden-terminal.html?note=03%20AI%20and%20Local%20Models%2FBenchmarks%2FModel%20Benchmarks.md">[ read the write-up &rarr; ]</a>
+                    </article>
+                    <article class="spec-unit lab-card animate-on-scroll stagger">
+                        <div class="chart" data-note="garden-terminal.html?note=01%20Projects%2FStrata%2FStrata%20V100%20Optimization%20Showcase.md"><img src="https://raw.githubusercontent.com/AIMDaAlien/Obsidian-Vault/main/_attachments/strata-v100-tuning-20261018/headline.png" alt="Before and after bars across seven metrics for V100 tuning, including decode 67 to 90 tokens per second." loading="lazy" decoding="async"></div>
+                        <div class="card-led">STRATA-V100 &middot; TUNING</div>
+                        <div class="lab-num">67 &rarr; 90 tok/s decode</div>
+                        <p class="spec-line">one day of paired a/b tuning: 80K request 95 &rarr; 65 s, idle CPU 85 &rarr; 59 W.</p>
+                        <a class="proof-link" href="garden-terminal.html?note=01%20Projects%2FStrata%2FStrata%20V100%20Optimization%20Showcase.md">[ read the write-up &rarr; ]</a>
+                    </article>
+                    <article class="spec-unit lab-card animate-on-scroll stagger">
+                        <div class="chart dark" data-note="garden-terminal.html?note=01%20Projects%2FStrata%2FStrata%20RTX%203060%20Optimization%20Showcase.md"><img src="https://raw.githubusercontent.com/AIMDaAlien/Obsidian-Vault/main/_attachments/strata-rtx3060-showcase/expert-campaign-gate.png" alt="Profiling results for a rejected expert-kernel change that failed the 5% response-time gate." loading="lazy" decoding="async"></div>
+                        <div class="card-led">REJECTED &middot; 5% GATE</div>
+                        <div class="lab-num">didn't ship it</div>
+                        <p class="spec-line">a kernel change that looked faster in profiles came out 0.12% and 0.18% slower end to end. it missed the 5% bar.</p>
+                        <a class="proof-link" href="garden-terminal.html?note=01%20Projects%2FStrata%2FStrata%20RTX%203060%20Optimization%20Showcase.md">[ read the write-up &rarr; ]</a>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <div class="pcb-divider" aria-hidden="true">
+            <svg viewBox="0 0 1200 28" preserveAspectRatio="none">
+                <path class="pcb-trace" pathLength="1200" d="M0 14 H420 L436 4 H760 L776 14 H1200" />
+                <path class="pcb-trace pcb-trace--2" pathLength="1200" d="M0 22 H300 L312 26 H900 L912 22 H1200" />
+                <circle class="pcb-via" cx="436" cy="4" r="2.5" />
+                <circle class="pcb-via" cx="776" cy="14" r="2.5" />
+                <path class="pcb-pulse" pathLength="1200" d="M0 14 H420 L436 4 H760 L776 14 H1200" />
+            </svg>
+        </div>
+
         <section id="machine-spec" class="content-section">
             <h2 class="section-title">Machine Spec</h2>
             <div class="spec-layout">
@@ -513,132 +569,34 @@
         </div>
 
         <section id="skills" class="content-section">
-            <h2 class="section-title">Skills & Expertise</h2>
-            <div class="skills-grid">
-                <div class="skill-category skill-primary animate-on-scroll stagger">
-                    <div class="card-led">ONLINE</div>
-                    <div class="skill-header">
-                        <div class="skill-icon-wrapper">
-                            <svg>
-                                <use href="#icon-computer"></use>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3>Self-Hosted Infrastructure</h3>
-                        </div>
-                    </div>
-                    <p>TrueNAS, Docker Compose, Caddy reverse proxy, GitHub Actions CI/CD, Linux server management, DDNS and remote access</p>
-                    <div class="chip-row">
-                        <span class="chip">TrueNAS</span>
-                        <span class="chip">Docker</span>
-                        <span class="chip">Caddy</span>
-                        <span class="chip">Linux</span>
-                    </div>
-                    <div class="vu-meter" data-level="0.95" aria-hidden="true">
-                        <svg viewBox="0 0 120 70">
-                            <path class="vu-arc" d="M 14 62 A 48 48 0 0 1 106 62" />
-                            <g class="vu-ticks">
-                                <line x1="30.9" y1="37.6" x2="26.3" y2="33.7"/>
-                                <line x1="43.9" y1="27.6" x2="41.4" y2="22.1"/>
-                                <line x1="60" y1="24" x2="60" y2="18"/>
-                                <line x1="76.1" y1="27.6" x2="78.6" y2="22.1"/>
-                                <line x1="89.1" y1="37.6" x2="93.7" y2="33.7"/>
-                            </g>
-                            <line class="vu-needle" x1="60" y1="62" x2="60" y2="20" />
-                            <circle class="vu-pivot" cx="60" cy="62" r="3.5" />
-                        </svg>
-                    </div>
-                    <div class="stat-big">06+</div>
-                    <div class="module-id">years_hands_on</div>
-                </div>
-                <div class="skill-category animate-on-scroll stagger">
-                    <div class="card-led">ONLINE</div>
-                    <div class="skill-header">
-                        <div class="skill-icon-wrapper">
-                            <svg>
-                                <use href="#icon-memory"></use>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3>Hardware & Software</h3>
-                        </div>
-                    </div>
-                    <p>PC building, laptop repair, component diagnostics, performance optimization, enterprise storage, NAS configuration</p>
-                    <div class="vu-meter" data-level="0.85" aria-hidden="true">
-                        <svg viewBox="0 0 120 70">
-                            <path class="vu-arc" d="M 14 62 A 48 48 0 0 1 106 62" />
-                            <g class="vu-ticks">
-                                <line x1="30.9" y1="37.6" x2="26.3" y2="33.7"/>
-                                <line x1="43.9" y1="27.6" x2="41.4" y2="22.1"/>
-                                <line x1="60" y1="24" x2="60" y2="18"/>
-                                <line x1="76.1" y1="27.6" x2="78.6" y2="22.1"/>
-                                <line x1="89.1" y1="37.6" x2="93.7" y2="33.7"/>
-                            </g>
-                            <line class="vu-needle" x1="60" y1="62" x2="60" y2="20" />
-                            <circle class="vu-pivot" cx="60" cy="62" r="3.5" />
-                        </svg>
-                    </div>
-                    <div class="module-id">module_hardware</div>
-                </div>
-                <div class="skill-category animate-on-scroll stagger">
-                    <div class="card-led">ONLINE</div>
-                    <div class="skill-header">
-                        <div class="skill-icon-wrapper">
-                            <svg>
-                                <use href="#icon-science"></use>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3>AI Orchestration</h3>
-                        </div>
-                    </div>
-                    <p>Multi-model delegation workflows: assigning tasks to specialized agents by domain, gated handoffs with evidence and review stages, structured planning and closeout documentation</p>
-                    <div class="vu-meter" data-level="0.9" aria-hidden="true">
-                        <svg viewBox="0 0 120 70">
-                            <path class="vu-arc" d="M 14 62 A 48 48 0 0 1 106 62" />
-                            <g class="vu-ticks">
-                                <line x1="30.9" y1="37.6" x2="26.3" y2="33.7"/>
-                                <line x1="43.9" y1="27.6" x2="41.4" y2="22.1"/>
-                                <line x1="60" y1="24" x2="60" y2="18"/>
-                                <line x1="76.1" y1="27.6" x2="78.6" y2="22.1"/>
-                                <line x1="89.1" y1="37.6" x2="93.7" y2="33.7"/>
-                            </g>
-                            <line class="vu-needle" x1="60" y1="62" x2="60" y2="20" />
-                            <circle class="vu-pivot" cx="60" cy="62" r="3.5" />
-                        </svg>
-                    </div>
-                    <div class="module-id">module_agents</div>
-                </div>
-                <div class="skill-category animate-on-scroll stagger">
-                    <div class="card-led">ONLINE</div>
-                    <div class="skill-header">
-                        <div class="skill-icon-wrapper">
-                            <svg>
-                                <use href="#icon-groups"></use>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3>Operations & Management</h3>
-                        </div>
-                    </div>
-                    <p>Team leadership, inventory control, process improvement, technical support, quality assurance</p>
-                    <div class="vu-meter" data-level="0.8" aria-hidden="true">
-                        <svg viewBox="0 0 120 70">
-                            <path class="vu-arc" d="M 14 62 A 48 48 0 0 1 106 62" />
-                            <g class="vu-ticks">
-                                <line x1="30.9" y1="37.6" x2="26.3" y2="33.7"/>
-                                <line x1="43.9" y1="27.6" x2="41.4" y2="22.1"/>
-                                <line x1="60" y1="24" x2="60" y2="18"/>
-                                <line x1="76.1" y1="27.6" x2="78.6" y2="22.1"/>
-                                <line x1="89.1" y1="37.6" x2="93.7" y2="33.7"/>
-                            </g>
-                            <line class="vu-needle" x1="60" y1="62" x2="60" y2="20" />
-                            <circle class="vu-pivot" cx="60" cy="62" r="3.5" />
-                        </svg>
-                    </div>
-                    <div class="module-id">module_people</div>
-                </div>
-            </div>
+            <h2 class="section-title">Skills, With Receipts</h2>
+            <ul class="proof-list">
+                <li class="animate-on-scroll stagger">
+                    <span class="skill">GPU tuning</span>
+                    <span class="receipt">V100 decode 67 &rarr; 90 tok/s, idle CPU 85 &rarr; 59 W after a day of paired tests</span>
+                    <a href="garden-terminal.html?note=01%20Projects%2FStrata%2FStrata%20V100%20Optimization%20Showcase.md">strata v100 &rarr;</a>
+                </li>
+                <li class="animate-on-scroll stagger">
+                    <span class="skill">Self-hosting</span>
+                    <span class="receipt">an Unraid server and a homelab where every machine is documented, with a dated incident log</span>
+                    <a href="garden-terminal.html?note=02%20Homelab%2FOverview%2F00%20-%20Server%20Inventory.md">server inventory &rarr;</a>
+                </li>
+                <li class="animate-on-scroll stagger">
+                    <span class="skill">AI evaluation</span>
+                    <span class="receipt">45 research tasks on small local models; turning thinking on flipped the ranking</span>
+                    <a href="garden-terminal.html?note=03%20AI%20and%20Local%20Models%2FBenchmarks%2F2026-09-24%20v4%20Results%20%E2%80%94%20Thinking%20flips%20the%20ranking.md">v4 results &rarr;</a>
+                </li>
+                <li class="animate-on-scroll stagger">
+                    <span class="skill">Networking</span>
+                    <span class="receipt">Pi-hole + Unbound DNS, moved from a 2014 Raspberry Pi B+ to a Pi 5</span>
+                    <a href="garden-terminal.html?note=02%20Homelab%2FRaspberry%20Pi%2FRaspberry%20Pi.md">raspberry pi &rarr;</a>
+                </li>
+                <li class="animate-on-scroll stagger">
+                    <span class="skill">Operations</span>
+                    <span class="receipt">ran a shop team of 8+ technicians and cut turnaround time by 15%</span>
+                    <a href="#experience">experience &rarr;</a>
+                </li>
+            </ul>
         </section>
 
         <div class="pcb-divider" aria-hidden="true">
@@ -704,15 +662,8 @@
                                 <span class="tech-tag">AI Orchestration</span>
                             </div>
 
-                            <div class="complexity-meter">
-                                <div class="complexity-fill lit"></div>
-                                <div class="complexity-fill lit"></div>
-                                <div class="complexity-fill lit"></div>
-                                <div class="complexity-fill lit"></div>
-                                <div class="complexity-fill lit"></div>
-                            </div>
-                            <div class="complexity-label">Complexity: Expert</div>
                             <a href="https://penthouse.blog" target="_blank" rel="noopener noreferrer" class="project-link">[ visit: penthouse.blog ]</a>
+                            <a href="garden-terminal.html?note=01%20Projects%2FPenthouse%2F00%20-%20Knowledge%20Hub.md" class="project-link">[ read: the build journal ]</a>
                         </div>
                     </div>
                 </div>
@@ -751,14 +702,6 @@
                         </ul>
                     </div>
 
-                    <div class="complexity-meter">
-                        <div class="complexity-fill lit"></div>
-                        <div class="complexity-fill lit"></div>
-                        <div class="complexity-fill lit"></div>
-                        <div class="complexity-fill"></div>
-                        <div class="complexity-fill"></div>
-                    </div>
-                    <div class="complexity-label">Complexity: Intermediate</div>
                     <a href="https://aim3dprints.com" target="_blank" rel="noopener noreferrer" class="project-link">[ visit: aim3dprints.com ]</a>
                 </div>
 
@@ -797,14 +740,6 @@
                         </ul>
                     </div>
 
-                    <div class="complexity-meter">
-                        <div class="complexity-fill lit"></div>
-                        <div class="complexity-fill lit"></div>
-                        <div class="complexity-fill lit"></div>
-                        <div class="complexity-fill lit"></div>
-                        <div class="complexity-fill lit"></div>
-                    </div>
-                    <div class="complexity-label">Complexity: Expert</div>
                     <a href="garden-terminal.html?note=02%20Homelab%2FGuides%2FTrueNAS%20Build%20Guide.md" class="project-link">[ read: the write-up ]</a>
                 </div>
 
@@ -843,14 +778,6 @@
                         </ul>
                     </div>
 
-                    <div class="complexity-meter">
-                        <div class="complexity-fill lit"></div>
-                        <div class="complexity-fill lit"></div>
-                        <div class="complexity-fill lit"></div>
-                        <div class="complexity-fill"></div>
-                        <div class="complexity-fill"></div>
-                    </div>
-                    <div class="complexity-label">Complexity: Intermediate</div>
                     <a href="garden-terminal.html?note=02%20Homelab%2FRaspberry%20Pi%2FRaspberry%20Pi.md" class="project-link">[ read: the write-up ]</a>
                 </div>
 
@@ -889,14 +816,6 @@
                         </ul>
                     </div>
 
-                    <div class="complexity-meter">
-                        <div class="complexity-fill lit"></div>
-                        <div class="complexity-fill lit"></div>
-                        <div class="complexity-fill lit"></div>
-                        <div class="complexity-fill lit"></div>
-                        <div class="complexity-fill"></div>
-                    </div>
-                    <div class="complexity-label">Complexity: Advanced</div>
                     <a href="garden-terminal.html?note=07%20Tools%20and%20Workflow%2FGrapheneOS%20Migration%20Guide%20-%20Complete%20Documentation.md" class="project-link">[ read: the write-up ]</a>
                 </div>
 

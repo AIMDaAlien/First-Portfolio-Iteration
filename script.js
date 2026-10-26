@@ -700,27 +700,6 @@ function initUptimeCounter() {
     setInterval(updateUptime, 1000);
 }
 
-// --- VU Meter Gauges (skill cards) ---
-function initVuMeters() {
-    const meters = document.querySelectorAll('.vu-meter');
-    if (!meters.length) return;
-
-    const observer = new IntersectionObserver((entries, obs) => {
-        entries.forEach(entry => {
-            if (!entry.isIntersecting) return;
-            const meter = entry.target;
-            const level = parseFloat(meter.dataset.level) || 0;
-            const clamped = Math.max(0, Math.min(1, level));
-            const deg = -50 + clamped * 100;
-            meter.style.setProperty('--vu-angle', `${deg}deg`);
-            meter.classList.add('vu-live');
-            obs.unobserve(meter);
-        });
-    }, { threshold: 0.1 });
-
-    meters.forEach(meter => observer.observe(meter));
-}
-
 // --- Unraid Telemetry ---
 function initUnraidTelemetry() {
     const container = document.getElementById('unraidTelemetry');
@@ -1006,7 +985,6 @@ async function initVaultActivity() {
 document.addEventListener('DOMContentLoaded', () => {
     initMatrixRain();
     initUptimeCounter();
-    initVuMeters();
     initUnraidTelemetry();
     initVaultActivity();
     setInterval(initVaultActivity, 5 * 60 * 1000);

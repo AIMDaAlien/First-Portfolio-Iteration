@@ -1383,35 +1383,6 @@ body {
     transform: translateX(4px);
 }
 
-.complexity-meter {
-    display: flex;
-    gap: 3px;
-    margin-bottom: calc(var(--spacing-unit) * 1);
-}
-
-.complexity-fill {
-    flex: 1;
-    height: 6px;
-    background: rgba(142, 153, 243, 0.15);
-    border-radius: 2px;
-    position: relative;
-}
-
-.complexity-fill.lit {
-    background: var(--accent);
-    box-shadow: 0 0 8px var(--accent);
-}
-
-.complexity-label {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    color: var(--muted);
-    font-weight: 500;
-    margin-bottom: calc(var(--spacing-unit) * 2);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
 .project-link {
     display: inline-flex;
     align-items: center;
@@ -2302,72 +2273,6 @@ html.is-scrolling .hero-label::before {
     }
 }
 
-/* === VU METER GAUGES (skill cards) === */
-.vu-meter {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: auto;
-    padding-top: 1rem;
-    position: relative;
-}
-
-.vu-meter svg {
-    width: 110px;
-    height: auto;
-    display: block;
-    position: relative;
-    z-index: 1;
-}
-
-.vu-meter::before {
-    content: '';
-    position: absolute;
-    right: -10px;
-    bottom: -12px;
-    width: 130px;
-    height: 80px;
-    background: radial-gradient(ellipse at 50% 90%, var(--glow), transparent 70%);
-    opacity: 0;
-    transition: opacity var(--duration-long) ease;
-    pointer-events: none;
-}
-
-.vu-meter.vu-live::before {
-    opacity: 0.5;
-}
-
-.vu-arc {
-    fill: none;
-    stroke: var(--md-sys-color-outline-variant);
-    stroke-width: 2;
-    stroke-linecap: round;
-}
-
-.vu-ticks line {
-    stroke: var(--md-sys-color-outline-variant);
-    stroke-width: 1.5;
-    stroke-linecap: round;
-}
-
-.vu-needle {
-    stroke: var(--md-sys-color-primary);
-    stroke-width: 2;
-    stroke-linecap: round;
-    filter: drop-shadow(0 0 3px var(--glow));
-    transform-box: view-box;
-    transform-origin: 60px 62px;
-    transform: rotate(-50deg);
-}
-
-.vu-meter.vu-live .vu-needle {
-    transform: rotate(var(--vu-angle, -50deg));
-    transition: transform var(--duration-extra-long) var(--motion-spring-bouncy);
-}
-
-.vu-pivot {
-    fill: var(--md-sys-color-primary);
-}
-
 /* === PCB TRACE DIVIDERS === */
 .pcb-divider {
     width: 100%;
@@ -2928,10 +2833,6 @@ button:focus-visible {
     }
 
     /* VU needle jumps straight to its final angle */
-    .vu-meter.vu-live .vu-needle {
-        transition: none;
-    }
-
     .telemetry-fill {
         transition: none;
     }
@@ -3160,5 +3061,194 @@ button:focus-visible {
 
     .whoami:has(.whoami-photo) {
         grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* Deep end: lab results */
+.section-lede {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin: -1rem 0 2rem;
+}
+
+.lab-stack {
+    display: grid;
+    gap: calc(var(--spacing-unit) * 3);
+}
+
+.lab-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: calc(var(--spacing-unit) * 3);
+}
+
+.lab-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.lab-card.wide {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.lab-card .chart {
+    position: relative;
+    margin: 0.75rem 0;
+    border: 1px solid var(--border);
+    border-radius: var(--md-sys-shape-corner-small);
+    background: #fff;
+    overflow: hidden;
+    cursor: zoom-in;
+}
+
+.lab-card.wide .chart {
+    margin: 0;
+}
+
+.lab-card .chart.dark {
+    background: var(--md-sys-color-surface-container-lowest);
+}
+
+.lab-card .chart img {
+    display: block;
+    width: 100%;
+    height: auto;
+    opacity: 0.9;
+    transition: opacity var(--duration-short) ease;
+}
+
+.lab-card .chart:hover img,
+.lab-card .chart:focus-visible img {
+    opacity: 1;
+}
+
+.lab-card .chart:focus-visible {
+    outline: 2px solid var(--md-sys-color-primary);
+    outline-offset: 2px;
+}
+
+.lab-card .chart::after {
+    content: '\2922  zoom';
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--md-sys-color-on-primary-container);
+    background: rgba(13, 14, 19, 0.78);
+    border: 1px solid var(--border);
+    border-radius: var(--md-sys-shape-corner-full);
+    padding: 2px 8px;
+    opacity: 0;
+    transition: opacity var(--duration-short) ease;
+    pointer-events: none;
+}
+
+.lab-card .chart:hover::after,
+.lab-card .chart:focus-visible::after {
+    opacity: 1;
+}
+
+.lab-card .chart.chart--missing {
+    min-height: 160px;
+    cursor: default;
+    background: var(--md-sys-color-surface-container-lowest);
+}
+
+.lab-card .chart.chart--missing img {
+    display: none;
+}
+
+.lab-card .chart.chart--missing::after {
+    content: 'chart unavailable \00B7  read the write-up';
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 0;
+    opacity: 1;
+    color: var(--muted);
+}
+
+.lab-num {
+    font-family: var(--mono);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--lavender);
+    margin: 0.4rem 0;
+}
+
+.lab-card .spec-line {
+    flex: 1;
+}
+
+/* Deep end: skills, with receipts */
+.proof-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 auto;
+    max-width: 1000px;
+    display: grid;
+    gap: 0.6rem;
+}
+
+.proof-list li {
+    display: grid;
+    grid-template-columns: 11rem minmax(0, 1fr) auto;
+    gap: 1rem;
+    align-items: baseline;
+    padding: 0.8rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--md-sys-shape-corner-medium);
+    background: var(--panel-glass);
+}
+
+.proof-list .skill {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--lavender);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.proof-list .receipt {
+    color: var(--fg);
+}
+
+.proof-list a {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.proof-list a:hover,
+.proof-list a:focus-visible {
+    color: var(--lavender);
+}
+
+@media (max-width: 760px) {
+    .lab-grid,
+    .lab-card.wide {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .proof-list li {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.35rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lab-card .chart img,
+    .lab-card .chart::after {
+        transition: none;
     }
 }
