@@ -462,6 +462,12 @@ async function updateGardenStats() {
 
                 noteCount = mdCount;
                 folderCount = topFolders.size;
+                // Count what the garden itself lists (published notes, real topics) so both pages agree.
+                if (window.GardenReaderLogic) {
+                    const facts = window.GardenReaderLogic.gardenFacts(manifest);
+                    noteCount = facts.notes;
+                    folderCount = facts.topics;
+                }
 
                 featuredCount = Object.entries(metadata).filter(([path, meta]) =>
                     isFeatured(meta) && !isHiddenPath(path)
@@ -971,7 +977,7 @@ async function initVaultActivity() {
     const incidentEntry = Object.values(metadata)
         .filter(meta => meta && meta.last_incident)
         .sort((a, b) => new Date(b.updated || 0) - new Date(a.updated || 0))[0];
-    const incidentDate = new Date(incidentEntry ? incidentEntry.last_incident : '2026-06-27');
+    const incidentDate = new Date(incidentEntry ? incidentEntry.last_incident : '2026-10-24');
     if (!isNaN(incidentDate.getTime())) {
         const days = Math.max(0, Math.floor((Date.now() - incidentDate.getTime()) / (1000 * 60 * 60 * 24)));
         if (incidentDaysEl) incidentDaysEl.textContent = String(days);
@@ -983,6 +989,11 @@ async function initVaultActivity() {
     }
     if (incidentSummaryEl && incidentEntry?.incident_summary) {
         incidentSummaryEl.textContent = incidentEntry.incident_summary;
+    }
+    const incidentEarlierEl = document.getElementById('incidentEarlier');
+    if (incidentEarlierEl && incidentEntry?.previous_incident) {
+        incidentEarlierEl.textContent = incidentEntry.previous_incident;
+        document.getElementById('incidentEarlierRow')?.removeAttribute('hidden');
     }
     if (incidentNextEl && incidentEntry?.next_maintenance) {
         incidentNextEl.textContent = incidentEntry.next_maintenance;

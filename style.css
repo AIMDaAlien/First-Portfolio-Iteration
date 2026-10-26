@@ -1447,7 +1447,8 @@ body {
 
 .knowledge-garden-container {
     display: grid;
-    grid-template-columns: 1.5fr 1fr;
+    /* minmax(0, …) lets long note titles ellipsize instead of widening the page on phones */
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
     gap: calc(var(--spacing-unit) * 6);
     align-items: start;
 }
@@ -2190,7 +2191,7 @@ html.is-scrolling .hero-label::before {
     }
 
     .knowledge-garden-container {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
         gap: calc(var(--spacing-unit) * 4);
     }
 
@@ -2740,6 +2741,7 @@ html.is-scrolling .hero-label::before {
 
 /* === RECENT NOTES (latest transmissions) === */
 .recent-notes {
+    box-sizing: border-box;
     width: 100%;
     margin-top: calc(var(--spacing-unit) * 2);
     background: var(--panel-glass);

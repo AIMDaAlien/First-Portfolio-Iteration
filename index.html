@@ -297,7 +297,7 @@
                         <div class="card-led">UNRAID-01</div>
                         <h3>Unraid server · fleet flagship</h3>
                         <p class="spec-line">i5-12600KF &middot; 128GB DDR4-3200 &middot; RTX 3060 12GB</p>
-                        <p class="spec-line">Unraid 7.2.4 &middot; 21.8TB raw array + 14.6TB parity</p>
+                        <p class="spec-line">Unraid 7.2.4 &middot; 21.8TB raw JBOD &middot; no parity</p>
                         <p class="spec-line">dual ZFS NVMe pools &middot; LSI SAS2308 HBA</p>
                         <div class="spec-telemetry" id="unraidTelemetry"
                             data-endpoint="https://penthouse.blog/unraid-metrics.json" data-interval="300000">
@@ -381,6 +381,10 @@
                         <div class="incident-detail">
                             <span>Last event</span>
                             <strong id="incidentSummary">Hardware upgrade</strong>
+                        </div>
+                        <div class="incident-detail" id="incidentEarlierRow" hidden>
+                            <span>Before that</span>
+                            <strong id="incidentEarlier"></strong>
                         </div>
                         <div class="incident-detail">
                             <span>Next window</span>
@@ -790,8 +794,8 @@
                             </div>
                         </div>
                     </div>
-                    <p class="project-description">Deployed DNS-level ad blocking using Raspberry Pi 3B+ with Unbound
-                        recursive DNS resolver. Integrated with WireGuard VPN for complete network privacy protection.
+                    <p class="project-description">DNS-level ad blocking that started on a 2014 Raspberry Pi B+ (512MB) and
+                        moved to a Raspberry Pi 5 on NVMe, with an Unbound recursive DNS resolver. Integrated with WireGuard VPN for complete network privacy protection.
                     </p>
 
                     <div class="tech-stack">
@@ -1030,6 +1034,7 @@
     <div id="cursor-aura"></div>
 
     <script src="net-utils.js" defer></script>
+    <script src="garden-reader-logic.js" defer></script>
     <script src="script.js" defer></script>
     <script src="terminal.js" defer></script>
 </body>
