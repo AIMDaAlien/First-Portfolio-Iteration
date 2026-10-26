@@ -60,10 +60,14 @@
         return { s, x: px - (px - state.x) * k, y: py - (py - state.y) * k };
     }
 
-    // Drag by (dx, dy) without pulling the scaled image's edge inside the viewport.
+    // Drag by (dx, dy) within limits. Per axis the offset may reach the larger of:
+    // the gap between image and viewport (a small image slides to the viewport edge,
+    // a big one until its own edge arrives), and how much zooming grew the image,
+    // w*(s-1)/2, which is exactly what a zoom anchored on the image needs.
     function panBy(state, dx, dy, bounds) {
-        const maxX = Math.max(0, (bounds.w * state.s - bounds.vw) / 2);
-        const maxY = Math.max(0, (bounds.h * state.s - bounds.vh) / 2);
+        const limit = (size, view) => Math.max(Math.abs(size * state.s - view) / 2, size * (state.s - 1) / 2);
+        const maxX = limit(bounds.w, bounds.vw);
+        const maxY = limit(bounds.h, bounds.vh);
         const clamp = (v, m) => Math.min(m, Math.max(-m, v)) + 0;
         return { s: state.s, x: clamp(state.x + dx, maxX), y: clamp(state.y + dy, maxY) };
     }

@@ -107,6 +107,8 @@
             apply();
             dialog.hidden = false;
             document.body.style.overflow = 'hidden';
+            // Everything behind the viewer is unreachable by keyboard and screen reader while it is open.
+            for (const el of document.body.children) if (el !== dialog) el.inert = true;
             dialog.querySelector('[data-zoom="close"]').focus();
         }
 
@@ -114,6 +116,7 @@
             if (dialog.hidden) return;
             dialog.hidden = true;
             document.body.style.overflow = '';
+            for (const el of document.body.children) el.inert = false;
             pointers.clear();
             pinch = null;
             if (opener) opener.focus();
@@ -139,12 +142,18 @@
             });
         });
 
+        // Pointer capture retargets click/dblclick to the dialog, so remember where the
+        // press started: only a still press that began on the backdrop closes the viewer.
+        let moved = false;
+        let downOn = null;
+
         dialog.addEventListener('click', e => {
             const action = e.target.closest('[data-zoom]')?.dataset.zoom;
             if (action === 'in') zoomBy(1.4);
             else if (action === 'out') zoomBy(1 / 1.4);
             else if (action === 'fit') set({ s: 1, x: 0, y: 0 });
-            else if (action === 'close' || e.target === dialog) closeViewer();
+            else if (action === 'close') closeViewer();
+            else if (!action && downOn === 'backdrop' && !moved) closeViewer();
         });
 
         dialog.addEventListener('wheel', e => {
@@ -152,14 +161,22 @@
             zoomBy(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX, e.clientY);
         }, { passive: false });
 
-        img.addEventListener('dblclick', e => {
+        dialog.addEventListener('dblclick', e => {
+            if (downOn !== 'image') return;
             if (state.s > 1) set({ s: 1, x: 0, y: 0 });
             else zoomBy(2.5, e.clientX, e.clientY);
         });
 
-        img.addEventListener('pointerdown', e => {
-            img.setPointerCapture(e.pointerId);
-            pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        // Pointer handling is on the whole viewer, so a pinch can start anywhere on screen.
+        const onBar = e => Boolean(e.target.closest('.zoom-bar'));
+        dialog.addEventListener('pointerdown', e => {
+            if (onBar(e)) return;
+            dialog.setPointerCapture(e.pointerId);
+            if (!pointers.size) {
+                moved = false;
+                downOn = e.target === img ? 'image' : 'backdrop';
+            }
+            pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY });
             if (pointers.size === 2) {
                 const [a, b] = [...pointers.values()];
                 pinch = { dist: Math.hypot(a.x - b.x, a.y - b.y), mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } };
@@ -167,10 +184,11 @@
             dialog.classList.add('is-dragging');
         });
 
-        img.addEventListener('pointermove', e => {
+        dialog.addEventListener('pointermove', e => {
             const prev = pointers.get(e.pointerId);
             if (!prev) return;
-            pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            if (Math.hypot(e.clientX - prev.x0, e.clientY - prev.y0) > 6) moved = true;
+            pointers.set(e.pointerId, { ...prev, x: e.clientX, y: e.clientY });
             if (pointers.size === 2 && pinch) {
                 const [a, b] = [...pointers.values()];
                 const dist = Math.hypot(a.x - b.x, a.y - b.y);
@@ -189,8 +207,8 @@
             if (pointers.size < 2) pinch = null;
             if (!pointers.size) dialog.classList.remove('is-dragging');
         };
-        img.addEventListener('pointerup', release);
-        img.addEventListener('pointercancel', release);
+        dialog.addEventListener('pointerup', release);
+        dialog.addEventListener('pointercancel', release);
 
         document.addEventListener('keydown', e => {
             if (dialog.hidden) return;
@@ -199,7 +217,9 @@
                 const focusable = [...dialog.querySelectorAll('button, a[href]')];
                 const first = focusable[0];
                 const last = focusable[focusable.length - 1];
-                if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+                const inside = dialog.contains(document.activeElement) && document.activeElement !== dialog;
+                if (!inside) { e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+                else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
                 else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
             }
         });

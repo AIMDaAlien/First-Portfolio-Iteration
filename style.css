@@ -2974,7 +2974,7 @@ button:focus-visible {
 .door-btn--cta:hover {
     background: var(--md-sys-color-primary-container);
     color: var(--md-sys-color-on-primary-container);
-    transform: translateY(-2px);
+    transform: translateY(-4px) scale(1.02);
 }
 
 /* Short version: who i am */
@@ -3140,7 +3140,7 @@ button:focus-visible {
     width: 100%;
     height: auto;
     opacity: 0.9;
-    transition: opacity var(--duration-short) ease;
+    transition: opacity var(--duration-short) var(--motion-spring-expressive);
 }
 
 .lab-card .chart:hover img,
@@ -3166,7 +3166,7 @@ button:focus-visible {
     border-radius: var(--md-sys-shape-corner-full);
     padding: 2px 8px;
     opacity: 0;
-    transition: opacity var(--duration-short) ease;
+    transition: opacity var(--duration-short) var(--motion-spring-expressive);
     pointer-events: none;
 }
 
@@ -3299,7 +3299,7 @@ button:focus-visible {
     cursor: grab;
     user-select: none;
     -webkit-user-drag: none;
-    transition: transform 120ms ease-out;
+    transition: transform var(--duration-short) var(--motion-spring-expressive);
 }
 
 .zoom.is-dragging img {
