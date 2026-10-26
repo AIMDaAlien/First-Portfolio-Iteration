@@ -977,6 +977,16 @@
             </div>
         </footer>
 
+        <div class="zoom" id="chartZoom" role="dialog" aria-modal="true" aria-label="chart viewer" hidden>
+            <img id="chartZoomImg" alt="" draggable="false">
+            <div class="zoom-bar">
+                <button type="button" data-zoom="out" aria-label="zoom out">&minus;</button>
+                <button type="button" data-zoom="in" aria-label="zoom in">+</button>
+                <button type="button" data-zoom="fit">fit</button>
+                <a id="chartZoomNote" href="#">read the write-up &rarr;</a>
+                <button type="button" data-zoom="close">&#x2715; close</button>
+            </div>
+        </div>
     </main>
 
     <div id="cursor-aura"></div>

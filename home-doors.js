@@ -70,8 +70,145 @@
         if (tries > 0) setTimeout(() => scrollToHash(hash, tries - 1), 200);
     }
 
+
+    // --- Chart viewer: zoom with wheel, pinch, +/- or double-click; drag to pan ---
+    function initChartViewer() {
+        const dialog = document.getElementById('chartZoom');
+        const img = document.getElementById('chartZoomImg');
+        const noteLink = document.getElementById('chartZoomNote');
+        if (!dialog || !img) return;
+        // Fixed positioning breaks under a transformed ancestor, so the viewer lives on <body>.
+        document.body.appendChild(dialog);
+
+        let state = { s: 1, x: 0, y: 0 };
+        let opener = null;
+        const pointers = new Map();
+        let pinch = null;
+
+        const bounds = () => ({ w: img.offsetWidth, h: img.offsetHeight, vw: window.innerWidth, vh: window.innerHeight });
+        const fromCentre = (clientX, clientY) => ({ px: clientX - window.innerWidth / 2, py: clientY - window.innerHeight / 2 });
+        const apply = () => {
+            img.style.transform = `translate(calc(-50% + ${state.x}px), calc(-50% + ${state.y}px)) scale(${state.s})`;
+        };
+        const set = (next) => { state = Logic.panBy(next, 0, 0, bounds()); apply(); };
+        const zoomBy = (factor, clientX = window.innerWidth / 2, clientY = window.innerHeight / 2) => {
+            const { px, py } = fromCentre(clientX, clientY);
+            set(Logic.zoomAt(state, factor, px, py));
+        };
+
+        function openViewer(chart) {
+            const source = chart.querySelector('img');
+            if (!source || chart.classList.contains('chart--missing')) return;
+            opener = chart;
+            img.src = source.currentSrc || source.src;
+            img.alt = source.alt;
+            noteLink.href = chart.dataset.note || '#';
+            state = { s: 1, x: 0, y: 0 };
+            apply();
+            dialog.hidden = false;
+            document.body.style.overflow = 'hidden';
+            dialog.querySelector('[data-zoom="close"]').focus();
+        }
+
+        function closeViewer() {
+            if (dialog.hidden) return;
+            dialog.hidden = true;
+            document.body.style.overflow = '';
+            pointers.clear();
+            pinch = null;
+            if (opener) opener.focus();
+        }
+
+        document.querySelectorAll('.lab-card .chart').forEach(chart => {
+            const source = chart.querySelector('img');
+            chart.tabIndex = 0;
+            chart.setAttribute('role', 'button');
+            chart.setAttribute('aria-label', 'zoom chart: ' + (source?.alt || 'chart'));
+            const markMissing = () => {
+                chart.classList.add('chart--missing');
+                chart.removeAttribute('role');
+                chart.tabIndex = -1;
+            };
+            if (source) {
+                source.addEventListener('error', markMissing);
+                if (source.complete && source.naturalWidth === 0 && source.getAttribute('src')) markMissing();
+            }
+            chart.addEventListener('click', () => openViewer(chart));
+            chart.addEventListener('keydown', e => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openViewer(chart); }
+            });
+        });
+
+        dialog.addEventListener('click', e => {
+            const action = e.target.closest('[data-zoom]')?.dataset.zoom;
+            if (action === 'in') zoomBy(1.4);
+            else if (action === 'out') zoomBy(1 / 1.4);
+            else if (action === 'fit') set({ s: 1, x: 0, y: 0 });
+            else if (action === 'close' || e.target === dialog) closeViewer();
+        });
+
+        dialog.addEventListener('wheel', e => {
+            e.preventDefault();
+            zoomBy(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX, e.clientY);
+        }, { passive: false });
+
+        img.addEventListener('dblclick', e => {
+            if (state.s > 1) set({ s: 1, x: 0, y: 0 });
+            else zoomBy(2.5, e.clientX, e.clientY);
+        });
+
+        img.addEventListener('pointerdown', e => {
+            img.setPointerCapture(e.pointerId);
+            pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            if (pointers.size === 2) {
+                const [a, b] = [...pointers.values()];
+                pinch = { dist: Math.hypot(a.x - b.x, a.y - b.y), mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } };
+            }
+            dialog.classList.add('is-dragging');
+        });
+
+        img.addEventListener('pointermove', e => {
+            const prev = pointers.get(e.pointerId);
+            if (!prev) return;
+            pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            if (pointers.size === 2 && pinch) {
+                const [a, b] = [...pointers.values()];
+                const dist = Math.hypot(a.x - b.x, a.y - b.y);
+                const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+                const { px, py } = fromCentre(mid.x, mid.y);
+                const zoomed = Logic.zoomAt(state, dist / (pinch.dist || dist), px, py);
+                set(Logic.panBy(zoomed, mid.x - pinch.mid.x, mid.y - pinch.mid.y, bounds()));
+                pinch = { dist, mid };
+            } else if (pointers.size === 1 && state.s > 1) {
+                set(Logic.panBy(state, e.clientX - prev.x, e.clientY - prev.y, bounds()));
+            }
+        });
+
+        const release = e => {
+            pointers.delete(e.pointerId);
+            if (pointers.size < 2) pinch = null;
+            if (!pointers.size) dialog.classList.remove('is-dragging');
+        };
+        img.addEventListener('pointerup', release);
+        img.addEventListener('pointercancel', release);
+
+        document.addEventListener('keydown', e => {
+            if (dialog.hidden) return;
+            if (e.key === 'Escape') { e.preventDefault(); closeViewer(); return; }
+            if (e.key === 'Tab') {
+                const focusable = [...dialog.querySelectorAll('button, a[href]')];
+                const first = focusable[0];
+                const last = focusable[focusable.length - 1];
+                if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+                else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         if (!Logic || !document.querySelector('[data-door-panel]')) return;
+
+        initChartViewer();
 
         const hashDoor = Logic.doorForHash(location.hash);
         open(hashDoor || Logic.pickDoor(location.search, readStored()), { remember: Boolean(hashDoor) || /[?&]door=/.test(location.search) });

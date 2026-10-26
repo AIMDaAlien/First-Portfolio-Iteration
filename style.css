@@ -3252,3 +3252,84 @@ button:focus-visible {
         transition: none;
     }
 }
+
+/* Chart viewer */
+.zoom {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(13, 14, 19, 0.94);
+    overflow: hidden;
+    touch-action: none;
+}
+
+.zoom[hidden] {
+    display: none;
+}
+
+.zoom img {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    max-width: 92vw;
+    max-height: 82vh;
+    border-radius: var(--md-sys-shape-corner-small);
+    transform: translate(-50%, -50%);
+    transform-origin: center;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-drag: none;
+    transition: transform 120ms ease-out;
+}
+
+.zoom.is-dragging img {
+    cursor: grabbing;
+    transition: none;
+}
+
+.zoom-bar {
+    position: absolute;
+    left: 50%;
+    bottom: max(18px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    width: max-content;
+    max-width: calc(100vw - 32px);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+}
+
+.zoom-bar button,
+.zoom-bar a {
+    font: inherit;
+    background: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-primary-container);
+    border: 1px solid var(--border);
+    border-radius: var(--md-sys-shape-corner-full);
+    padding: 0.45rem 0.95rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform var(--duration-short) var(--motion-spring-bouncy);
+}
+
+.zoom-bar button:active,
+.zoom-bar a:active {
+    transform: scale(0.95);
+}
+
+.zoom-bar button:focus-visible,
+.zoom-bar a:focus-visible {
+    outline: 2px solid var(--md-sys-color-primary);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .zoom img,
+    .zoom-bar button,
+    .zoom-bar a {
+        transition: none;
+    }
+}
