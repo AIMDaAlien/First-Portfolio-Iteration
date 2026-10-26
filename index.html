@@ -232,62 +232,58 @@
         <!-- M3 BALANCED ABOUT SECTION -->
         <section id="about" class="content-section">
             <h2 class="section-title">Hi there,</h2>
-            <blockquote class="about-epigraph animate-on-scroll fade-in">
-                "Aim at nothing, and you'll hit it every time"
-                <cite>— Zig Ziglar</cite>
-            </blockquote>
-            <p class="bio-text animate-on-scroll fade-in">I'm a detail-oriented IT professional with a passion for
-                hands-on problem solving. I approach technical challenges with creative thinking, whether I'm optimizing
-                system performance, troubleshooting hardware issues, or exploring cutting-edge solutions to everyday
-                problems. Outside the tech world, I cultivate patience through gardening and foraging for rare flora in
-                unexpected places, while mountain biking keeps me sharp (just a cool excuse to touch grass).</p>
-            <div class="stats-cards">
-                <div class="stat-card animate-on-scroll stagger">
-                    <div class="card-led">ONLINE</div>
-                    <div class="card-icon">
-                        <svg>
-                            <use href="#icon-school"></use>
-                        </svg>
+            <div class="whoami animate-on-scroll fade-in">
+                <!-- Photo slot: add <img class="whoami-photo" src="..." alt="..."> here and the layout makes room for it. -->
+                <div class="whoami-text">
+                    <p class="bio-text">i'm studying IT at george mason and i've been on linux since i was 13. most of what i do is take
+                        hardware nobody wanted, make it fast, and keep honest notes about what worked and what didn't.
+                        off the keyboard i'm an animanga enthusiast, i forage for rare plants, and i ride mountain bikes.</p>
+                    <div class="status-strip whoami-facts">
+                        <span>[gmu: b.s. IT &middot; 2028]</span>
+                        <span>[studying: comptia a+ &middot; aws]</span>
+                        <span>[linux: since 13]</span>
                     </div>
-                    <h3>George Mason University</h3>
-                    <p>B.S. Information Technology<br>(Expected 2028)</p>
-                    <div class="node-id">node_edu</div>
-                </div>
-                <div class="stat-card animate-on-scroll stagger">
-                    <div class="card-led">ONLINE</div>
-                    <div class="card-icon">
-                        <svg>
-                            <use href="#icon-build"></use>
-                        </svg>
-                    </div>
-                    <h3>6+ Years Experience</h3>
-                    <p>Technical troubleshooting & team management</p>
-                    <div class="node-id">node_exp</div>
-                </div>
-                <div class="stat-card animate-on-scroll stagger">
-                    <div class="card-led">ONLINE</div>
-                    <div class="card-icon">
-                        <svg>
-                            <use href="#icon-terminal"></use>
-                        </svg>
-                    </div>
-                    <h3>Linux Enthusiast</h3>
-                    <p>Since age 13</p>
-                    <div class="node-id">node_linux</div>
-                </div>
-                <div class="stat-card stat-card-studying animate-on-scroll stagger">
-                    <div class="card-led" style="color:var(--rt-led)">ACTIVE</div>
-                    <div class="card-icon">
-                        <svg>
-                            <use href="#icon-school"></use>
-                        </svg>
-                    </div>
-                    <h3>Currently Studying</h3>
-                    <p>CompTIA A+ • AWS Cloud & AI Practitioner</p>
-                    <div class="node-id" style="color:var(--rt-led)">node_study</div>
                 </div>
             </div>
         </section>
+
+        <div class="pcb-divider" aria-hidden="true">
+            <svg viewBox="0 0 1200 28" preserveAspectRatio="none">
+                <path class="pcb-trace" pathLength="1200" d="M0 14 H420 L436 4 H760 L776 14 H1200" />
+                <path class="pcb-trace pcb-trace--2" pathLength="1200" d="M0 22 H300 L312 26 H900 L912 22 H1200" />
+                <circle class="pcb-via" cx="436" cy="4" r="2.5" />
+                <circle class="pcb-via" cx="776" cy="14" r="2.5" />
+                <path class="pcb-pulse" pathLength="1200" d="M0 14 H420 L436 4 H760 L776 14 H1200" />
+            </svg>
+        </div>
+
+        <section id="done" class="content-section">
+            <h2 class="section-title">Things I've Done</h2>
+            <div class="proof-grid">
+                <article class="spec-unit proof-card animate-on-scroll stagger">
+                    <div class="card-led">STRATA-V100</div>
+                    <div class="proof-num">62s &rarr; 1s</div>
+                    <h3>an old datacenter card, answering instantly</h3>
+                    <p>a long chat's next reply used to take a minute. now it takes a second.</p>
+                    <a class="proof-link" href="garden-terminal.html?note=01%20Projects%2FStrata%2FStrata%20V100%20update%20%E2%80%94%202026-10-25.md">[ read the story &rarr; ]</a>
+                </article>
+                <article class="spec-unit proof-card animate-on-scroll stagger">
+                    <div class="card-led">STRATA-3060</div>
+                    <div class="proof-num">16.6%</div>
+                    <h3>faster answers on a gaming card</h3>
+                    <p>proven with paired tests, not one lucky run.</p>
+                    <a class="proof-link" href="garden-terminal.html?note=01%20Projects%2FStrata%2FStrata%20RTX%203060%20Optimization%20Showcase.md">[ read the story &rarr; ]</a>
+                </article>
+                <article class="spec-unit proof-card animate-on-scroll stagger">
+                    <div class="card-led">PHILOSOPHER</div>
+                    <div class="proof-num">0 / 40</div>
+                    <h3>made-up quotes from my philosophy ai</h3>
+                    <p>40 questions built to tempt it into faking a source. it never did.</p>
+                    <a class="proof-link" href="garden-terminal.html?note=01%20Projects%2FPhilosopher%2FPhilosopher%20Project.md">[ read the story &rarr; ]</a>
+                </article>
+            </div>
+        </section>
+
 
         <div class="pcb-divider" aria-hidden="true">
             <svg viewBox="0 0 1200 28" preserveAspectRatio="none">
@@ -366,6 +362,33 @@
                         <span class="experience-tag">AI Training Pipelines</span>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <div class="pcb-divider" aria-hidden="true">
+            <svg viewBox="0 0 1200 28" preserveAspectRatio="none">
+                <path class="pcb-trace" pathLength="1200" d="M0 14 H420 L436 4 H760 L776 14 H1200" />
+                <path class="pcb-trace pcb-trace--2" pathLength="1200" d="M0 22 H300 L312 26 H900 L912 22 H1200" />
+                <circle class="pcb-via" cx="436" cy="4" r="2.5" />
+                <circle class="pcb-via" cx="776" cy="14" r="2.5" />
+                <path class="pcb-pulse" pathLength="1200" d="M0 14 H420 L436 4 H760 L776 14 H1200" />
+            </svg>
+        </div>
+
+        <section id="garden-invite" class="content-section">
+            <h2 class="section-title">Where I Write It Down</h2>
+            <div class="spec-unit garden-invite animate-on-scroll fade-in">
+                <div class="card-led">KNOWLEDGE GARDEN</div>
+                <p>everything above came out of my notes. <span class="garden-invite-count"><span id="noteCount2">...</span> notes across <span id="folderCount2">...</span> topics</span>, written while i was figuring things out, mistakes included.</p>
+                <a class="door-btn door-btn--cta" href="garden-terminal.html">[ open the garden &rarr; ]</a>
+            </div>
+        </section>
+
+        <section class="content-section door-nudge-section">
+            <div class="spec-unit deep-nudge">
+                <div class="card-led">THAT WAS THE SHORT VERSION</div>
+                <p>want the actual charts, the server specs, live telemetry, and the experiment i threw out?</p>
+                <button type="button" class="door-btn door-btn--cta" data-door="deep">[ open the deep end &rarr; ]</button>
             </div>
         </section>
 

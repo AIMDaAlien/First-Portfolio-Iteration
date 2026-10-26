@@ -525,6 +525,10 @@ async function updateGardenStats() {
 
         if (noteCountEl) noteCountEl.textContent = String(noteCount);
         if (folderCountEl) folderCountEl.textContent = String(folderCount);
+        const noteCount2El = document.getElementById('noteCount2');
+        const folderCount2El = document.getElementById('folderCount2');
+        if (noteCount2El) noteCount2El.textContent = String(noteCount);
+        if (folderCount2El) folderCount2El.textContent = String(folderCount);
         if (stripNotesEl) stripNotesEl.textContent = `[garden: ${noteCount}]`;
 
         if (featuredCount !== null) {

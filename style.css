@@ -3041,3 +3041,124 @@ button:focus-visible {
         transition: none;
     }
 }
+
+.door-btn--cta {
+    display: inline-block;
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    border-color: var(--md-sys-color-primary);
+    text-decoration: none;
+}
+
+.door-btn--cta:hover {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    transform: translateY(-2px);
+}
+
+/* Short version: who i am */
+.whoami {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: center;
+    max-width: 860px;
+    margin: 0 auto;
+}
+
+.whoami:has(.whoami-photo) {
+    grid-template-columns: 140px minmax(0, 1fr);
+}
+
+.whoami-photo {
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: var(--md-sys-shape-corner-large);
+    border: 1px solid var(--border);
+}
+
+.whoami .bio-text {
+    margin: 0;
+}
+
+.whoami-facts {
+    margin-top: 1.25rem;
+}
+
+/* Short version: three results */
+.proof-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: calc(var(--spacing-unit) * 3);
+}
+
+.proof-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.proof-num {
+    font-family: var(--mono);
+    font-size: clamp(2rem, 4vw, 2.6rem);
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--lavender);
+    margin: 0.6rem 0 0.5rem;
+}
+
+.proof-card p {
+    color: var(--muted);
+    flex: 1;
+}
+
+.proof-link {
+    display: inline-block;
+    margin-top: 1rem;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--lavender);
+    text-decoration: none;
+}
+
+.proof-link:hover,
+.proof-link:focus-visible {
+    text-decoration: underline;
+}
+
+/* Short version: garden invite and the nudge to the deep end */
+.garden-invite,
+.deep-nudge {
+    max-width: 760px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    text-align: center;
+}
+
+.garden-invite p,
+.deep-nudge p {
+    margin: 0;
+    color: var(--fg);
+}
+
+.garden-invite-count {
+    font-family: var(--mono);
+    color: var(--lavender);
+}
+
+.door-nudge-section {
+    padding-top: 0;
+}
+
+@media (max-width: 760px) {
+    .proof-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .whoami:has(.whoami-photo) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
