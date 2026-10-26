@@ -530,6 +530,21 @@ body {
     transition: opacity var(--duration-long) var(--motion-spring-expressive) 200ms, transform var(--duration-long) var(--motion-spring-expressive) 200ms;
 }
 
+/* Typed line and its invisible full-length twin share one cell, so the hero is
+   already its final height before typing starts and nothing below it moves. */
+.hero-subtitle {
+    display: grid;
+}
+
+.hero-subtitle > .typed-ghost,
+.hero-subtitle > .typed-live {
+    grid-area: 1 / 1;
+}
+
+.typed-ghost {
+    visibility: hidden;
+}
+
 .hero-subtitle strong {
     color: var(--lavender);
     font-weight: 500;

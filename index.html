@@ -203,7 +203,9 @@
                 <h1 class="hero-title">Aim</h1>
                 <div class="hero-rule"></div>
                 <p class="hero-subtitle">
-                    <span id="typed-subtitle"></span><span class="typing-cursor"></span>
+                    <!-- The ghost holds the finished line's space so the page doesn't shift while it types. -->
+                    <span class="typed-ghost" aria-hidden="true">i build and break my own servers, then write down what actually happened.<span class="typing-cursor"></span></span>
+                    <span class="typed-live"><span id="typed-subtitle"></span><span class="typing-cursor"></span></span>
                 </p>
                 <div class="status-strip">
                     <span id="strip-uptime">[uptime: ...]</span>

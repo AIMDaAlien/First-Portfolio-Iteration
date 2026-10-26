@@ -60,14 +60,22 @@
 
     // Jump (not smooth-scroll) to a section. The boot intro can hold scrolling for a
     // moment after the page appears, so keep trying until the section is in place.
-    function scrollToHash(hash, tries = 15) {
+    // Once the visitor scrolls on their own, stop: never pull them back to the section.
+    let lastUserScroll = 0;
+    const markUserScroll = () => { lastUserScroll = performance.now(); };
+    ['wheel', 'touchmove'].forEach(type => window.addEventListener(type, markUserScroll, { passive: true }));
+    window.addEventListener('keydown', e => {
+        if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key)) markUserScroll();
+    });
+
+    function scrollToHash(hash, tries = 15, startedAt = performance.now()) {
         const target = hash && document.getElementById(hash.slice(1));
-        if (!target) return;
+        if (!target || lastUserScroll > startedAt) return;
         const navHeight = document.getElementById('main-nav')?.offsetHeight || 0;
         const offset = target.getBoundingClientRect().top - navHeight;
         if (Math.abs(offset) <= 4) return;
         window.scrollTo({ top: offset + window.scrollY, behavior: 'instant' });
-        if (tries > 0) setTimeout(() => scrollToHash(hash, tries - 1), 200);
+        if (tries > 0) setTimeout(() => scrollToHash(hash, tries - 1, startedAt), 200);
     }
 
 

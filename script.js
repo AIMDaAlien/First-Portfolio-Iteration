@@ -111,7 +111,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (heroSubtitle) {
                             heroSubtitle.style.opacity = '1';
                             heroSubtitle.style.transform = 'translateY(0) scale(1)';
-                            typeSubtitle('i build and break my own servers, then write down what actually happened.');
+                            const ghost = heroSubtitle.querySelector('.typed-ghost');
+                            typeSubtitle(ghost ? ghost.textContent.trim() : '');
                         }
                         if (scrollIndicator) {
                             scrollIndicator.style.opacity = '1';
