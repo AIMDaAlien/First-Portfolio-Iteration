@@ -2864,7 +2864,8 @@ button:focus-visible {
     flex-direction: column;
     align-items: center;
     gap: 0.75rem;
-    margin: 2.5rem auto 0;
+    /* bottom room for the hero's scroll arrow, which sits absolutely at the hero's foot */
+    margin: 2.5rem auto 4rem;
     padding: 0 16px;
     text-align: center;
 }
@@ -2931,9 +2932,28 @@ button:focus-visible {
 }
 
 @media (max-width: 600px) {
+    .door-switch {
+        padding: 0;
+    }
+
+    .door-buttons {
+        flex-wrap: nowrap;
+        gap: 0.25rem;
+        padding: 0.25rem;
+    }
+
     .door-btn {
-        font-size: 0.72rem;
-        padding: 0.5rem 0.9rem;
+        font-size: 0.66rem;
+        letter-spacing: 0;
+        padding: 0.5rem 0.65rem;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 359px) {
+    .door-buttons {
+        flex-wrap: wrap;
+        border-radius: var(--md-sys-shape-corner-large);
     }
 }
 
